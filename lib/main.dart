@@ -1,4 +1,5 @@
-import 'package:cloudilya/student/myHomepage.dart';
+import 'package:cloudilya/staff/myHomepage.dart';
+import 'package:cloudilya/views/Signup.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,6 +14,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
+        fontFamily: 'SF Pro Text',
       ),
     );
   }
@@ -54,9 +56,11 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  bool _rememberMe = false;
 
   @override
   void initState() {
@@ -97,6 +101,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                   _buildTextField('Password', obscureText: true),
                   SizedBox(height: 40.0),
                   _buildLoginButton(),
+                  SizedBox(height: 20.0),
+                  _buildRememberMeCheckbox(),
+                  SizedBox(height: 10.0),
+                  _buildSignupText(),
+                  SizedBox(height: 20.0),
+                  _buildPoweredByText(),
+                  // Padding(
+                  //   padding: const EdgeInsets.all(8.0),
+                  //   child: Container(height:100,child: Image.asset("assets/beeslogo.jpeg")),
+                  // )
                 ],
               ),
             ),
@@ -124,7 +138,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         ),
         contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
       ),
-      style: TextStyle(color: Colors.black), // Changed to black for better visibility
+      style: TextStyle(
+          color: Colors.black), // Changed to black for better visibility
     );
   }
 
@@ -151,6 +166,76 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           fontSize: 18.0,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRememberMeCheckbox() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Theme(
+          data: ThemeData(
+            unselectedWidgetColor:
+                Colors.grey, // Color of tick mark when not selected
+          ),
+          child: Checkbox(
+            value: _rememberMe,
+            onChanged: (bool? value) {
+              setState(() {
+                _rememberMe = value ?? false;
+              });
+            },
+            activeColor: Colors.white,
+            // Color of checkbox when selected
+            checkColor: Color(0xFF003d85),
+            // Color of tick mark when selected
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+        Text(
+          'Remember me',
+          style: TextStyle(color: Colors.black),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignupText() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NewSignupScreen()),
+        );
+      },
+      child: RichText(
+        text: TextSpan(
+          text: 'Don\'t have an account? ',
+          style: TextStyle(color: Colors.grey),
+          children: <TextSpan>[
+            TextSpan(
+              text: 'Sign Up',
+              style: TextStyle(
+                color: Color(0xFF003d85),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPoweredByText() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 20.0),
+      child: Text(
+        'Powered by Bees Software Solutions PVT.LTD',
+        style: TextStyle(
+          color: Colors.grey,
+          fontSize: 12.0,
         ),
       ),
     );
