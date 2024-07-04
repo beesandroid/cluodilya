@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart';
+import '../../main.dart';
 
-// Define separate screen widgets
+
 class HomeScreenContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _pageIndex = 0;
   final PageController _pageController = PageController();
 
-  // List of pages
+
   final List<Widget> _pages = [
     HomeScreenContent(),
     SearchScreenContent(),
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onTap(int index) {
     setState(() {
       _pageIndex = index;
-      _pageController.jumpToPage(index); // Jump to the selected page without animation
+      _pageController.jumpToPage(index);
     });
   }
 
