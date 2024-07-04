@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:cloudilya/staff/views/webview_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import '../../main.dart';
 
@@ -19,10 +20,22 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _retypePasswordController = TextEditingController();
+  final TextEditingController _retypePasswordController =
+      TextEditingController();
+
   bool _otpSent = false;
   bool _otpVerified = false;
   String? _serverOtp;
+
+  // Variables to store API response values
+  String? _mercid;
+  String? _bdorderid;
+  String? _rdata;
+  String? _amount;
+  String? _grpCode;
+  String? _collegeId;
+  String? _userName;
+  String? _userType;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -62,19 +75,59 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
         _serverOtp = responseBody['otp'];
-        print("Server OTP: $_serverOtp");
+        // _showToast(_serverOtp.toString());
 
-        if (responseBody['status']) {
-          setState(() {
-            _otpSent = true;
-          });
-          _showToast('OTP sent successfully');
-        } else {
-          _showToast('Failed to send OTP');
+        var singleCloudAPPRegistrationList =
+            responseBody['singleCloudAPPRegistrationList'];
+        var billdeskResponse = responseBody['billdeskResponse'];
+        if (billdeskResponse != null) {
+          String mercid = billdeskResponse['links'][1]['parameters']['mercid'];
+          String bdorderid =
+              billdeskResponse['links'][1]['parameters']['bdorderid'];
+          String rdata = billdeskResponse['links'][1]['parameters']['rdata'];
+          String amount = billdeskResponse['amount'];
+          String grpCode =
+              billdeskResponse['additional_info']['additional_info1'];
+          String collegeId =
+              billdeskResponse['additional_info']['additional_info3'];
+
+          // Store these values for later use
+          _mercid = mercid;
+          _bdorderid = bdorderid;
+          _rdata = rdata;
+          _amount = amount;
+          _grpCode = grpCode;
+          _collegeId = collegeId;
+
+          print('mercid: $mercid');
+          print('bdorderid: $bdorderid');
+          print('rdata: $rdata');
+          print('amount: $amount');
+          print('grpCode: $grpCode');
+          print('collegeId: $collegeId');
         }
+
+        if (singleCloudAPPRegistrationList != null) {
+          String userName = singleCloudAPPRegistrationList['userName'];
+          String userType = singleCloudAPPRegistrationList['userType'];
+
+          print('userName: $userName');
+          print('userType: $userType');
+
+          // Store these values for later use
+          _userName = userName;
+          _userType = userType;
+        }
+
+        setState(() {
+          _otpSent = true;
+        });
+        _showToast('OTP sent successfully');
       } else {
-        _showToast('Error: ${response.statusCode}');
+        _showToast('Failed to send OTP');
       }
+    } else {
+      _showToast('Error');
     }
   }
 
@@ -89,6 +142,65 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       _showToast('OTP verified successfully');
     } else {
       _showToast('Incorrect OTP');
+    }
+  }
+
+  Future<void> _registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      String email = _emailController.text;
+      String password = _passwordController.text;
+      String orderId =
+          "ORD${DateTime.now().toIso8601String().replaceAll(':', '').replaceAll('-', '').replaceAll('T', '')}";
+      String transactionDate =
+          DateTime.now().toIso8601String().split('T').first;
+
+      // Prepare request body using stored values
+      var requestBody = jsonEncode({
+        "GrpCode": _grpCode,
+        "ColCode": "0001",
+        "CollegeId": _collegeId,
+        "MercId": _mercid,
+        "OrderId": orderId,
+        "TransactionDate": transactionDate,
+        "Amount": _amount,
+        "Username": _userName,
+        "email": email,
+        "Password": password,
+        "usertype": _userType
+      });
+      print(requestBody);
+
+      var url = Uri.parse(
+          'https://beessoftware.cloud/CoreAPI/CloudilyaMobileAPP/CloudilyaBilldeskPaymentLogs');
+      var response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 204) {
+        // No content to decode
+        _showToast('User registered successfully');
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => WebViewScreen(
+                      bdorderid: _bdorderid.toString(),
+                      mercid: _mercid.toString(),
+                      rdata: _rdata.toString(),
+                      initialUrl: '',
+                    )));
+      } else if (response.statusCode == 200) {
+        // Successful response with content
+        var responseBody = jsonDecode(response.body);
+        print(responseBody);
+        _showToast('User registered successfully');
+      } else {
+        // Handle error response
+        _showToast('Failed to register user');
+      }
+    } else {
+      _showToast('Please fix the errors before submitting.');
     }
   }
 
@@ -196,19 +308,15 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
                         EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
                   ),
                   style: TextStyle(color: Colors.black),
-                  onChanged: (text) {
-                    setState(() {});
-                  },
                 ),
-                SizedBox(height: 16.0),
+                SizedBox(height: 12.0),
                 TextFormField(
                   controller: _phoneNumberController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 10,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey.withOpacity(0.1),
-                    hintText: 'Mobile Number',
+                    hintText: 'Phone Number',
                     hintStyle: TextStyle(color: Colors.grey),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
@@ -218,34 +326,14 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
                         EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
                   ),
                   style: TextStyle(color: Colors.black),
-                  onChanged: (text) {
-                    setState(() {});
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter mobile number';
-                    }
-                    if (value.length != 10 || int.tryParse(value) == null) {
-                      return 'Please enter a valid 10-digit mobile number';
-                    }
-                    return null;
-                  },
                 ),
-                SizedBox(height: 16.0),
+                SizedBox(height: 56.0),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_groupcodeController.text.isEmpty ||
-                        _phoneNumberController.text.isEmpty) {
-                      _showToast('Please fill all fields');
-                    } else {
-                      _sendOtp();
-                    }
-                  },
-                  child: Text('Get OTP', style: TextStyle(color: Colors.white)),
+                  onPressed: _sendOtp,
+                  child:
+                      Text('Send OTP', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isGetOtpButtonEnabled()
-                        ? Color(0xFF003d85)
-                        : Colors.grey,
+                    backgroundColor: Color(0xFF003d85),
                     padding: EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
@@ -258,148 +346,82 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
   }
 
   Widget _buildRegistrationForm() {
-    return Container(
-      key: ValueKey(2),
-      padding: EdgeInsets.all(16.0), // Add padding to the Container
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 19),
-            child: Text(
-              "Register Your Email and Password",
-              style: TextStyle(color: Colors.black, fontSize: 20),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0, bottom: 15),
+          child: Text(
+            "Register",
+            style: TextStyle(color: Colors.black, fontSize: 20),
+          ),
+        ),
+        TextFormField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey.withOpacity(0.1),
+            hintText: 'Email',
+            hintStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding:
+                EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          ),
+          style: TextStyle(color: Colors.black),
+        ),
+        SizedBox(height: 12.0),
+        TextFormField(
+          controller: _passwordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey.withOpacity(0.1),
+            hintText: 'Password',
+            hintStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding:
+                EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          ),
+          style: TextStyle(color: Colors.black),
+        ),
+        SizedBox(height: 12.0),
+        TextFormField(
+          controller: _retypePasswordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey.withOpacity(0.1),
+            hintText: 'Retype Password',
+            hintStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding:
+                EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          ),
+          style: TextStyle(color: Colors.black),
+        ),
+        SizedBox(height: 56.0),
+        ElevatedButton(
+          onPressed: _registerUser,
+          child: Text('Register', style: TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF003d85),
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
             ),
           ),
-          TextFormField(
-            controller: _emailController,
-            style: TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              hintText: "Email",
-              filled: true,
-              fillColor: Colors.grey.withOpacity(0.1),
-              hintStyle: TextStyle(color: Colors.grey),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter an email';
-              }
-              // Simple email validation
-              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16.0),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: true,
-            style: TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.grey.withOpacity(0.1),
-              hintText: 'Password',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a password';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16.0),
-          TextFormField(
-            controller: _retypePasswordController,
-            obscureText: true,
-            style: TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.grey.withOpacity(0.1),
-              hintText: 'Re - Type Password',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please re-type the password';
-              }
-              if (value != _passwordController.text) {
-                return 'Passwords do not match';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16.0),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _registerUser();
-                } else {
-                  _showToast('Please fix the errors before submitting.');
-                }
-              },
-              child: Text('Register', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF003d85),
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  bool _isGetOtpButtonEnabled() {
-    return _groupcodeController.text.isNotEmpty &&
-        _phoneNumberController.text.length == 10 &&
-        int.tryParse(_phoneNumberController.text) != null;
-  }
-
-  void _registerUser() {
-    String email = _emailController.text;
-    String password = _passwordController.text;
-
-    // Perform registration logic here
-    // For example, you can make an API call to register the user
-
-    _showToast('User registered successfully with email: $email');
-    // Optionally, navigate to the next screen or perform other actions
-  }
-
-  @override
-  void dispose() {
-    // Clean up controllers when the widget is disposed
-    _groupcodeController.dispose();
-    _phoneNumberController.dispose();
-    _otpController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _retypePasswordController.dispose();
-    super.dispose();
   }
 }

@@ -37,6 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.6
   shimmer: ^2.0.0
   http:
+  webview_flutter: ^2.0.13
+  url_launcher: ^6.0.0
 
 dev_dependencies:
   flutter_test:
