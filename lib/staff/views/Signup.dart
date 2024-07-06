@@ -36,6 +36,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
   String? _collegeId;
   String? _userName;
   String? _userType;
+  String? _orderid;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -75,7 +76,6 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
         _serverOtp = responseBody['otp'];
-        // _showToast(_serverOtp.toString());
 
         var singleCloudAPPRegistrationList =
             responseBody['singleCloudAPPRegistrationList'];
@@ -90,14 +90,15 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
               billdeskResponse['additional_info']['additional_info1'];
           String collegeId =
               billdeskResponse['additional_info']['additional_info3'];
+          String orderid = billdeskResponse['orderid'];
 
-          // Store these values for later use
           _mercid = mercid;
           _bdorderid = bdorderid;
           _rdata = rdata;
           _amount = amount;
           _grpCode = grpCode;
           _collegeId = collegeId;
+          _orderid = orderid;
 
           print('mercid: $mercid');
           print('bdorderid: $bdorderid');
@@ -105,6 +106,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
           print('amount: $amount');
           print('grpCode: $grpCode');
           print('collegeId: $collegeId');
+          print('orderid: $orderid'); // Print orderid
         }
 
         if (singleCloudAPPRegistrationList != null) {
@@ -149,10 +151,10 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
     if (_formKey.currentState!.validate()) {
       String email = _emailController.text;
       String password = _passwordController.text;
-      String orderId =
-          "ORD${DateTime.now().toIso8601String().replaceAll(':', '').replaceAll('-', '').replaceAll('T', '')}";
+      String orderId = _orderid.toString();
       String transactionDate =
           DateTime.now().toIso8601String().split('T').first;
+      String mobile = _phoneNumberController.text;
 
       // Prepare request body using stored values
       var requestBody = jsonEncode({
@@ -166,7 +168,8 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
         "Username": _userName,
         "email": email,
         "Password": password,
-        "usertype": _userType
+        "usertype": _userType,
+        "mobile": mobile
       });
       print(requestBody);
 

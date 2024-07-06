@@ -42,7 +42,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.white,
-        title: Text('Payment Page'),
+        title: Text('Payment Page',style: TextStyle(color: Colors.black),),
         automaticallyImplyLeading: false,
       ),
       body: WillPopScope(
