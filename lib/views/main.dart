@@ -1,6 +1,7 @@
 import 'package:cloudilya/staff/views/myHomepage.dart';
-import 'package:cloudilya/staff/views/Signup.dart';
 import 'package:flutter/material.dart';
+
+import 'Signup.dart';
 
 void main() {
   runApp(MyApp());

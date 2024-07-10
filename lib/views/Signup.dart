@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:cloudilya/staff/views/webview_screen.dart';
+import 'package:cloudilya/views/webview_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../main.dart';
+import 'main.dart';
 
 class NewSignupScreen extends StatefulWidget {
   const NewSignupScreen({super.key});
@@ -75,21 +75,27 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
+        print(responseBody.toString());
+
+        // Check for the 'message' field
+        String? message = responseBody['message'];
+        if (message == 'User Already Registered') {
+          _showToast('User already registered');
+          return; // Exit the function early
+        }
+
         _serverOtp = responseBody['otp'];
 
         var singleCloudAPPRegistrationList =
-            responseBody['singleCloudAPPRegistrationList'];
+        responseBody['singleCloudAPPRegistrationList'];
         var billdeskResponse = responseBody['billdeskResponse'];
         if (billdeskResponse != null) {
           String mercid = billdeskResponse['links'][1]['parameters']['mercid'];
-          String bdorderid =
-              billdeskResponse['links'][1]['parameters']['bdorderid'];
+          String bdorderid = billdeskResponse['links'][1]['parameters']['bdorderid'];
           String rdata = billdeskResponse['links'][1]['parameters']['rdata'];
           String amount = billdeskResponse['amount'];
-          String grpCode =
-              billdeskResponse['additional_info']['additional_info1'];
-          String collegeId =
-              billdeskResponse['additional_info']['additional_info3'];
+          String grpCode = billdeskResponse['additional_info']['additional_info1'];
+          String collegeId = billdeskResponse['additional_info']['additional_info3'];
           String orderid = billdeskResponse['orderid'];
 
           _mercid = mercid;
@@ -106,7 +112,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
           print('amount: $amount');
           print('grpCode: $grpCode');
           print('collegeId: $collegeId');
-          print('orderid: $orderid'); // Print orderid
+          print('orderid: $orderid');
         }
 
         if (singleCloudAPPRegistrationList != null) {
