@@ -1,50 +1,64 @@
-import 'package:cloudilya/staff/views/myHomepage.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:dio/dio.dart';
 
+import '../staff/Attendence.dart';
+import '../staff/Dashboard.dart';
+import '../staff/LeaveApplication.dart';
 import 'Signup.dart';
 
 void main() {
   runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: SplashScreen(),
+    return GetMaterialApp(
+      initialRoute: '/splash',
+      getPages: [
+        GetPage(name: '/splash', page: () => SplashScreen()),
+        GetPage(name: '/login', page: () => LoginPage()),
+        GetPage(name: '/dashboard', page: () => DashboardScreen()),
+        GetPage(name: '/signup', page: () => NewSignupScreen()),
+        GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
+        GetPage(name: '/LeaveApplication', page: () => LeaveApplication()),
+      ],
       theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
         primarySwatch: Colors.blue,
-        brightness: Brightness.dark,
         fontFamily: 'SF Pro Text',
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white, // White background
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border on focus
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border when enabled
+          ),
+          contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
+        ),
       ),
     );
   }
 }
 
-class SplashScreen extends StatefulWidget {
-  @override
-  _SplashScreenState createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateToLogin();
-  }
-
-  _navigateToLogin() async {
-    await Future.delayed(Duration(seconds: 3), () {});
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
-  }
-
+class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Navigate to login page after a delay
+    Future.delayed(Duration(seconds: 3), () {
+      Get.offNamed('/login');
+    });
+
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Center(
         child: Image.asset('assets/image.png', width: 150, height: 150),
       ),
@@ -52,40 +66,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class LoginPage extends StatefulWidget {
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  bool _rememberMe = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 10),
-      vsync: this,
-    )..repeat(reverse: true);
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class LoginPage extends StatelessWidget {
+  final LoginController _loginController = Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 32.0),
@@ -94,21 +80,17 @@ class _LoginPageState extends State<LoginPage>
             children: [
               Image.asset('assets/image.png', width: 150, height: 150),
               SizedBox(height: 20.0),
-              _buildTextField('UserID'),
+              _buildTextField('UserID', controller: _loginController.userIdController),
               SizedBox(height: 20.0),
-              _buildTextField('Password', obscureText: true),
+              _buildTextField('Password', obscureText: true, controller: _loginController.passwordController),
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()),
-                  );
+                  _loginController.login();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF003d85),
-                  padding:
-                      EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
+                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
@@ -127,22 +109,17 @@ class _LoginPageState extends State<LoginPage>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Theme(
-                    data: ThemeData(
-                      unselectedWidgetColor: Colors.grey,
-                    ),
-                    child: Checkbox(
-                      value: _rememberMe,
+                  Obx(() {
+                    return Checkbox(
+                      value: _loginController.rememberMe.value,
                       onChanged: (bool? value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
+                        _loginController.rememberMe.value = value ?? false;
                       },
                       activeColor: Colors.white,
                       checkColor: Color(0xFF003d85),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
+                    );
+                  }),
                   Text(
                     'Remember me',
                     style: TextStyle(color: Colors.black),
@@ -152,10 +129,7 @@ class _LoginPageState extends State<LoginPage>
               SizedBox(height: 10.0),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => NewSignupScreen()),
-                  );
+                  Get.toNamed('/signup');
                 },
                 child: RichText(
                   text: TextSpan(
@@ -190,22 +164,96 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
   }
-
-  Widget _buildTextField(String hintText, {bool obscureText = false}) {
+  Widget _buildTextField(String hintText, {bool obscureText = false, required TextEditingController controller}) {
     return TextField(
       obscureText: obscureText,
+      controller: controller,
       decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.grey.withOpacity(0.1),
         hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide.none,
-        ),
         contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
       ),
-      style: TextStyle(color: Colors.black),
+      style: TextStyle(color: Colors.grey), // Grey input text
     );
   }
+}
+class LoginController extends GetxController {
+  var userIdController = TextEditingController();
+  var passwordController = TextEditingController();
+  var rememberMe = false.obs;
+
+  final Dio _dio = Dio();
+  final String _loginUrl = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails'; // Replace with your API endpoint
+
+  void login() async {
+    final userName = userIdController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (userName.isEmpty || password.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please fill in both fields.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    try {
+      final response = await _dio.post(
+        _loginUrl,
+        data: {
+          'GrpCode': '',
+          'UserName': userName,
+          'password': password,
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        // Check if the response contains 'singleLoginUesrDetails' and 'message'
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('singleLoginUesrDetails') &&
+            responseData.containsKey('message')) {
+
+          final singleLoginUserDetails = responseData['singleLoginUesrDetails'];
+          final message = responseData['message'];
+
+          if (message == 'Login Successfully' && singleLoginUserDetails != null) {
+            // Handle successful login
+            Get.offNamed('/dashboard');
+          } else {
+            // Handle invalid credentials or other issues
+            Get.snackbar(
+              'Error',
+              'Invalid credentials. Please try again.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
+        } else {
+          // Handle unexpected response format
+          Get.snackbar(
+            'Error',
+            'Unexpected response format.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      } else {
+        // Handle errors based on status code
+        Get.snackbar(
+          'Error',
+          'Login failed with status code: ${response.statusCode}',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      // Handle exceptions
+      Get.snackbar(
+        'Error',
+        'An error occurred: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
 }

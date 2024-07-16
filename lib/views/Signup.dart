@@ -61,8 +61,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       String grpCode = _groupcodeController.text;
       String mobile = _phoneNumberController.text;
 
-      var url = Uri.parse(
-          'https://beessoftware.cloud/CoreAPI/CloudilyaMobileAPP/CloudAPPRegistration');
+      var url = Uri.parse('https://beessoftware.cloud/CoreAPI/CloudilyaMobileAPP/CloudAPPRegistration');
       var response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -84,10 +83,15 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
           return; // Exit the function early
         }
 
+        // Check for "Mobile Number Not Found" message
+        if (message == 'Mobile Number Not Found') {
+          _showToast('Mobile Number Not Found');
+          return; // Exit the function early
+        }
+
         _serverOtp = responseBody['otp'];
 
-        var singleCloudAPPRegistrationList =
-        responseBody['singleCloudAPPRegistrationList'];
+        var singleCloudAPPRegistrationList = responseBody['singleCloudAPPRegistrationList'];
         var billdeskResponse = responseBody['billdeskResponse'];
         if (billdeskResponse != null) {
           String mercid = billdeskResponse['links'][1]['parameters']['mercid'];
@@ -138,6 +142,11 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       _showToast('Error');
     }
   }
+
+
+
+
+
 
   void _verifyOtp() {
     String enteredOtp = _otpController.text.trim();
