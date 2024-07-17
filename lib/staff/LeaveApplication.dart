@@ -24,6 +24,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   String _daysTaken = '';
   String? _selectedPeriodType;
   bool _isSaveButtonEnabled = false;
+  double _balance = 0.0;
 
   @override
   void initState() {
@@ -61,7 +62,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
     setState(() {
       _selectedRowIndex = index;
       _selectedAbsenceName = data.absenceName;
-
+      _balance = data.balance;
       _reason = '';
       _fromDate = null;
       _toDate = null;
@@ -73,13 +74,17 @@ class _LeaveApplicationState extends State<LeaveApplication> {
 
   void _calculateDaysTaken() {
     if (_fromDate != null && _toDate != null) {
-      final difference = _toDate!.difference(_fromDate!).inDays;
+      final difference = _toDate!.difference(_fromDate!).inDays + 1; // Including the from date
       setState(() {
-        _daysTaken = difference == 0
-            ? _selectedPeriodType != null
-            ? 'Selected period: $_selectedPeriodType'
-            : 'Period not selected'
-            : '$difference days';
+        if (difference > _balance) {
+          _daysTaken = 'Exceeds available balance of $_balance days';
+        } else {
+          _daysTaken = difference == 0
+              ? _selectedPeriodType != null
+              ? 'Selected period: $_selectedPeriodType'
+              : 'Period not selected'
+              : '$difference days';
+        }
       });
     }
   }
@@ -128,11 +133,21 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                       MaterialStateColor.resolveWith((states) => Colors.blue),
                       columnSpacing: 16,
                       columns: const [
-                        DataColumn(label: Text('Absence Name', style: TextStyle(color: Colors.white))),
-                        DataColumn(label: Text('Accrual Period', style: TextStyle(color: Colors.white))),
-                        DataColumn(label: Text('Balance', style: TextStyle(color: Colors.white))),
-                        DataColumn(label: Text('Last Accrued Date', style: TextStyle(color: Colors.white))),
-                        DataColumn(label: Text('Accrued', style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Absence Name',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Accrual Period',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Balance',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Last Accrued Date',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Accrued',
+                                style: TextStyle(color: Colors.white))),
                       ],
                       rows: List.generate(leaveData.length, (index) {
                         final data = leaveData[index];
@@ -174,6 +189,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
       ),
     );
   }
+
   Widget _buildDetailContainer() {
     return Material(
       elevation: 44,
@@ -261,7 +277,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                         context: context,
                         initialDate: _fromDate ?? DateTime.now(),
                         firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
+                        lastDate: DateTime(2100),
                       );
                       if (pickedDate != null) {
                         setState(() {
@@ -273,147 +289,83 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                     },
                   ),
                 ),
-                Container(
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.calendar_today, color: Colors.black87),
-                    label: Text(
-                      'To Date: ${_toDate?.toLocal().toString().split(' ')[0] ?? 'Not selected'}',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.black87,
-                      backgroundColor: Colors.blueGrey[100],
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: _toDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _toDate = pickedDate;
-                          _calculateDaysTaken();
-                          _validateForm();
-                        });
-                      }
-                    },
+                ElevatedButton.icon(
+                  icon: Icon(Icons.calendar_today, color: Colors.black87),
+                  label: Text(
+                    'To Date: ${_toDate?.toLocal().toString().split(' ')[0] ?? 'Not selected'}',
+                    style: TextStyle(color: Colors.black87),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_fromDate != null &&
-                _toDate != null &&
-                _fromDate!.isAtSameMomentAs(_toDate!)) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Select Period:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(width: 220,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: _buildSelectablePeriodOption('Full Day'),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Container(width: 220,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: _buildSelectablePeriodOption('Afternoon'),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Container(width: 220,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: _buildSelectablePeriodOption('Forenoon'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 16),
-            Text(
-              'Days Taken: $_daysTaken',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickFile,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey[100],
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.attach_file, color: Colors.black87),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _selectedFile == null
-                            ? 'Choose File'
-                            : 'File Selected: ${_selectedFile!.path.split('/').last}',
-                        style: TextStyle(color: Colors.black87),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_selectedFile != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Selected File Path: ${_selectedFile!.path}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            Center(
-              child: Container(
-                width: 200,
-                child: ElevatedButton(
-                  onPressed: _isSaveButtonEnabled
-                      ? () {
-                    // Add your save logic here
-                  }
-                      : null,
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: _isSaveButtonEnabled ? Colors.blueAccent : Colors.grey,
+                    foregroundColor: Colors.black87,
+                    backgroundColor: Colors.blueGrey[100],
                     padding: EdgeInsets.symmetric(vertical: 12.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                   ),
-                  child: Text('Adjust'),
+                  onPressed: () async {
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: _toDate ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      setState(() {
+                        _toDate = pickedDate;
+                        _calculateDaysTaken();
+                        _validateForm();
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Days taken: ',
+                        style: TextStyle(color: Colors.black87, fontSize: 16),
+                      ),
+                      TextSpan(
+                        text: _daysTaken,
+                        style: TextStyle(
+                          color: _daysTaken.contains('Exceeds')
+                              ? Colors.red
+                              : Colors.black87,fontWeight:FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _pickFile,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Text(
+                  _selectedFile != null
+                      ? 'Selected file: ${_selectedFile!.path.split('/').last}'
+                      : 'Pick a file',
+                  style: TextStyle(color: Colors.black87, fontSize: 16),
                 ),
               ),
+            ),
+            const SizedBox(height: 16),
+            _buildSelectablePeriodOption('Full Day'),
+            _buildSelectablePeriodOption('Afternoon'),
+            _buildSelectablePeriodOption('Forenoon'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _adjustLeaveApplication ,
+              child: const Text('Submit Leave Application'),
             ),
           ],
         ),
@@ -422,42 +374,86 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   }
 
   Widget _buildSelectablePeriodOption(String period) {
-    final isSelected = _selectedPeriodType == period;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPeriodType = period;
-          _calculateDaysTaken();
-          _validateForm();
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blueAccent : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(color: Colors.blueAccent),
-        ),
-        child: Text(
-          period,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+    return ListTile(
+      title: Text(period),
+      leading: Radio<String>(
+        value: period,
+        groupValue: _selectedPeriodType,
+        onChanged: (value) {
+          setState(() {
+            _selectedPeriodType = value;
+            _calculateDaysTaken();
+            _validateForm();
+          });
+        },
       ),
     );
   }
 
-
   void _validateForm() {
     setState(() {
-      _isSaveButtonEnabled = _selectedAbsenceName!.isNotEmpty &&
+      _isSaveButtonEnabled = _selectedAbsenceName != null &&
           _reason.isNotEmpty &&
           _fromDate != null &&
           _toDate != null &&
-          (_fromDate!.isAtSameMomentAs(_toDate!) ? _selectedPeriodType != null : true);
+          _daysTaken.isNotEmpty &&
+          !_daysTaken.startsWith('Exceeds');
     });
   }
+
+  Future<void> _adjustLeaveApplication() async {
+    final fromDateStr = _fromDate?.toIso8601String().split('T').first ?? '';
+    final toDateStr = _toDate?.toIso8601String().split('T').first ?? '';
+    final leaveDuration = _fromDate != null && _toDate != null
+        ? _toDate!.difference(_fromDate!).inDays
+        : 0;
+    final attachFileName = _selectedFile != null ? _selectedFile!.path.split('/').last : '';
+
+    final requestBody = {
+      "GrpCode": "bees",
+      "CollegeId": "1",
+      "ColCode": "0001",
+      "EmployeeId": "49",
+      "ApplicationId": "0",
+      "Flag": "REVIEW",
+      "UserId": "716",
+      "AttachFile1": attachFileName,
+      "Reason1": _reason,
+      "LeaveApplicationSaveTablevariable": [
+        {
+          "AbsenceType": _selectedRowIndex ?? 0,
+          "FromDate": fromDateStr,
+          "ToDate": toDateStr,
+          "LeaveDuration": leaveDuration,
+          "Reason": _reason,
+          "AttachFile": attachFileName,
+        }
+      ]
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        print(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Leave application submitted successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit leave application')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    }
+  }
+
 }
+
