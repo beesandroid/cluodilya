@@ -4,6 +4,7 @@ class LeaveData {
   final double balance;
   final String lastAccruedDate;
   final double accrued;
+  final int leaveId;
 
   LeaveData({
     required this.absenceName,
@@ -11,6 +12,7 @@ class LeaveData {
     required this.balance,
     required this.lastAccruedDate,
     required this.accrued,
+    required this.leaveId,
   });
 
   factory LeaveData.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class LeaveData {
       balance: json['balance']?.toDouble() ?? 0.0,
       lastAccruedDate: json['lastAccruedDate'] ?? '',
       accrued: json['accrued']?.toDouble() ?? 0.0,
+      leaveId: json['leaveId']?? 0,
     );
   }
 }

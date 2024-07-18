@@ -36,6 +36,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _selectedPeriod;
   final TextEditingController _searchController = TextEditingController();
   String _selectedDateText = 'Pick a date';
+  bool _allPresent = false; // State to track if all are set to present
+  bool _allAbsent = false; // State to track if all are set to absent
 
   @override
   void initState() {
@@ -60,7 +62,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (pickedDate != null && pickedDate != _selectedDate) {
       setState(() {
         _selectedDate = pickedDate;
-        _selectedDateText = '${_selectedDate.toLocal()}'.split(' ')[0]; // Update the text
+        _selectedDateText =
+            '${_selectedDate.toLocal()}'.split(' ')[0]; // Update the text
         _selectedPeriod = null;
         _students = [];
         _filteredStudents = [];
@@ -68,24 +71,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       });
 
       String formattedDate = _selectedDateText;
-      await _fetchAttendanceData(formattedDate, '0'); // Fetch data with default period value '0'
+      await _fetchAttendanceData(
+          _selectedDateText); // Fetch data with default period value '0'
     }
   }
 
-  Future<void> _fetchAttendanceData(String date, String period) async {
+  Future<void> _fetchAttendanceData(String formattedDate) async {
     final String url =
-        'https://beessoftware.cloud/CoreAPI/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
+        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
 
     final Map<String, dynamic> requestBody = {
       "GrpCode": "Bees",
       "ColCode": "0001",
-      "Date": date,
+      "Date": formattedDate,
       "ProgramId": "0",
       "BranchId": "0",
       "SemId": "0",
       "SectionId": "0",
       "EmployeeId": "1099",
-      "Perioddisplay": period,
+      "Perioddisplay": "0",
       "Flag": "FacultyWise"
     };
 
@@ -100,14 +104,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('Response data: $data'); // Print entire response data for debugging
+        print(
+            'Response data: $data'); // Print entire response data for debugging
 
         if (data['FacultyDailyAttendanceDisplayList'] != null &&
             data['FacultyDailyAttendanceDisplayList'].isNotEmpty) {
           final attendanceList = data['FacultyDailyAttendanceDisplayList'];
 
           // Print the outer level Posted field
-          if (attendanceList[0] != null && attendanceList[0]['Posted'] != null) {
+          if (attendanceList[0] != null &&
+              attendanceList[0]['Posted'] != null) {
             print('Outer Posted: ${attendanceList[0]['Posted']}');
           } else {
             print('Outer Posted field not found');
@@ -129,7 +135,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             _periodData = periods;
 
             // Update students and filtered students based on selected period if available
-            if (_selectedPeriod != null && _periodData.containsKey(_selectedPeriod)) {
+            if (_selectedPeriod != null &&
+                _periodData.containsKey(_selectedPeriod)) {
               _students = _periodData[_selectedPeriod]?['Students'] ?? [];
             } else {
               _students = [];
@@ -155,13 +162,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
 
     // Fetch data for the selected period
-    _fetchAttendanceData(_selectedDateText, period);
+    _fetchAttendanceData(_selectedDateText);
   }
 
   void _toggleAttendance(int index) {
     setState(() {
       _students[index]['Attendance'] =
-      _students[index]['Attendance'] == 1 ? 2 : 1;
+          _students[index]['Attendance'] == 1 ? 2 : 1;
       _filterStudents(); // Filter list after changing attendance
     });
   }
@@ -185,14 +192,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       PieChartSectionData(
         value: presentCount.toDouble(),
         title:
-        '${(presentCount / _filteredStudents.length * 100).toStringAsFixed(1)}%',
+            '${(presentCount / _filteredStudents.length * 100).toStringAsFixed(1)}%',
         color: Colors.green,
         titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
       PieChartSectionData(
         value: absentCount.toDouble(),
         title:
-        '${(absentCount / _filteredStudents.length * 100).toStringAsFixed(1)}%',
+            '${(absentCount / _filteredStudents.length * 100).toStringAsFixed(1)}%',
         color: Colors.red,
         titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
@@ -244,24 +251,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   SizedBox(height: 8.0),
                   ...presentStudents.map((student) => Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          student['StudentName'],
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                      ),
-                      SizedBox(width: 8.0),
-                      CircleAvatar(
-                        backgroundColor: Colors.green,
-                        child: Text(
-                          'P',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  )),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              student['StudentName'],
+                              style: TextStyle(color: Colors.black54),
+                            ),
+                          ),
+                          SizedBox(width: 8.0),
+                          CircleAvatar(
+                            backgroundColor: Colors.green,
+                            child: Text(
+                              'P',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      )),
                 ],
                 // Absent Students Section
                 if (absentStudents.isNotEmpty) ...[
@@ -275,24 +282,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   SizedBox(height: 8.0),
                   ...absentStudents.map((student) => Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          student['StudentName'],
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                      ),
-                      SizedBox(width: 8.0),
-                      CircleAvatar(
-                        backgroundColor: Colors.red,
-                        child: Text(
-                          'A',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  )),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              student['StudentName'],
+                              style: TextStyle(color: Colors.black54),
+                            ),
+                          ),
+                          SizedBox(width: 8.0),
+                          CircleAvatar(
+                            backgroundColor: Colors.red,
+                            child: Text(
+                              'A',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      )),
                   SizedBox(height: 16.0),
                 ],
                 // Buttons
@@ -309,7 +316,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.green,
                         padding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
@@ -328,7 +335,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.red,
                         padding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
@@ -388,7 +395,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
 
       if (response.statusCode == 200) {
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>DashboardScreen()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => DashboardScreen()));
         print('Attendance data saved successfully!');
         _showToast('Attendance data saved successfully!'); // Show success toast
       } else {
@@ -402,8 +410,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-
-
   void _showToast(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -416,6 +422,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
+  void _setAllPresent() {
+    setState(() {
+      for (var student in _filteredStudents) {
+        student['Attendance'] = 1 ?? ''; // Set attendance to present
+      }
+    });
+  }
+
+  void _setAllAbsent() {
+    setState(() {
+      for (var student in _filteredStudents) {
+        student['Attendance'] = 2 ?? ''; // Set attendance to absent
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     int presentCount =
@@ -424,159 +446,255 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     // Safely access the 'Posted' field and provide a default value if null
 
+    return
+      Scaffold(
+        appBar: AppBar(
+          title: Text('Attendance Screen'),
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 16.0),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 16.0),
+                padding: EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _selectedDateText,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.calendar_today),
+                          onPressed: () => _selectDate(context),
+                        ),
+                      ],
+                    ),
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Attendance Screen'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: 16.0),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16.0),
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _selectedDateText,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+              Container(
+                child: Column(mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 16.0),
+                    DropdownButton<String>(
+                      value: _selectedPeriod,
+                      hint: Text('Select Period'),
+                      onChanged: _onPeriodSelected,
+                      items: _periods.map((period) {
+                        return DropdownMenuItem<String>(
+                          value: period,
+                          child: Text(period),
+                        );
+                      }).toList(),
+                    ),
+
+
+                    Container(width: 300,
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sections: _createChartData(),
+                          centerSpaceRadius: 40,
+                          sectionsSpace: 2,
+                          startDegreeOffset: 90,
+                        ),
+                        swapAnimationDuration: Duration(milliseconds: 1500),
+                        swapAnimationCurve: Curves.easeInOut,
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+
+                    Text(
+                      'Present: $presentCount',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    SizedBox(height: 8.0),
+                    Text(
+                      'Absent: $absentCount',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 8.0),
+                    Text(
+                      _periodData[_selectedPeriod]?['Posted'] ?? '',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search Students',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _setAllPresent,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                          child: Text(
+                            'Mark All Present',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _setAllAbsent,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: Text(
+                            'Mark All Absent',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.0),
+
+                    SingleChildScrollView(
+                      child: Container(
+                        padding: EdgeInsets.all(0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List<Widget>.generate(
+                            _filteredStudents.length,
+                                (index) {
+                              final student = _filteredStudents[index];
+                              final isPresent = student['Attendance'] == 1;
+
+                              return Container(
+                                margin: EdgeInsets.only(bottom: 12.0),
+                                padding: EdgeInsets.all(12.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4.0,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            student['StudentName'],
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          Text(
+                                            student['HallticketNumber'] ?? '',
+                                            style: TextStyle(color: Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => _toggleAttendance(index),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 8.0, horizontal: 16.0),
+                                        decoration: BoxDecoration(
+                                          color: isPresent
+                                              ? Colors.green.withOpacity(0.2)
+                                              : Colors.red.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(12.0),
+                                        ),
+                                        child: Text(
+                                          isPresent ? 'Present' : 'Absent',
+                                          style: TextStyle(
+                                            color: isPresent
+                                                ? Colors.green
+                                                : Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: () => _selectDate(context),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.0),
-                  DropdownButton<String>(
-                    value: _selectedPeriod,
-                    hint: Text('Select Period'),
-                    onChanged: _onPeriodSelected,
-                    items: _periods.map((period) {
-                      return DropdownMenuItem<String>(
-                        value: period,
-                        child: Text(period),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 16.0),
-                  Container(
-                    height: 200,
-                    child: PieChart(
-                      PieChartData(
-                        sections: _createChartData(),
-                      ),
                     ),
+                  ],
+                ),
+              )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 220,
+              child: FloatingActionButton(
+                onPressed: _showPreviewDialog,
+                backgroundColor: Colors.blue,
+                tooltip: 'Preview Attendance',
+                child: Text(
+                  "SAVE",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                  SizedBox(height: 16.0),
-                  Text(
-                    'Present: $presentCount',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(
-                    'Absent: $absentCount',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(
-                    _periodData[_selectedPeriod]?['Posted'] ??'',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Search Students',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
-                  DataTable(
-                    columns: [
-                      DataColumn(label: Text('Student Name')),
-                      DataColumn(label: Text('Attendance')),
-                    ],
-                    rows: List<DataRow>.generate(
-                      _filteredStudents.length,
-                          (index) {
-                        final student = _filteredStudents[index];
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(student['StudentName'])),
-                            DataCell(
-                              Checkbox(
-                                value: student['Attendance'] == 1,
-                                onChanged: (_) => _toggleAttendance(index),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 220,
-            child: FloatingActionButton(
-              onPressed: _showPreviewDialog,
-              backgroundColor: Colors.blue, // Change this to your desired color
-              tooltip: 'Preview Attendance',
-              child: Text(
-                "SAVE",
-                style: TextStyle(
-                  color: Colors.white, // Change this to your desired text color
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+      )
+;
   }
-
-
 }

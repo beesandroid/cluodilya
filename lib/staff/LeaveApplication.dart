@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'leavemodel.dart';
 
@@ -16,6 +17,7 @@ class LeaveApplication extends StatefulWidget {
 class _LeaveApplicationState extends State<LeaveApplication> {
   late Future<List<LeaveData>> _leaveData;
   int? _selectedRowIndex;
+  int? _LeaveId;
   String? _selectedAbsenceName;
   String _reason = '';
   DateTime? _fromDate;
@@ -24,7 +26,9 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   String _daysTaken = '';
   String? _selectedPeriodType;
   bool _isSaveButtonEnabled = false;
+
   double _balance = 0.0;
+  List<Map<String, dynamic>> _submittedApplications = [];
 
   @override
   void initState() {
@@ -51,6 +55,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      print(data);
       final List<dynamic> jsonList = data['employeeLeavesDisplayList'];
       return jsonList.map((json) => LeaveData.fromJson(json)).toList();
     } else {
@@ -62,6 +67,8 @@ class _LeaveApplicationState extends State<LeaveApplication> {
     setState(() {
       _selectedRowIndex = index;
       _selectedAbsenceName = data.absenceName;
+      _LeaveId = data.leaveId;
+
       _balance = data.balance;
       _reason = '';
       _fromDate = null;
@@ -74,19 +81,41 @@ class _LeaveApplicationState extends State<LeaveApplication> {
 
   void _calculateDaysTaken() {
     if (_fromDate != null && _toDate != null) {
-      final difference = _toDate!.difference(_fromDate!).inDays + 1; // Including the from date
+      final difference =
+          _toDate!.difference(_fromDate!).inDays + 1; // Including the from date
       setState(() {
         if (difference > _balance) {
           _daysTaken = 'Exceeds available balance of $_balance days';
         } else {
           _daysTaken = difference == 0
               ? _selectedPeriodType != null
-              ? 'Selected period: $_selectedPeriodType'
-              : 'Period not selected'
+                  ? 'Selected period: $_selectedPeriodType'
+                  : 'Period not selected'
               : '$difference days';
         }
       });
     }
+  }
+
+  void _clearSelections() {
+    setState(() {
+      _selectedRowIndex = null;
+      _selectedAbsenceName = null;
+      _LeaveId = null;
+      _reason = '';
+      _fromDate = null;
+      _toDate = null;
+      _selectedFile = null;
+      _daysTaken = '';
+      _selectedPeriodType = null;
+      _isSaveButtonEnabled = false;
+    });
+  }
+
+  void _removeSubmittedApplication(int index) {
+    setState(() {
+      _submittedApplications.removeAt(index);
+    });
   }
 
   Future<void> _pickFile() async {
@@ -110,7 +139,8 @@ class _LeaveApplicationState extends State<LeaveApplication> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return
+      Scaffold(
       appBar: AppBar(title: const Text('Leave Application')),
       body: SingleChildScrollView(
         child: Column(
@@ -129,8 +159,8 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      headingRowColor:
-                      MaterialStateColor.resolveWith((states) => Colors.blue),
+                      headingRowColor: MaterialStateColor.resolveWith(
+                          (states) => Colors.blue),
                       columnSpacing: 16,
                       columns: const [
                         DataColumn(
@@ -154,15 +184,18 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                         final isSelected = _selectedRowIndex == index;
                         return DataRow(
                           color: MaterialStateColor.resolveWith((states) =>
-                          isSelected
-                              ? Colors.blue.withOpacity(0.3) // Background glow effect
-                              : Colors.transparent),
+                              isSelected
+                                  ? Colors.blue.withOpacity(
+                                      0.3) // Background glow effect
+                                  : Colors.transparent),
                           cells: [
                             _buildDataCell(data.absenceName, index, data),
                             _buildDataCell(data.accrualPeriodName, index, data),
-                            _buildDataCell(data.balance.toString(), index, data),
+                            _buildDataCell(
+                                data.balance.toString(), index, data),
                             _buildDataCell(data.lastAccruedDate, index, data),
-                            _buildDataCell(data.accrued.toString(), index, data),
+                            _buildDataCell(
+                                data.accrued.toString(), index, data),
                           ],
                         );
                       }),
@@ -172,6 +205,143 @@ class _LeaveApplicationState extends State<LeaveApplication> {
               },
             ),
             if (_selectedAbsenceName != null) _buildDetailContainer(),
+            if (_submittedApplications.isNotEmpty)
+              Container(
+                margin: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Submitted Applications:',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: _submittedApplications.length,
+                      itemBuilder: (context, index) {
+                        final application =
+                            _submittedApplications[index]['singleList'];
+                        return Container(
+                          padding: EdgeInsets.all(16.0),
+                          margin: EdgeInsets.only(bottom: 8.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Leave Type: ${application['absenceTypeName']}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.remove_circle_outline),
+                                    color: Colors.red,
+                                    onPressed: () {
+                                      // Remove the application from the list
+                                      setState(() {
+                                        _submittedApplications.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'From: ${application['fromDate']}',
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'To: ${application['toDate']}',
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Reason: ${application['reason']}',
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Attachment: ${application['attachFile']}',
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 48.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              // Handle the "Continue with Adjustment" button press
+                            },
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.blue,
+                              // Text color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    12), // Rounded corners
+                              ),
+                              elevation: 8,
+                              // Shadow elevation
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              // Padding inside the button
+                              textStyle: TextStyle(
+                                fontSize: 16, // Text size
+                                fontWeight: FontWeight.bold, // Text weight
+                              ),
+                            ),
+                            child: Text('Continue with Adjustment'),
+                          ),
+                          SizedBox(width: 16),
+                          // Add some spacing between the buttons
+                          ElevatedButton(
+                            onPressed: () {
+                              // Handle the "Continue without Adjustment" button press
+                            },
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.blue,
+                              // Text color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    12), // Rounded corners
+                              ),
+                              elevation: 8,
+                              // Shadow elevation
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              // Padding inside the button
+                              textStyle: TextStyle(
+                                fontSize: 16, // Text size
+                                fontWeight: FontWeight.bold, // Text weight
+                              ),
+                            ),
+                            child: Text('Continue without Adjustment'),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              )
           ],
         ),
       ),
@@ -222,6 +392,14 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.blueAccent,
+                    ),
+                  ),
+                  TextSpan(
+                    text: _LeaveId.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
                     ),
                   ),
                 ],
@@ -332,20 +510,35 @@ class _LeaveApplicationState extends State<LeaveApplication> {
                         style: TextStyle(
                           color: _daysTaken.contains('Exceeds')
                               ? Colors.red
-                              : Colors.black87,fontWeight:FontWeight.bold,
+                              : Colors.black87,
+                          fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                // Only show period options if 'From' and 'To' dates are the same
+                if (_fromDate != null &&
+                    _toDate != null &&
+                    _fromDate!.isAtSameMomentAs(_toDate!))
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSelectablePeriodOption('Full Day'),
+                      _buildSelectablePeriodOption('Afternoon'),
+                      _buildSelectablePeriodOption('Forenoon'),
+                    ],
+                  ),
               ],
             ),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: _pickFile,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 12.0, horizontal: 16.0),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(12.0),
@@ -359,12 +552,20 @@ class _LeaveApplicationState extends State<LeaveApplication> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildSelectablePeriodOption('Full Day'),
-            _buildSelectablePeriodOption('Afternoon'),
-            _buildSelectablePeriodOption('Forenoon'),
-            const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _adjustLeaveApplication ,
+              onPressed: _adjustLeaveApplication,
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white, backgroundColor: Colors.blue, // Text color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12), // Rounded corners
+                ),
+                elevation: 8, // Shadow elevation
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14), // Padding inside the button
+                textStyle: TextStyle(
+                  fontSize: 18, // Text size
+                  fontWeight: FontWeight.bold, // Text weight
+                ),
+              ),
               child: const Text('Submit Leave Application'),
             ),
           ],
@@ -393,6 +594,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   void _validateForm() {
     setState(() {
       _isSaveButtonEnabled = _selectedAbsenceName != null &&
+          _LeaveId != null &&
           _reason.isNotEmpty &&
           _fromDate != null &&
           _toDate != null &&
@@ -407,7 +609,8 @@ class _LeaveApplicationState extends State<LeaveApplication> {
     final leaveDuration = _fromDate != null && _toDate != null
         ? _toDate!.difference(_fromDate!).inDays
         : 0;
-    final attachFileName = _selectedFile != null ? _selectedFile!.path.split('/').last : '';
+    final attachFileName =
+        _selectedFile != null ? _selectedFile!.path.split('/').last : '';
 
     final requestBody = {
       "GrpCode": "bees",
@@ -421,7 +624,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
       "Reason1": _reason,
       "LeaveApplicationSaveTablevariable": [
         {
-          "AbsenceType": _selectedRowIndex ?? 0,
+          "AbsenceType": _LeaveId,
           "FromDate": fromDateStr,
           "ToDate": toDateStr,
           "LeaveDuration": leaveDuration,
@@ -430,16 +633,33 @@ class _LeaveApplicationState extends State<LeaveApplication> {
         }
       ]
     };
+    print(requestBody);
 
     try {
       final response = await http.post(
-        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
+        Uri.parse(
+            'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
 
       if (response.statusCode == 200) {
         print(response.body);
+        final Map<String, dynamic> data =
+            json.decode(response.body);
+        setState(() {
+
+            _reason = '';
+            _fromDate = null;
+            _toDate = null;
+            _daysTaken = '';
+            _selectedFile = null;
+            _selectedAbsenceName = '';
+            _LeaveId = 0; // or whatever default value you prefer
+
+          // Now you can correctly add the decoded data to the list
+          _submittedApplications.add(data);
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Leave application submitted successfully')),
         );
@@ -454,6 +674,4 @@ class _LeaveApplicationState extends State<LeaveApplication> {
       );
     }
   }
-
 }
-

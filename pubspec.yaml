@@ -49,6 +49,7 @@ dependencies:
   dio:
   file_picker: ^6.0.2
   font_awesome_flutter: ^10.1.0
+  shared_preferences:
 
 
 dev_dependencies:
