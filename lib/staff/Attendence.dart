@@ -5,22 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 
-void main() {
-  runApp(MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Date Picker and Attendance',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: AttendanceScreen(),
-    );
-  }
-}
+
 
 class AttendanceScreen extends StatefulWidget {
   @override
@@ -42,7 +28,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_filterStudents);
+
   }
 
   @override
@@ -167,21 +153,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   void _toggleAttendance(int index) {
     setState(() {
-      _students[index]['Attendance'] =
-          _students[index]['Attendance'] == 1 ? 2 : 1;
-      _filterStudents(); // Filter list after changing attendance
+      final student = _filteredStudents[index];
+      student['Attendance'] = student['Attendance'] == 1 ? 0 : 1;
+
+      // Update _students directly if needed
+      final originalIndex = _students.indexOf(student);
+      if (originalIndex != -1) {
+        _students[originalIndex] = student;
+      }
     });
   }
 
-  void _filterStudents() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredStudents = _students.where((student) {
-        final name = student['StudentName'].toLowerCase();
-        return name.contains(query);
-      }).toList();
-    });
-  }
+
 
   List<PieChartSectionData> _createChartData() {
     int presentCount =
@@ -395,8 +378,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
 
       if (response.statusCode == 200) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => DashboardScreen()));
+
         print('Attendance data saved successfully!');
         _showToast('Attendance data saved successfully!'); // Show success toast
       } else {
@@ -491,210 +473,293 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       ],
                     ),
-
-              Container(
-                child: Column(mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
                     SizedBox(height: 16.0),
-                    DropdownButton<String>(
-                      value: _selectedPeriod,
-                      hint: Text('Select Period'),
-                      onChanged: _onPeriodSelected,
-                      items: _periods.map((period) {
-                        return DropdownMenuItem<String>(
-                          value: period,
-                          child: Text(period),
-                        );
-                      }).toList(),
-                    ),
-
-
-                    Container(width: 300,
-                      height: 200,
-                      child: PieChart(
-                        PieChartData(
-                          sections: _createChartData(),
-                          centerSpaceRadius: 40,
-                          sectionsSpace: 2,
-                          startDegreeOffset: 90,
-                        ),
-                        swapAnimationDuration: Duration(milliseconds: 1500),
-                        swapAnimationCurve: Curves.easeInOut,
-                      ),
-                    ),
-                    SizedBox(height: 16.0),
-
-                    Text(
-                      'Present: $presentCount',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    SizedBox(height: 8.0),
-                    Text(
-                      'Absent: $absentCount',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                    SizedBox(height: 8.0),
-                    Text(
-                      _periodData[_selectedPeriod]?['Posted'] ?? '',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16.0),
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        labelText: 'Search Students',
-                        border: OutlineInputBorder(
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.blue, Colors.blue],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(12.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6.0,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        width: double.maxFinite,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedPeriod,
+                            hint: Text(
+                              'Pick a Date to Select Period',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            dropdownColor: Colors.blue,
+                            icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+                            onChanged: _onPeriodSelected,
+                            items: _periods.map((period) {
+                              return DropdownMenuItem<String>(
+                                value: period,
+                                child: Text(
+                                  period,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.0),
+                  ],
+                ),
+              ),
+              if (_selectedDateText != 'Pick a date' && _selectedPeriod != null)
+                Column(
+                  children: [
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                      padding: EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 300,
+                            height: 200,
+                            child: PieChart(
+                              PieChartData(
+                                sections: _createChartData(),
+                                centerSpaceRadius: 40,
+                                sectionsSpace: 2,
+                                startDegreeOffset: 90,
+                              ),
+                              swapAnimationDuration: Duration(milliseconds: 2000),
+                              swapAnimationCurve: Curves.easeInOut,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
+                          Text(
+                            'Present: $presentCount',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            'Absent: $absentCount',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            _periodData[_selectedPeriod]?['Posted'] ?? '',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              setState(() {
+                                _filteredStudents = _students.where((student) {
+                                  return student['HallticketNumber']
+                                      .toString()
+                                      .contains(value) ||
+                                      student['StudentName']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(value.toLowerCase());
+                                }).toList();
+                              });
+                            },
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.search),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                icon: Icon(Icons.clear,color: Colors.red,),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    _filteredStudents = _students; // Reset to show all students
+                                  });
+                                },
+                              )
+                                  : null,
+                              labelText: 'Search Students',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                            ),
+                          ),
 
+                          SizedBox(height: 16.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ElevatedButton(
+                                onPressed: _setAllPresent,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                ),
+                                child: Text(
+                                  'Mark All Present',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: _setAllAbsent,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: Text(
+                                  'Mark All Absent',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16.0),
+                          SingleChildScrollView(
+                            child: Container(
+                              padding: EdgeInsets.all(0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: List<Widget>.generate(
+                                  _filteredStudents.length,
+                                      (index) {
+                                    final student = _filteredStudents[index];
+                                    final isPresent = student['Attendance'] == 1;
+
+                                    return Container(
+                                      margin: EdgeInsets.only(bottom: 12.0),
+                                      padding: EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 4.0,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  student['HallticketNumber'] ?? '',
+                                                  style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w500),
+                                                ),
+                                                Text(
+                                                  student['StudentName'],
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: Colors.grey),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () => _toggleAttendance(index),
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8.0, horizontal: 16.0),
+                                              decoration: BoxDecoration(
+                                                color: isPresent
+                                                    ? Colors.green.withOpacity(0.2)
+                                                    : Colors.red.withOpacity(0.2),
+                                                borderRadius:
+                                                BorderRadius.circular(12.0),
+                                              ),
+                                              child: Text(
+                                                isPresent ? 'Present' : 'Absent',
+                                                style: TextStyle(
+                                                  color: isPresent
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
-                          onPressed: _setAllPresent,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                          ),
-                          child: Text(
-                            'Mark All Present',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: _setAllAbsent,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          child: Text(
-                            'Mark All Absent',
-                            style: TextStyle(color: Colors.white),
+                        Container(
+                          width: 220,
+                          child: FloatingActionButton(
+                            onPressed: _saveAttendance,
+                            backgroundColor: Colors.blue,
+                            tooltip: 'Preview Attendance',
+                            child: Text(
+                              "SAVE",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 16.0),
-
-                    SingleChildScrollView(
-                      child: Container(
-                        padding: EdgeInsets.all(0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: List<Widget>.generate(
-                            _filteredStudents.length,
-                                (index) {
-                              final student = _filteredStudents[index];
-                              final isPresent = student['Attendance'] == 1;
-
-                              return Container(
-                                margin: EdgeInsets.only(bottom: 12.0),
-                                padding: EdgeInsets.all(12.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 4.0,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            student['StudentName'],
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          Text(
-                                            student['HallticketNumber'] ?? '',
-                                            style: TextStyle(color: Colors.grey),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => _toggleAttendance(index),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 8.0, horizontal: 16.0),
-                                        decoration: BoxDecoration(
-                                          color: isPresent
-                                              ? Colors.green.withOpacity(0.2)
-                                              : Colors.red.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(12.0),
-                                        ),
-                                        child: Text(
-                                          isPresent ? 'Present' : 'Absent',
-                                          style: TextStyle(
-                                            color: isPresent
-                                                ? Colors.green
-                                                : Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-              )
-                  ],
-                ),
-              ),
             ],
           ),
         ),
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 220,
-              child: FloatingActionButton(
-                onPressed: _showPreviewDialog,
-                backgroundColor: Colors.blue,
-                tooltip: 'Preview Attendance',
-                child: Text(
-                  "SAVE",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      )
-;
+      );
+
+// Add a unique identifier to each student if not already present
+
+
+
   }
 }
