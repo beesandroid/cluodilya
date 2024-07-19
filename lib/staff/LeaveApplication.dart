@@ -19,6 +19,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   List<Map<String, dynamic>> _freeFacultyList = [];
   List<Map<String, dynamic>> _displayOfClassesList = [];
   List<Map<String, dynamic>> _selectedFacultyDetails = [];
+  TextEditingController _reasonController= TextEditingController();
 
   List<DropdownMenuItem<String>> _generateDropdownItems() {
     List<DropdownMenuItem<String>> items = [];
@@ -808,6 +809,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
             ),
             const SizedBox(height: 16),
             TextField(
+              controller: _reasonController,
               decoration: InputDecoration(
                 labelText: 'Reason',
                 labelStyle: TextStyle(color: Colors.grey[700]),
@@ -826,7 +828,6 @@ class _LeaveApplicationState extends State<LeaveApplication> {
               style: TextStyle(color: Colors.black87),
               onChanged: (value) {
                 setState(() {
-                  _reason = value;
                   _validateForm();
                 });
               },
@@ -974,7 +975,6 @@ class _LeaveApplicationState extends State<LeaveApplication> {
       ),
     );
   }
-
   Widget _buildSelectablePeriodOption(String period) {
     bool isSelected = _selectedPeriod == period;
 
@@ -1020,13 +1020,12 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   void _validateForm() {
     bool isValidDateRange = _fromDate != null && _toDate != null;
     bool isSameDay = isValidDateRange && _fromDate!.isAtSameMomentAs(_toDate!);
-    bool isPeriodSelected = !isSameDay ||
-        (_selectedPeriod != null); // Ensure period selection is valid
+    bool isPeriodSelected = !isSameDay || (_selectedPeriod != null);
 
     setState(() {
       _isFormValid = isValidDateRange &&
           (!isSameDay || isPeriodSelected) &&
-          _reason.isNotEmpty && // Check other required fields
+          _reasonController.text.isNotEmpty && // Check other required fields
           (_fromDate != null && _toDate != null); // Ensure dates are selected
     });
   }
