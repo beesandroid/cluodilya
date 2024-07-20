@@ -1,1117 +1,440 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'leavemodel.dart';
+import 'package:intl/intl.dart';
+import 'Service/leave.dart';
+import 'package:http/http.dart'as http;
 
-class LeaveApplication extends StatefulWidget {
-  const LeaveApplication({super.key});
-
+class LeaveApplicationScreen extends StatefulWidget {
   @override
-  State<LeaveApplication> createState() => _LeaveApplicationState();
+  _LeaveApplicationScreenState createState() => _LeaveApplicationScreenState();
 }
 
-class _LeaveApplicationState extends State<LeaveApplication> {
-  bool _showDetails = false;
-  bool _isFormValid = false;
-  List<String> _periods = [];
-  List<Map<String, dynamic>> _freeFacultyList = [];
-  List<Map<String, dynamic>> _displayOfClassesList = [];
-  List<Map<String, dynamic>> _selectedFacultyDetails = [];
-  TextEditingController _reasonController= TextEditingController();
-
-  List<DropdownMenuItem<String>> _generateDropdownItems() {
-    List<DropdownMenuItem<String>> items = [];
-
-      for (var application in _submittedApplications) {
-      String fromDate = application['singleList']['fromDate'];
-      String toDate = application['singleList']['toDate'];
-
-      String formattedFromDate = convertDateFormat(fromDate);
-      String formattedToDate = convertDateFormat(toDate);
-
-      DateTime startDate = DateTime.parse(formattedFromDate);
-      DateTime endDate = DateTime.parse(formattedToDate);
-
-      for (DateTime date = startDate;
-          date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-          date = date.add(Duration(days: 1))) {
-        String formattedDate = '${date.year}-${date.month}-${date.day}';
-        items.add(DropdownMenuItem<String>(
-          value: formattedDate,
-          child: Text(formattedDate),
-        ));
-      }
-    }
-
-    return items;
-  }
-
-  bool _isDateInRange(String fromDate, String toDate) {
-    if (_selectedDateRange == null || !_selectedDateRange!.contains(' to ')) {
-      return false; // No valid range selected
-    }
-
-    List<String> rangeParts = _selectedDateRange!.split(' to ');
-    if (rangeParts.length != 2) {
-      throw Exception('Invalid date range format');
-    }
-
-    DateTime? selectedStartDate = DateTime.tryParse(rangeParts[0]);
-    DateTime? selectedEndDate = DateTime.tryParse(rangeParts[1]);
-
-    if (selectedStartDate == null || selectedEndDate == null) {
-      throw Exception('Invalid date format in selected date range');
-    }
-
-    DateTime? appStartDate = DateTime.tryParse(fromDate);
-    DateTime? appEndDate = DateTime.tryParse(toDate);
-
-    if (appStartDate == null || appEndDate == null) {
-      throw Exception('Invalid date format in application date range');
-    }
-
-    if (appStartDate.isBefore(selectedEndDate) &&
-        appEndDate.isAfter(selectedStartDate)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  String convertDateFormat(String inputDate) {
-    List<String> parts = inputDate.split('-');
-    if (parts.length != 3) {
-      throw Exception('Invalid date format');
-    }
-
-    return '${parts[2]}-${parts[1]}-${parts[0]}';
-  }
-
-  late Future<List<LeaveData>> _leaveData;
-  String? _selectedDateRange;
-  String? _selectedPeriod;
-
-  int? _selectedRowIndex;
-  int? _LeaveId;
-  String? _selectedAbsenceName;
-  String _reason = '';
+class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
+  List<dynamic> _leaveTypes = [];
+  dynamic _selectedLeaveType;
+  TextEditingController _reasonController = TextEditingController();
   DateTime? _fromDate;
   DateTime? _toDate;
-  File? _selectedFile;
-  String _daysTaken = '';
-  String? _selectedPeriodType;
-  bool _isSaveButtonEnabled = false;
+  String? _leaveDuration;
+  final LeaveService _leaveService = LeaveService();
+  List<Map<String, dynamic>> _leaveApplications = [];
+  String? _selectedDate;
+  int? _selectedPeriod;
+  String? _selectedFaculty;
 
-  double _balance = 0.0;
-  List<Map<String, dynamic>> _submittedApplications = [];
+  List<Map<String, dynamic>> datesList = [];
+  List<Map<String, dynamic>> periodsList = [];
+  List<Map<String, dynamic>> facultyList = [];// List to store leave applications
 
   @override
   void initState() {
     super.initState();
-    _leaveData = fetchLeaveData();
-    _selectedPeriod = _periods.isNotEmpty ? _periods[0] : null;
+    _fetchLeaveTypes();
   }
 
-  Future<List<LeaveData>> fetchLeaveData() async {
-    final response = await http.post(
-      Uri.parse(
-          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveEmployeeLeaves'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "GrpCode": "bees",
-        "ColCode": "0001",
-        "CollegeId": "1",
-        "EmployeeId": "1",
-        "LeaveId": "0",
-        "Description": "",
-        "Balance": "0",
-        "Flag": "DISPLAY"
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      print(data);
-      final List<dynamic> jsonList = data['employeeLeavesDisplayList'];
-      return jsonList.map((json) => LeaveData.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load leave data');
+  Future<void> _fetchLeaveTypes() async {
+    try {
+      final leaveTypes = await _leaveService.fetchLeaveTypes();
+      setState(() {
+        _leaveTypes = leaveTypes;
+      });
+    } catch (e) {
+      // Handle the error
     }
   }
 
-  void _onRowTapped(int index, LeaveData data) {
-    setState(() {
-      _selectedRowIndex = index;
-      _selectedAbsenceName = data.absenceName;
-      _LeaveId = data.leaveId;
-
-      _balance = data.balance;
-      _reason = '';
-      _fromDate = null;
-      _toDate = null;
-      _selectedFile = null;
-      _daysTaken = '';
-      _selectedPeriodType = null;
-    });
-  }
-
-  void _calculateDaysTaken() {
-    if (_fromDate != null && _toDate != null) {
-      final difference =
-          _toDate!.difference(_fromDate!).inDays + 1; // Including the from date
+  Future<void> _selectFromDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _fromDate) {
       setState(() {
-        if (difference > _balance) {
-          _daysTaken = 'Exceeds available balance of $_balance days';
-        } else {
-          _daysTaken = difference == 0
-              ? _selectedPeriodType != null
-                  ? 'Selected period: $_selectedPeriodType'
-                  : 'Period not selected'
-              : '$difference days';
+        _fromDate = picked;
+        if (_toDate != null) {
+          _validateDateRange();
         }
       });
     }
   }
 
-  Future<void> _fetchPeriodsFromApi(String? selectedDate) async {
-    String apiUrl =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CloudilyaPeriodDropDown';
-
-    Map<String, dynamic> requestBody = {
-      "GrpCode": "bees",
-      "ColCode": "0001",
-      "CollegeId": "1",
-      "EmployeeId": "1",
-      "Date": selectedDate ?? "",
-    };
-
-    try {
-      final response = await http.post(Uri.parse(apiUrl),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode(requestBody));
-
-      if (response.statusCode == 200) {
-        print(response.body.toString());
-        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        List<dynamic> periodsList = jsonResponse['periodDropDownList'];
-
-        List<String> periods = periodsList
-            .map((period) =>
-                '${period['periods']}')
-            .toList();
-
-        setState(() {
-          _periods = periods;
-        });
-      } else {
-        throw Exception('Failed to fetch periods from API');
-      }
-    } catch (e) {
-      print('Error fetching periods: $e');
-      // Handle error
+  Future<void> _selectToDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _toDate) {
+      setState(() {
+        _toDate = picked;
+        if (_fromDate != null) {
+          _validateDateRange();
+          if (_fromDate == _toDate) {
+            _promptLeaveDuration(context);
+          }
+        }
+      });
     }
   }
 
-  void _clearSelections() {
+  void _promptLeaveDuration(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select Leave Duration'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Full Day'),
+                onTap: () {
+                  setState(() {
+                    _leaveDuration = 'Full Day';
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text('Forenoon'),
+                onTap: () {
+                  setState(() {
+                    _leaveDuration = 'Forenoon';
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text('Afternoon'),
+                onTap: () {
+                  setState(() {
+                    _leaveDuration = 'Afternoon';
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _validateDateRange() {
+    if (_selectedLeaveType != null) {
+      int selectedDays = _calculateSelectedDays();
+      double balance = _selectedLeaveType['balance'];
+      if (selectedDays > balance) {
+        _showErrorDialog(
+            'Selected date range exceeds the available balance of ${balance.toStringAsFixed(2)} days.');
+        _toDate = null;
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  int _calculateSelectedDays() {
+    if (_fromDate != null && _toDate != null) {
+      return _toDate!.difference(_fromDate!).inDays + 1;
+    }
+    return 0;
+  }
+
+  void _onLeaveTypeChanged(dynamic newValue) {
     setState(() {
-      _selectedRowIndex = null;
-      _selectedAbsenceName = null;
-      _LeaveId = null;
-      _reason = '';
+      _selectedLeaveType = newValue;
+      _reasonController.clear();
       _fromDate = null;
       _toDate = null;
-      _selectedFile = null;
-      _daysTaken = '';
-      _selectedPeriodType = null;
-      _isSaveButtonEnabled = false;
+      _leaveDuration = null;
     });
   }
 
-  void _removeSubmittedApplication(int index) {
-    setState(() {
-      _submittedApplications.removeAt(index);
-    });
+  bool _isFormValid() {
+    return _selectedLeaveType != null &&
+        _reasonController.text.isNotEmpty &&
+        _fromDate != null &&
+        _toDate != null &&
+        (_fromDate != _toDate || _leaveDuration != null);
   }
 
-  Future<void> _pickFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
-        type: FileType.any,
-      );
+  void _addLeaveApplication() {
+    if (_isFormValid()) {
+      final leaveApplication = {
+        'AbsenceType': _selectedLeaveType['absenceType'],
+        'FromDate': DateFormat('yyyy-MM-dd').format(_fromDate!),
+        'ToDate': DateFormat('yyyy-MM-dd').format(_toDate!),
+        'LeaveDuration': _calculateSelectedDays(),
+        'Reason': _reasonController.text,
+      };
 
-      if (result != null && result.files.isNotEmpty) {
-        setState(() {
-          _selectedFile = File(result.files.single.path!);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick file: $e')),
-      );
+      setState(() {
+        _leaveApplications.add(leaveApplication);
+        // Clear the form after adding
+        _selectedLeaveType = null;
+        _reasonController.clear();
+        _fromDate = null;
+        _toDate = null;
+        _leaveDuration = null;
+      });
     }
   }
-
-  String? _selectedProgramId;
-  String? _selectedBranchId;
-  String? _selectedSemesterId;
-  String? _selectedSectionId;
-  String? _selectedCourseId;
-
-  Future<void> _fetchClassesFromApi(String? selectedPeriod) async {
-    String apiUrl =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CloudilyaDisplayOfClasses';
-
-    // Replace with your request payload
-    Map<String, dynamic> requestBody = {
-      "GrpCode": "Bees",
+  void _continueWithAdjustment() async {
+    final requestBody = {
+      "GrpCode": "bees",
+      "CollegeId": 1,
       "ColCode": "0001",
-      "CollegeId": "1",
-      "EmployeeId": "1",
-      "Periods": selectedPeriod ?? "",
-      "Date": _selectedDateRange ?? "",
-    };
-
-    try {
-      final response = await http.post(Uri.parse(apiUrl),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode(requestBody));
-
-      if (response.statusCode == 200) {
-        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        List<dynamic> displayOfClassesList =
-            jsonResponse['displayOfClassesList'];
-
-        for (var classInfo in displayOfClassesList) {
-          print('sectionId: ${classInfo['sectionId']}');
-          print('courseId: ${classInfo['courseId']}');
-          print('semId: ${classInfo['semId']}');
-          print('branchId: ${classInfo['branchId']}');
-          print('programId: ${classInfo['programId']}');
-          print('----------------------');
-
-          setState(() {
-            _selectedProgramId = classInfo['programId'].toString();
-            _selectedBranchId = classInfo['branchId'].toString();
-            _selectedSemesterId = classInfo['semId'].toString();
-            _selectedSectionId = classInfo['sectionId'].toString();
-            _selectedCourseId = classInfo['courseId'].toString();
-          });
-        }
-
-        setState(() {
-          _displayOfClassesList =
-              displayOfClassesList.cast<Map<String, dynamic>>();
-        });
-
-        await _fetchFreeFacultiesFromApi(selectedPeriod, _selectedDateRange);
-      } else {
-        throw Exception('Failed to fetch classes from API');
-      }
-    } catch (e) {
-      print('Error fetching classes: $e');
-    }
-  }
-
-  Future<void> _fetchFreeFacultiesFromApi(
-      String? newValue, String? selectedDateRange) async {
-    String apiUrl =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ClassAdjustmentFreeFaculty';
-    Map<String, dynamic> requestBody = {
-      "GrpCode": "Bees",
-      "ColCode": "0001",
-      "CollegeId": "1",
-      "EmployeeId": "1",
-      "ApplicationId": "0",
+      "EmployeeId": 1,
+      "ApplicationId": 0,
       "Flag": "REVIEW",
-      "Date": selectedDateRange ?? "",
-      "ProgramId": _selectedProgramId ?? "",
-      "BranchId": _selectedBranchId ?? "",
-      "SemId": _selectedSemesterId ?? "",
-      "SectionId": _selectedSectionId ?? "",
-      "CourseId": 0,
-      "Periods": _selectedPeriod ?? "",
+      "UserId": 716,
+      "AttachFile": " ",
+      "Reason": _reasonController.text,
+      "LeaveApplicationSaveTablevariable": _leaveApplications.map((application) {
+        return {
+          "AbsenceType": application['AbsenceType'], // Use the appropriate absence type ID
+          "FromDate": application['FromDate'],
+          "ToDate": application['ToDate'],
+          "LeaveDuration": application['LeaveDuration'],
+          "Reason": application['Reason'],
+          "AttachFile": ""
+        };
+      }).toList(),
     };
     print(requestBody);
 
-    try {
-      final response = await http.post(Uri.parse(apiUrl),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode(requestBody));
+    final response = await http.post(
+      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(requestBody),
+    );
 
-      if (response.statusCode == 200) {
-        print(response.body);
-        // Parse response JSON
-        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        List<dynamic> facultiesList = jsonResponse['multiList'];
+    if (response.statusCode == 200) {
+      print(response.body.toString());
+      Map<String, dynamic> parsedResponse = json.decode(response.body);
 
-        // Extract free faculties from API response
-        List<Map<String, dynamic>> faculties = facultiesList
-            .map((faculty) => {
-                  'freeFacultyId': faculty['freeFacultyId'],
-                  'freeFacultyName': faculty['freeFacultyName'],
-                  'freeFacultyEmail': faculty['freeFacultyEmail'],
-                  'freeFacultyPhoneNumber': faculty['freeFacultyPhoneNumber'],
-                })
-            .toList();
+      setState(() {
+        datesList = List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
+        periodsList = List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
+        facultyList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']);
+      });
 
-        setState(() {
-          _freeFacultyList = faculties; // Update free faculties list
-        });
-      } else {
-        throw Exception('Failed to fetch free faculties from API');
-      }
-    } catch (e) {
-      print('Error fetching free faculties: $e');
-      // Handle error
+      // Handle successful response
+      print('Leave application submitted successfully');
+    } else {
+      // Handle error response
+      print('Failed to submit leave application');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Leave Application')),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            FutureBuilder<List<LeaveData>>(
-              future: _leaveData,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No leave data available'));
-                } else {
-                  final leaveData = snapshot.data!;
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor: MaterialStateColor.resolveWith(
-                          (states) => Colors.blue),
-                      columnSpacing: 16,
-                      columns: const [
-                        DataColumn(
-                            label: Text('Absence Name',
-                                style: TextStyle(color: Colors.white))),
-                        DataColumn(
-                            label: Text('Accrual Period',
-                                style: TextStyle(color: Colors.white))),
-                        DataColumn(
-                            label: Text('Balance',
-                                style: TextStyle(color: Colors.white))),
-                        DataColumn(
-                            label: Text('Last Accrued Date',
-                                style: TextStyle(color: Colors.white))),
-                        DataColumn(
-                            label: Text('Accrued',
-                                style: TextStyle(color: Colors.white))),
-                      ],
-                      rows: List.generate(leaveData.length, (index) {
-                        final data = leaveData[index];
-                        final isSelected = _selectedRowIndex == index;
-                        return DataRow(
-                          color: MaterialStateColor.resolveWith((states) =>
-                              isSelected
-                                  ? Colors.blue.withOpacity(
-                                      0.3) // Background glow effect
-                                  : Colors.transparent),
-                          cells: [
-                            _buildDataCell(data.absenceName, index, data),
-                            _buildDataCell(data.accrualPeriodName, index, data),
-                            _buildDataCell(
-                                data.balance.toString(), index, data),
-                            _buildDataCell(data.lastAccruedDate, index, data),
-                            _buildDataCell(
-                                data.accrued.toString(), index, data),
-                          ],
-                        );
-                      }),
-                    ),
-                  );
-                }
-              },
-            ),
-            if (_selectedAbsenceName != null) _buildDetailContainer(),
-            if (_submittedApplications.isNotEmpty)
-              Container(
-                margin: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Submitted Applications:',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _submittedApplications.length,
-                      itemBuilder: (context, index) {
-                        final application =
-                            _submittedApplications[index]['singleList'];
-                        return Container(
-                          padding: EdgeInsets.all(16.0),
-                          margin: EdgeInsets.only(bottom: 8.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Leave Type: ${application['absenceTypeName']}',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.remove_circle_outline),
-                                    color: Colors.red,
-                                    onPressed: () {
-                                      setState(() {
-                                        _submittedApplications.removeAt(index);
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                              Text('From: ${application['fromDate']}'),
-                              SizedBox(height: 8),
-                              Text('To: ${application['toDate']}'),
-                              SizedBox(height: 8),
-                              Text('Reason: ${application['reason']}'),
-                              SizedBox(height: 8),
-                              Text(
-                                  'leaveDurationSession: ${application['leaveDurationSession']}'),
-                              SizedBox(height: 8),
-                              Text(
-                                  'leaveDuration: ${application['leaveDuration']}'),
-                              SizedBox(height: 8),
-                              Text('Attachment: ${application['attachFile']}'),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showDetails = true;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 8,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        textStyle: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      child: Text('Continue with Adjustment'),
-                    ),
-                    SizedBox(height: 16),
-                    Visibility(
-                      visible: _showDetails,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DropdownButton<String>(
-                            hint: Text('Select Date Range'),
-                            value: _selectedDateRange,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedDateRange = newValue;
-                                _fetchPeriodsFromApi(newValue);
-                              });
-                            },
-                            items: _generateDropdownItems(),
-                          ),
-                          SizedBox(height: 16),
-                          DropdownButton<String>(
-                            hint: Text('Select Period'),
-                            value: _selectedPeriod,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedPeriod = newValue;
-                                _fetchClassesFromApi(newValue);
-                                _fetchFreeFacultiesFromApi(
-                                    newValue, _selectedDateRange);
-                              });
-                            },
-                            items: _periods.map((String period) {
-                              return DropdownMenuItem<String>(
-                                value: period,
-                                child: Text(period),
-                              );
-                            }).toList(),
-                          ),
-                          SizedBox(height: 16),
-                          if (_displayOfClassesList.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: _displayOfClassesList.map((classInfo) {
-                                return Container(
-                                  padding: EdgeInsets.all(16.0),
-                                  margin: EdgeInsets.only(bottom: 8.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        spreadRadius: 1,
-                                        blurRadius: 5,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Program: ${classInfo['programName']}',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Branch: ${classInfo['branchName']}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[800]),
-                                      ),
-                                      Text(
-                                        'Semester: ${classInfo['semester']}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[800]),
-                                      ),
-                                      Text(
-                                        'Section: ${classInfo['section']}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[800]),
-                                      ),
-                                      Text(
-                                        'Course: ${classInfo['courseName']}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[800]),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.access_time,
-                                              size: 18,
-                                              color: Colors.grey[600]),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            '${classInfo['startTime']} - ${classInfo['endTime']}',
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600]),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          SizedBox(height: 16),
-                          if (_freeFacultyList.isNotEmpty)
-                            DropdownButton<Map<String, dynamic>>(
-                              hint: Text('Select Free Faculty'),
-                              value: null,
-                              onChanged: (Map<String, dynamic>? newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    var selectedData = {
-                                      'date': _selectedDateRange,
-                                      'period': _selectedPeriod,
-                                      'programName': newValue['programName'],
-                                      'branchName': newValue['branchName'],
-                                      'semester': newValue['semester'],
-                                      'section': newValue['section'],
-                                      'courseName': newValue['courseName'],
-                                      'startTime': newValue['startTime'],
-                                      'endTime': newValue['endTime'],
-                                      'facultyName':
-                                          newValue['freeFacultyName'],
-                                    };
-                                    _selectedFacultyDetails.add(selectedData);
-                                  });
-                                }
-                              },
-                              items: _freeFacultyList.map((faculty) {
-                                return DropdownMenuItem<Map<String, dynamic>>(
-                                  value: faculty,
-                                  child: Text('${faculty['freeFacultyName']}'),
-                                );
-                              }).toList(),
-                            ),
-                          SizedBox(height: 16),
-                          if (_selectedFacultyDetails.isNotEmpty)
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: _selectedFacultyDetails.length,
-                              itemBuilder: (context, index) {
-                                final detail = _selectedFacultyDetails[index];
-                                return Container(
-                                  padding: EdgeInsets.all(16.0),
-                                  margin: EdgeInsets.only(bottom: 8.0),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Faculty: ${detail['facultyName']}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text('Date: ${detail['date']}'),
-                                      SizedBox(height: 8),
-                                      Text('Period: ${detail['period']}'),
-                                      SizedBox(height: 8),
-                                      Text('Program: ${detail['programName']}'),
-                                      SizedBox(height: 8),
-                                      Text('Branch: ${detail['branchName']}'),
-                                      SizedBox(height: 8),
-                                      Text('Semester: ${detail['semester']}'),
-                                      SizedBox(height: 8),
-                                      Text('Section: ${detail['section']}'),
-                                      SizedBox(height: 8),
-                                      Text('Course: ${detail['courseName']}'),
-                                      SizedBox(height: 8),
-                                      Text(
-                                          'Time: ${detail['startTime']} - ${detail['endTime']}'),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+    return
+      Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: Text('Leave Application'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<dynamic>(
+                decoration: InputDecoration(
+                  labelText: 'Select Leave Type',
                 ),
-              )
-          ],
-        ),
-      ),
-    );
-  }
-
-  DataCell _buildDataCell(String text, int index, LeaveData data) {
-    return DataCell(
-      InkWell(
-        onTap: () => _onRowTapped(index, data),
-        child: Container(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(text),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailContainer() {
-    return Material(
-      elevation: 44,
-      shadowColor: Colors.blue,
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        margin: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RichText(
-              text: TextSpan(
+                items: _leaveTypes.map((leave) {
+                  return DropdownMenuItem<dynamic>(
+                    value: leave,
+                    child: Text(leave['absenceName']),
+                  );
+                }).toList(),
+                onChanged: _onLeaveTypeChanged,
+                value: _selectedLeaveType,
+              ),
+              if (_selectedLeaveType != null) ...[
+                SizedBox(height: 16.0),
+                Text('Leave ID: ${_selectedLeaveType!['leaveId']}'),
+                Text('Accrual Period: ${_selectedLeaveType!['accrualPeriodName']}'),
+                Text('Accrued: ${_selectedLeaveType!['accrued']}'),
+                Text('Absence Type: ${_selectedLeaveType!['absenceTypeName']}'),
+                Text('Accrual Period: ${_selectedLeaveType!['accrualPeriod']}'),
+                Text('Balance: ${_selectedLeaveType!['balance']}'),
+              ],
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _reasonController,
+                decoration: InputDecoration(
+                  labelText: 'Reason for Leave',
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                },
+              ),
+              SizedBox(height: 16.0),
+              Row(
                 children: [
-                  TextSpan(
-                    text: 'Selected Absence: ',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  Expanded(
+                    child: Text(_fromDate == null
+                        ? 'Select From Date'
+                        : DateFormat.yMd().format(_fromDate!)),
                   ),
-                  TextSpan(
-                    text: _selectedAbsenceName,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                  TextSpan(
-                    text: _LeaveId.toString(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
+                  ElevatedButton(
+                    onPressed: () => _selectFromDate(context),
+                    child: Text('From Date'),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _reasonController,
-              decoration: InputDecoration(
-                labelText: 'Reason',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blueAccent, width: 2.0),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-              ),
-              style: TextStyle(color: Colors.black87),
-              onChanged: (value) {
-                setState(() {
-                  _validateForm();
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.calendar_today, color: Colors.black87),
-                    label: Text(
-                      'From Date: ${_fromDate?.toLocal().toString().split(' ')[0] ?? 'Not selected'}',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.black87,
-                      backgroundColor: Colors.blueGrey[100],
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: _fromDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _fromDate = pickedDate;
-                          _calculateDaysTaken();
-                          _validateForm();
-                        });
-                      }
-                    },
+              SizedBox(height: 16.0),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(_toDate == null
+                        ? 'Select To Date'
+                        : DateFormat.yMd().format(_toDate!)),
                   ),
-                ),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.calendar_today, color: Colors.black87),
-                  label: Text(
-                    'To Date: ${_toDate?.toLocal().toString().split(' ')[0] ?? 'Not selected'}',
-                    style: TextStyle(color: Colors.black87),
+                  ElevatedButton(
+                    onPressed: () => _selectToDate(context),
+                    child: Text('To Date'),
+                  ),
+                ],
+              ),
+              if (_fromDate != null &&
+                  _toDate != null &&
+                  _fromDate == _toDate &&
+                  _leaveDuration != null) ...[
+                SizedBox(height: 16.0),
+                Text('Leave Duration: $_leaveDuration'),
+              ],
+              SizedBox(height: 16.0),
+              Text('Selected Days: ${_calculateSelectedDays()}'),
+              SizedBox(height: 16.0),
+              Container(
+                child: ElevatedButton(
+                  onPressed: _isFormValid() ? _addLeaveApplication : null,
+                  child: Text(
+                    'Add',
+                    style: TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black87,
-                    backgroundColor: Colors.blueGrey[100],
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blue,
                   ),
-                  onPressed: () async {
-                    final pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: _toDate ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              if (_leaveApplications.isNotEmpty) ...[
+                Text('Leave Applications:'),
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _leaveApplications.length,
+                  itemBuilder: (context, index) {
+                    final application = _leaveApplications[index];
+                    return ListTile(
+                      title: Text('AbsenceType: ${application['AbsenceType']}'),
+                      subtitle: Text(
+                        'From: ${application['FromDate']} - To: ${application['ToDate']}\n'
+                            'Duration: ${application['LeaveDuration']} days\n'
+                            'Reason: ${application['Reason']}',
+                      ),
                     );
-                    if (pickedDate != null) {
-                      setState(() {
-                        _toDate = pickedDate;
-                        _calculateDaysTaken();
-                        _validateForm();
-                      });
-                    }
                   },
                 ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Days taken: ',
-                        style: TextStyle(color: Colors.black87, fontSize: 16),
-                      ),
-                      TextSpan(
-                        text: _daysTaken,
-                        style: TextStyle(
-                          color: _daysTaken.contains('Exceeds')
-                              ? Colors.red
-                              : Colors.black87,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
+                ElevatedButton(
+                  onPressed: _continueWithAdjustment,
+                  child: Text("Continue with adjustment"),
                 ),
-                const SizedBox(height: 16),
-                if (_fromDate != null &&
-                    _toDate != null &&
-                    _fromDate!.isAtSameMomentAs(_toDate!))
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSelectablePeriodOption('Full Day'),
-                      _buildSelectablePeriodOption('Afternoon'),
-                      _buildSelectablePeriodOption('Forenoon'),
-                    ],
+                SizedBox(height: 16.0),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Select Date',
                   ),
+                  value: _selectedDate,
+                  items: datesList.map((date) {
+                    return DropdownMenuItem<String>(
+                      value: date['date'],
+                      child: Text(date['date']),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedDate = newValue;
+                      _selectedPeriod = null; // Reset the selected period
+                      _selectedFaculty = null; // Reset the selected faculty
+                    });
+                  },
+                ),
+                SizedBox(height: 16.0),
+                if (_selectedDate != null) ...[
+                  DropdownButtonFormField<int>(
+                    decoration: InputDecoration(
+                      labelText: 'Select Period',
+                    ),
+                    value: _selectedPeriod,
+                    items: periodsList.where((period) => period['date'] == _selectedDate).map((period) {
+                      return DropdownMenuItem<int>(
+                        value: period['period'],
+                        child: Text('Period ${period['period']}'),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedPeriod = newValue;
+                        _selectedFaculty = null; // Reset the selected faculty
+                      });
+                    },
+                  ),
+                  SizedBox(height: 16.0),
+                  if (_selectedPeriod != null) ...[
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'Select Faculty',
+                      ),
+                      value: _selectedFaculty,
+                      items: facultyList.where((faculty) => faculty['date'] == _selectedDate && faculty['period'] == _selectedPeriod).map((faculty) {
+                        return DropdownMenuItem<String>(
+                          value: faculty['freeFacultyName'],
+                          child: Text(faculty['freeFacultyName']),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedFaculty = newValue;
+                        });
+                      },
+                    ),
+                  ],
+                ],
               ],
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickFile,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 12.0, horizontal: 16.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Text(
-                  _selectedFile != null
-                      ? 'Selected file: ${_selectedFile!.path.split('/').last}'
-                      : 'Pick a file',
-                  style: TextStyle(color: Colors.black87, fontSize: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isFormValid ? _adjustLeaveApplication : null,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12), // Rounded corners
-                ),
-                elevation: 8,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                textStyle: TextStyle(
-                  fontSize: 18, // Text size
-                  fontWeight: FontWeight.bold, // Text weight
-                ),
-              ),
-              child: const Text('Submit Leave Application'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildSelectablePeriodOption(String period) {
-    bool isSelected = _selectedPeriod == period;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPeriod = period;
-          _validateForm();
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue[100] : Colors.white,
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey,
-            width: 2.0,
-          ),
-          borderRadius: BorderRadius.circular(16.0),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: Offset(0, 4))
-                ]
-              : [],
-        ),
-        child: Center(
-          child: Text(
-            period,
-            style: TextStyle(
-              color: isSelected ? Colors.blue : Colors.black87,
-              fontSize: 16,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _validateForm() {
-    bool isValidDateRange = _fromDate != null && _toDate != null;
-    bool isSameDay = isValidDateRange && _fromDate!.isAtSameMomentAs(_toDate!);
-    bool isPeriodSelected = !isSameDay || (_selectedPeriod != null);
-
-    setState(() {
-      _isFormValid = isValidDateRange &&
-          (!isSameDay || isPeriodSelected) &&
-          _reasonController.text.isNotEmpty && // Check other required fields
-          (_fromDate != null && _toDate != null); // Ensure dates are selected
-    });
-  }
-
-  Future<void> _adjustLeaveApplication() async {
-    final fromDateStr = _fromDate?.toIso8601String().split('T').first ?? '';
-    final toDateStr = _toDate?.toIso8601String().split('T').first ?? '';
-
-    // Default leave duration calculation
-    int leaveDuration = 0;
-
-    // Adjust leave duration based on selected period
-    if (_fromDate != null && _toDate != null) {
-      if (_fromDate!.isAtSameMomentAs(_toDate!)) {
-        // If same day, adjust duration based on period
-        switch (_selectedPeriod) {
-          case 'Afternoon':
-            leaveDuration = 1; // Half day
-            break;
-          case 'Forenoon':
-            leaveDuration = 0; // Half day
-            break;
-          case 'Full Day':
-            leaveDuration = 2; // Full day
-            break;
-          default:
-            leaveDuration = 0; // No valid period selected
-            break;
-        }
-      } else {
-        // If different dates, calculate full days
-        leaveDuration = _toDate!.difference(_fromDate!).inDays + 1;
-      }
-    }
-
-    final attachFileName = _selectedFile != null ? _selectedFile!.path.split('/').last : '';
-
-    final requestBody = {
-      "GrpCode": "bees",
-      "CollegeId": "1",
-      "ColCode": "0001",
-      "EmployeeId": "1",
-      "ApplicationId": "0",
-      "Flag": "REVIEW",
-      "UserId": "0",
-      "AttachFile1": attachFileName,
-      "Reason1": _reason,
-      "LeaveApplicationSaveTablevariable": [
-        {
-          "AbsenceType": _LeaveId,
-          "FromDate": fromDateStr,
-          "ToDate": toDateStr,
-          "LeaveDuration": leaveDuration,
-          "Reason": _reason,
-          "AttachFile": attachFileName,
-        }
-      ]
-    };
-    print(requestBody);
-
-    try {
-      final response = await http.post(
-        Uri.parse(
-            'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
       );
-
-      if (response.statusCode == 200) {
-        print(response.body);
-        final Map<String, dynamic> data = json.decode(response.body);
-        setState(() {
-          _reason = '';
-          _fromDate = null;
-          _toDate = null;
-          _daysTaken = '';
-          _selectedFile = null;
-          _selectedAbsenceName = '';
-          _LeaveId = 0; // or whatever default value you prefer
-
-          // Now you can correctly add the decoded data to the list
-          _submittedApplications.add(data);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Leave application submitted successfully')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit leave application')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
-      );
-    }
   }
 }

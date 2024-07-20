@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/dashboard', page: () => EmpDashboard()),
         GetPage(name: '/signup', page: () => NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
-        GetPage(name: '/LeaveApplication', page: () => LeaveApplication()),
+        GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
         GetPage(name: '/FeePaymentScreen', page: () => FeeDetailsScreen()),
       ],
       theme: ThemeData(

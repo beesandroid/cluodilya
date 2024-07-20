@@ -42,7 +42,7 @@ class EmpDashboard extends StatelessWidget {
               'Leave Application',
               Icons.attach_email,
               Colors.greenAccent,
-              LeaveApplication(),
+              LeaveApplicationScreen(),
             ),
           ],
         ),
