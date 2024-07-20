@@ -5,7 +5,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'main.dart';
+import '../main.dart';
+
+
 
 class NewSignupScreen extends StatefulWidget {
   const NewSignupScreen({super.key});

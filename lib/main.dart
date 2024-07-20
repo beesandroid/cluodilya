@@ -1,11 +1,12 @@
+import 'package:cloudilya/student/feepayment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 
-import '../staff/Attendence.dart';
-import '../staff/Dashboard.dart';
-import '../staff/LeaveApplication.dart';
-import 'Signup.dart';
+import 'staff/Attendence.dart';
+import 'staff/EmpDashboard.dart';
+import 'staff/LeaveApplication.dart';
+import 'views/Signup.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,10 +19,11 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/splash', page: () => SplashScreen()),
         GetPage(name: '/login', page: () => LoginPage()),
-        GetPage(name: '/dashboard', page: () => DashboardScreen()),
+        GetPage(name: '/dashboard', page: () => EmpDashboard()),
         GetPage(name: '/signup', page: () => NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
         GetPage(name: '/LeaveApplication', page: () => LeaveApplication()),
+        GetPage(name: '/FeePaymentScreen', page: () => FeeDetailsScreen()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -55,7 +57,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Navigate to login page after a delay
     Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('/dashboard');
+      Get.offNamed('LeaveApplication');
     });
 
     return Scaffold(

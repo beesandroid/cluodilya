@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'Attendence.dart';
 import 'LeaveApplication.dart';
 
-class DashboardScreen extends StatelessWidget {
+class EmpDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

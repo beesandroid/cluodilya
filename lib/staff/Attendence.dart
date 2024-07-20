@@ -1,12 +1,9 @@
-import 'package:cloudilya/staff/Dashboard.dart';
+import 'package:cloudilya/staff/EmpDashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
-
-
-
 
 class AttendanceScreen extends StatefulWidget {
   @override
@@ -28,7 +25,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
-
   }
 
   @override
@@ -164,8 +160,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
-
-
   List<PieChartSectionData> _createChartData() {
     int presentCount =
         _filteredStudents.where((student) => student['Attendance'] == 1).length;
@@ -191,150 +185,113 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return sections;
   }
 
-  Future<void> _showPreviewDialog() async {
-    final presentStudents = _filteredStudents
-        .where((student) => student['Attendance'] == 1)
-        .toList();
-    final absentStudents = _filteredStudents
-        .where((student) => student['Attendance'] == 2)
-        .toList();
-
+  void _showPreviewDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
+      builder: (BuildContext context) {
+        return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
-          elevation: 25,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+          contentPadding: EdgeInsets.all(16.0),
+          content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Attendance Preview',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 SizedBox(height: 16.0),
-                // Present Students Section
-                if (presentStudents.isNotEmpty) ...[
-                  Text(
-                    'Present Students:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 18,
+                Container(
+                  width: double.maxFinite,
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sections: _createChartData(),
+                      centerSpaceRadius: 40,
+                      sectionsSpace: 2,
+                      startDegreeOffset: 90,
                     ),
+                    swapAnimationDuration: Duration(milliseconds: 2000),
+                    swapAnimationCurve: Curves.easeInOut,
                   ),
-                  SizedBox(height: 8.0),
-                  ...presentStudents.map((student) => Row(
+                ),
+                SizedBox(height: 16.0),
+                Column(
+                  children: _filteredStudents.map((student) {
+                    final isPresent = student['Attendance'] == 1;
+                    return Container(
+                      margin: EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      decoration: BoxDecoration(
+                        color: isPresent ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              student['StudentName'],
-                              style: TextStyle(color: Colors.black54),
+                          Text(
+                            student['StudentName'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(width: 8.0),
-                          CircleAvatar(
-                            backgroundColor: Colors.green,
-                            child: Text(
-                              'P',
-                              style: TextStyle(color: Colors.white),
+                          Text(
+                            isPresent ? 'Present' : 'Absent',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isPresent ? Colors.green : Colors.red,
                             ),
                           ),
                         ],
-                      )),
-                ],
-                // Absent Students Section
-                if (absentStudents.isNotEmpty) ...[
-                  Text(
-                    'Absent Students:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 18,
-                    ),
-                  ),
-                  SizedBox(height: 8.0),
-                  ...absentStudents.map((student) => Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              student['StudentName'],
-                              style: TextStyle(color: Colors.black54),
-                            ),
-                          ),
-                          SizedBox(width: 8.0),
-                          CircleAvatar(
-                            backgroundColor: Colors.red,
-                            child: Text(
-                              'A',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      )),
-                  SizedBox(height: 16.0),
-                ],
-                // Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _saveAttendance(); // Save attendance when confirmed
-                      },
-                      child: Text('Save'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.green,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        textStyle: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    SizedBox(width: 8.0),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showToast('Operation cancelled.');
-                      },
-                      child: Text('Cancel'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.red,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        textStyle: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ],
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                // Implement save logic here
+                Navigator.of(context).pop();
+                _saveAttendance();
+              },
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
+
 
   Future<void> _saveAttendance() async {
     final String url =
@@ -378,7 +335,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
 
       if (response.statusCode == 200) {
-
         print('Attendance data saved successfully!');
         _showToast('Attendance data saved successfully!'); // Show success toast
       } else {
@@ -603,11 +559,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               prefixIcon: Icon(Icons.search),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? IconButton(
-                                icon: Icon(Icons.clear,color: Colors.red,),
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _searchController.clear();
-                                    _filteredStudents = _students; // Reset to show all students
+                                    _filteredStudents =
+                                        _students; // Reset to show all students
                                   });
                                 },
                               )
@@ -618,7 +578,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                           ),
-
                           SizedBox(height: 16.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -662,7 +621,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                       padding: EdgeInsets.all(12.0),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8.0),
                                         boxShadow: [
                                           BoxShadow(
@@ -673,11 +633,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                         ],
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   student['HallticketNumber'] ?? '',
@@ -730,36 +692,34 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ],
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 220,
-                          child: FloatingActionButton(
-                            onPressed: _saveAttendance,
-                            backgroundColor: Colors.blue,
-                            tooltip: 'Preview Attendance',
-                            child: Text(
-                              "SAVE",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
             ],
           ),
         ),
+        floatingActionButton: _students.isNotEmpty
+            ? Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 220,
+              child: FloatingActionButton(
+                onPressed: _showPreviewDialog,
+                backgroundColor: Colors.blue,
+                tooltip: 'Preview Attendance',
+                child: Text(
+                  "Preview Attendance",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        )
+            : null,
       );
-
-// Add a unique identifier to each student if not already present
-
-
 
   }
 }

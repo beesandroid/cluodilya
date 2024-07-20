@@ -24,20 +24,16 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   List<DropdownMenuItem<String>> _generateDropdownItems() {
     List<DropdownMenuItem<String>> items = [];
 
-    // Iterate through _submittedApplications and add dropdown items for each date range
-    for (var application in _submittedApplications) {
+      for (var application in _submittedApplications) {
       String fromDate = application['singleList']['fromDate'];
       String toDate = application['singleList']['toDate'];
 
-      // Convert fromDate and toDate to 'yyyy-MM-dd' format
       String formattedFromDate = convertDateFormat(fromDate);
       String formattedToDate = convertDateFormat(toDate);
 
-      // Convert to DateTime objects
       DateTime startDate = DateTime.parse(formattedFromDate);
       DateTime endDate = DateTime.parse(formattedToDate);
 
-      // Iterate through each day between startDate and endDate
       for (DateTime date = startDate;
           date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
           date = date.add(Duration(days: 1))) {
@@ -180,18 +176,15 @@ class _LeaveApplicationState extends State<LeaveApplication> {
   }
 
   Future<void> _fetchPeriodsFromApi(String? selectedDate) async {
-    // Replace with your actual API endpoint
     String apiUrl =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CloudilyaPeriodDropDown';
 
-    // Replace with your request payload
     Map<String, dynamic> requestBody = {
       "GrpCode": "bees",
       "ColCode": "0001",
       "CollegeId": "1",
       "EmployeeId": "1",
       "Date": selectedDate ?? "",
-      // Use selected date or default to empty string
     };
 
     try {
@@ -203,18 +196,16 @@ class _LeaveApplicationState extends State<LeaveApplication> {
 
       if (response.statusCode == 200) {
         print(response.body.toString());
-        // Parse response JSON
         Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         List<dynamic> periodsList = jsonResponse['periodDropDownList'];
 
-        // Extract periods from API response
         List<String> periods = periodsList
             .map((period) =>
-                '${period['periods']}') // Adjust this as per your API response structure
+                '${period['periods']}')
             .toList();
 
         setState(() {
-          _periods = periods; // Update periods list
+          _periods = periods;
         });
       } else {
         throw Exception('Failed to fetch periods from API');
@@ -1061,8 +1052,7 @@ class _LeaveApplicationState extends State<LeaveApplication> {
       }
     }
 
-    final attachFileName =
-        _selectedFile != null ? _selectedFile!.path.split('/').last : '';
+    final attachFileName = _selectedFile != null ? _selectedFile!.path.split('/').last : '';
 
     final requestBody = {
       "GrpCode": "bees",

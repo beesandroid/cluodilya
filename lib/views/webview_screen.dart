@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 
-import 'main.dart';
+import '../main.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String bdorderid;
