@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'Service/leave.dart';
-import 'package:http/http.dart'as http;
+import 'package:http/http.dart' as http;
 
 class LeaveApplicationScreen extends StatefulWidget {
   @override
@@ -12,6 +12,7 @@ class LeaveApplicationScreen extends StatefulWidget {
 }
 
 class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
+  List<Map<String, dynamic>> addedFaculties = [];
   List<Map<String, dynamic>> programWiseDisplayList = [];
   List<Map<String, dynamic>> facultyDropdownList = [];
   List<dynamic> _leaveTypes = [];
@@ -28,7 +29,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
 
   List<Map<String, dynamic>> datesList = [];
   List<Map<String, dynamic>> periodsList = [];
-  List<Map<String, dynamic>> facultyList = [];// List to store leave applications
+  List<Map<String, dynamic>> facultyList =
+      []; // List to store leave applications
 
   @override
   void initState() {
@@ -205,6 +207,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       });
     }
   }
+
   void _continueWithAdjustment() async {
     final requestBody = {
       "GrpCode": "bees",
@@ -216,7 +219,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       "UserId": 716,
       "AttachFile": " ",
       "Reason": _reasonController.text,
-      "LeaveApplicationSaveTablevariable": _leaveApplications.map((application) {
+      "LeaveApplicationSaveTablevariable":
+          _leaveApplications.map((application) {
         return {
           "AbsenceType": application['AbsenceType'],
           "FromDate": application['FromDate'],
@@ -230,7 +234,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     print(requestBody);
 
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -242,11 +247,16 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       Map<String, dynamic> parsedResponse = json.decode(response.body);
 
       setState(() {
-        datesList = List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
-        periodsList = List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
-        facultyList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']);
-        programWiseDisplayList = List<Map<String, dynamic>>.from(parsedResponse['programWiseDisplayList']); // Store the list
-        facultyDropdownList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']); // Store the list
+        datesList =
+            List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
+        periodsList =
+            List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
+        facultyList = List<Map<String, dynamic>>.from(
+            parsedResponse['facultyDropdownList']);
+        programWiseDisplayList = List<Map<String, dynamic>>.from(
+            parsedResponse['programWiseDisplayList']); // Store the list
+        facultyDropdownList = List<Map<String, dynamic>>.from(
+            parsedResponse['facultyDropdownList']); // Store the list
       });
 
       // Handle successful response
@@ -257,8 +267,16 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
   }
 
+  void _removeFaculty(int index) {
+    setState(() {
+      addedFaculties.removeAt(index);
+    });
+  }
+
   void _saveLeaveApplication() async {
-    if (_selectedDate == null || _selectedPeriod == null || _selectedFaculty == null) {
+    if (_selectedDate == null ||
+        _selectedPeriod == null ||
+        _selectedFaculty == null) {
       Fluttertoast.showToast(
         msg: 'Please select all required fields',
         toastLength: Toast.LENGTH_SHORT,
@@ -274,36 +292,36 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     List<dynamic> programWiseDisplayList = this.programWiseDisplayList;
     List<dynamic> facultyDropdownList = this.facultyDropdownList;
 
-    // Print the lists for debugging
-    print('Faculty Dropdown List: $facultyDropdownList');
-
     // Find the matching program details
-    final programDetails = programWiseDisplayList.where((program) =>
-    program['dates'] == _selectedDate && program['period'] == _selectedPeriod
-    ).toList();
+    final programDetails = programWiseDisplayList
+        .where((program) =>
+            program['dates'] == _selectedDate &&
+            program['period'] == _selectedPeriod)
+        .toList();
 
     if (programDetails.isNotEmpty) {
       final program = programDetails.first;
       final startTime = program['startTime'];
       final endTime = program['endTime'];
 
-      // Debug: Print selected values
-      print('Selected Date: $_selectedDate');
-      print('Selected Period: $_selectedPeriod');
-      print('Selected Faculty: $_selectedFaculty');
-
       // Find the matching free faculty by ID
-      final facultyDetails = facultyDropdownList.where((faculty) =>
-      faculty['date'] == _selectedDate &&
-          faculty['period'] == _selectedPeriod &&
-          faculty['freeFacultyName'] == _selectedFaculty // Match by faculty name
-      ).toList();
-
-      // Debug: Print filtered faculty details
-      print('Filtered Faculty Details: $facultyDetails');
+      final facultyDetails = facultyDropdownList
+          .where((faculty) =>
+              faculty['date'] == _selectedDate &&
+              faculty['period'] == _selectedPeriod &&
+              faculty['freeFacultyName'] == _selectedFaculty)
+          .toList();
 
       // Extract free faculty details
-      final freeFaculty = facultyDetails.isNotEmpty ? facultyDetails.first['freeFaculty'].toString() : '';
+      final freeFaculty = facultyDetails.isNotEmpty
+          ? facultyDetails.first['freeFaculty'].toString()
+          : '';
+
+      // Convert date format from day-month-year to year-month-day
+      DateTime parsedDate =
+          DateTime.parse(_selectedDate!.split('-').reversed.join('-'));
+      String formattedDate =
+          '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
 
       // Create the final request body with actual StartTime, EndTime, and FreeFaculty
       final finalRequestBody = {
@@ -322,7 +340,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
             "StartTime": startTime,
             "EndTime": endTime,
             "Periods": _selectedPeriod,
-            "Date": _selectedDate,
+            "Date": formattedDate,
             "Faculty": "1", // Assuming this is the name
             "FreeFaculty": freeFaculty,
           }
@@ -332,14 +350,28 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       // Print the final request body
       print('Final Request Body: ${json.encode(finalRequestBody)}');
 
-      final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplicationSave';
+      final url =
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplicationSave';
       final headers = {'Content-Type': 'application/json'};
 
       try {
-        final response = await http.post(Uri.parse(url), headers: headers, body: json.encode(finalRequestBody));
+        final response = await http.post(Uri.parse(url),
+            headers: headers, body: json.encode(finalRequestBody));
         if (response.statusCode == 200) {
+          final responseBody = json.decode(response.body);
+          print(responseBody);
+
+          // Append the new faculty to the existing list
+          setState(() {
+            addedFaculties.add({
+              'facultyName': _selectedFaculty,
+              'date': formattedDate,
+              'periods': _selectedPeriod,
+            });
+          });
+
           Fluttertoast.showToast(
-            msg: 'Leave application saved successfully',
+            msg: 'Faculty added successfully',
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
             backgroundColor: Colors.green,
@@ -371,213 +403,257 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return
-      Scaffold(
-        resizeToAvoidBottomInset: true,
-        appBar: AppBar(
-          title: Text('Leave Application'),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DropdownButtonFormField<dynamic>(
-                decoration: InputDecoration(
-                  labelText: 'Select Leave Type',
-                ),
-                items: _leaveTypes.map((leave) {
-                  return DropdownMenuItem<dynamic>(
-                    value: leave,
-                    child: Text(leave['absenceName']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLeaveType = value;
-                  });
-                },
-                value: _selectedLeaveType,
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: Text('Leave Application'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButtonFormField<dynamic>(
+              decoration: InputDecoration(
+                labelText: 'Select Leave Type',
               ),
-              if (_selectedLeaveType != null) ...[
-                SizedBox(height: 16.0),
-                Text('Leave ID: ${_selectedLeaveType!['leaveId']}'),
-                Text('Accrual Period: ${_selectedLeaveType!['accrualPeriodName']}'),
-                Text('Accrued: ${_selectedLeaveType!['accrued']}'),
-                Text('Absence Type: ${_selectedLeaveType!['absenceTypeName']}'),
-                Text('Accrual Period: ${_selectedLeaveType!['accrualPeriod']}'),
-                Text('Balance: ${_selectedLeaveType!['balance']}'),
-              ],
+              items: _leaveTypes.map((leave) {
+                return DropdownMenuItem<dynamic>(
+                  value: leave,
+                  child: Text(leave['absenceName']),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedLeaveType = value;
+                });
+              },
+              value: _selectedLeaveType,
+            ),
+            if (_selectedLeaveType != null) ...[
               SizedBox(height: 16.0),
-              TextField(
-                controller: _reasonController,
-                decoration: InputDecoration(
-                  labelText: 'Reason for Leave',
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                },
+              Text('Leave ID: ${_selectedLeaveType!['leaveId']}'),
+              Text(
+                  'Accrual Period: ${_selectedLeaveType!['accrualPeriodName']}'),
+              Text('Accrued: ${_selectedLeaveType!['accrued']}'),
+              Text('Absence Type: ${_selectedLeaveType!['absenceTypeName']}'),
+              Text('Accrual Period: ${_selectedLeaveType!['accrualPeriod']}'),
+              Text('Balance: ${_selectedLeaveType!['balance']}'),
+            ],
+            SizedBox(height: 16.0),
+            TextField(
+              controller: _reasonController,
+              decoration: InputDecoration(
+                labelText: 'Reason for Leave',
               ),
-              SizedBox(height: 16.0),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(_fromDate == null
-                        ? 'Select From Date'
-                        : DateFormat.yMd().format(_fromDate!)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _selectFromDate(context),
-                    child: Text('From Date'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.0),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(_toDate == null
-                        ? 'Select To Date'
-                        : DateFormat.yMd().format(_toDate!)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _selectToDate(context),
-                    child: Text('To Date'),
-                  ),
-                ],
-              ),
-              if (_fromDate != null &&
-                  _toDate != null &&
-                  _fromDate == _toDate &&
-                  _leaveDuration != null) ...[
-                SizedBox(height: 16.0),
-                Text('Leave Duration: $_leaveDuration'),
-              ],
-              SizedBox(height: 16.0),
-              Text('Selected Days: ${_calculateSelectedDays()}'),
-              SizedBox(height: 16.0),
-              Container(
-                child: ElevatedButton(
-                  onPressed: _isFormValid() ? _addLeaveApplication : null,
-                  child: Text(
-                    'Add',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blue,
-                  ),
-                ),
-              ),
-              SizedBox(height: 16.0),
-              if (_leaveApplications.isNotEmpty) ...[
-                Text('Leave Applications:'),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _leaveApplications.length,
-                  itemBuilder: (context, index) {
-                    final application = _leaveApplications[index];
-                    return ListTile(
-                      title: Text('AbsenceType: ${application['AbsenceType']}'),
-                      subtitle: Text(
-                        'From: ${application['FromDate']} - To: ${application['ToDate']}\n'
-                            'Duration: ${application['LeaveDuration']} days\n'
-                            'Reason: ${application['Reason']}',
-                      ),
-                    );
-                  },
+              onChanged: (value) {
+                setState(() {});
+              },
+            ),
+            SizedBox(height: 16.0),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(_fromDate == null
+                      ? 'Select From Date'
+                      : DateFormat.yMd().format(_fromDate!)),
                 ),
                 ElevatedButton(
-                  onPressed: _continueWithAdjustment,
-                  child: Text("Continue with adjustment"),
+                  onPressed: () => _selectFromDate(context),
+                  child: Text('From Date'),
                 ),
-                SizedBox(height: 16.0),
-                DropdownButtonFormField<String>(
+              ],
+            ),
+            SizedBox(height: 16.0),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(_toDate == null
+                      ? 'Select To Date'
+                      : DateFormat.yMd().format(_toDate!)),
+                ),
+                ElevatedButton(
+                  onPressed: () => _selectToDate(context),
+                  child: Text('To Date'),
+                ),
+              ],
+            ),
+            if (_fromDate != null &&
+                _toDate != null &&
+                _fromDate == _toDate &&
+                _leaveDuration != null) ...[
+              SizedBox(height: 16.0),
+              Text('Leave Duration: $_leaveDuration'),
+            ],
+            SizedBox(height: 16.0),
+            Text('Selected Days: ${_calculateSelectedDays()}'),
+            SizedBox(height: 16.0),
+            Container(
+              child: ElevatedButton(
+                onPressed: _isFormValid() ? _addLeaveApplication : null,
+                child: Text(
+                  'Add',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                ),
+              ),
+            ),
+            SizedBox(height: 16.0),
+            if (_leaveApplications.isNotEmpty) ...[
+              Text('Leave Applications:'),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: _leaveApplications.length,
+                itemBuilder: (context, index) {
+                  final application = _leaveApplications[index];
+                  return ListTile(
+                    title: Text('AbsenceType: ${application['AbsenceType']}'),
+                    subtitle: Text(
+                      'From: ${application['FromDate']} - To: ${application['ToDate']}\n'
+                      'Duration: ${application['LeaveDuration']} days\n'
+                      'Reason: ${application['Reason']}',
+                    ),
+                  );
+                },
+              ),
+              ElevatedButton(
+                onPressed: _continueWithAdjustment,
+                child: Text("Continue with adjustment"),
+              ),
+              SizedBox(height: 16.0),
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Select Date',
+                ),
+                value: _selectedDate,
+                items: datesList.map((date) {
+                  return DropdownMenuItem<String>(
+                    value: date['date'],
+                    child: Text(date['date']),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedDate = newValue;
+                    _selectedPeriod = null; // Reset the selected period
+                    _selectedFaculty = null; // Reset the selected faculty
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              if (_selectedDate != null) ...[
+                DropdownButtonFormField<int>(
                   decoration: InputDecoration(
-                    labelText: 'Select Date',
+                    labelText: 'Select Period',
                   ),
-                  value: _selectedDate,
-                  items: datesList.map((date) {
-                    return DropdownMenuItem<String>(
-                      value: date['date'],
-                      child: Text(date['date']),
+                  value: _selectedPeriod,
+                  items: periodsList
+                      .where((period) => period['date'] == _selectedDate)
+                      .map((period) {
+                    return DropdownMenuItem<int>(
+                      value: period['period'],
+                      child: Text('Period ${period['period']}'),
                     );
                   }).toList(),
                   onChanged: (newValue) {
                     setState(() {
-                      _selectedDate = newValue;
-                      _selectedPeriod = null; // Reset the selected period
+                      _selectedPeriod = newValue;
                       _selectedFaculty = null; // Reset the selected faculty
                     });
                   },
                 ),
                 SizedBox(height: 16.0),
-                if (_selectedDate != null) ...[
-                  DropdownButtonFormField<int>(
+                if (_selectedPeriod != null) ...[
+                  DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      labelText: 'Select Period',
+                      labelText: 'Select Faculty',
                     ),
-                    value: _selectedPeriod,
-                    items: periodsList.where((period) => period['date'] == _selectedDate).map((period) {
-                      return DropdownMenuItem<int>(
-                        value: period['period'],
-                        child: Text('Period ${period['period']}'),
+                    value: _selectedFaculty,
+                    items: facultyList
+                        .where((faculty) =>
+                            faculty['date'] == _selectedDate &&
+                            faculty['period'] == _selectedPeriod)
+                        .map((faculty) {
+                      return DropdownMenuItem<String>(
+                        value: faculty['freeFacultyName'],
+                        child: Text(faculty['freeFacultyName']),
                       );
                     }).toList(),
                     onChanged: (newValue) {
                       setState(() {
-                        _selectedPeriod = newValue;
-                        _selectedFaculty = null; // Reset the selected faculty
+                        _selectedFaculty = newValue;
                       });
                     },
                   ),
-                  SizedBox(height: 16.0),
-                  if (_selectedPeriod != null) ...[
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Select Faculty',
-                      ),
-                      value: _selectedFaculty,
-                      items: facultyList.where((faculty) => faculty['date'] == _selectedDate && faculty['period'] == _selectedPeriod).map((faculty) {
-                        return DropdownMenuItem<String>(
-                          value: faculty['freeFacultyName'],
-                          child: Text(faculty['freeFacultyName']),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          _selectedFaculty = newValue;
-                        });
-                      },
-                    ),
-                  ],
                 ],
               ],
-              if (_selectedDate != null && _selectedPeriod != null && _selectedFaculty != null) ...[
-                Row(mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 220,
-                      child: ElevatedButton(
-                        onPressed: _saveLeaveApplication,
-                        child: Text(
-                          'Add Faculty  +',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue,
-                        ),
+            ],
+            if (_selectedDate != null &&
+                _selectedPeriod != null &&
+                _selectedFaculty != null) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 220,
+                    child: ElevatedButton(
+                      onPressed: _saveLeaveApplication,
+                      child: Text(
+                        'Add Faculty +',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.blue,
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ],
-          ),
+            SizedBox(height: 16.0),
+            if (addedFaculties.isNotEmpty) ...[
+              Text('Added Faculties:'),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: addedFaculties.length,
+                itemBuilder: (context, index) {
+                  final faculty = addedFaculties[index];
+                  return ListTile(
+                    title: Text(faculty['facultyName'] ?? 'No Name'),
+                    subtitle: Text(
+                      'Date: ${faculty['date'] ?? 'No Date'}, Period: ${faculty['periods'] ?? 'No Period'}',
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _removeFaculty(index);
+                      },
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {},
+                child: Text(
+                  'Apply Leave',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                ),
+              ),
+            ],
+          ],
         ),
-      );
+      ),
+    );
   }
 }

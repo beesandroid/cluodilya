@@ -186,6 +186,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _showPreviewDialog() {
+    // Count present and absent students
+    final int totalStudents = _filteredStudents.length;
+    final int presentCount = _filteredStudents.where((student) => student['Attendance'] == 1).length;
+    final int absentCount = totalStudents - presentCount;
+    final double presentPercentage = totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
+    final double absentPercentage = totalStudents > 0 ? (absentCount / totalStudents) * 100 : 0;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -197,6 +204,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Attendance Preview',
@@ -221,38 +229,100 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                 ),
                 SizedBox(height: 16.0),
+                Text(
+                  'Absent Students (${absentCount} - ${absentPercentage.toStringAsFixed(1)}%)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8.0),
                 Column(
-                  children: _filteredStudents.map((student) {
-                    final isPresent = student['Attendance'] == 1;
+                  children: _filteredStudents.where((student) => student['Attendance'] == 0).map((student) {
                     return Container(
                       margin: EdgeInsets.symmetric(vertical: 4.0),
                       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                       decoration: BoxDecoration(
-                        color: isPresent ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                        color: Colors.red.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            student['StudentName'],
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                          Expanded(
+                            child: Text(
+                              student['StudentName'],
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis, // Handle overflow
                             ),
                           ),
                           Text(
-                            isPresent ? 'Present' : 'Absent',
+                            'Absent',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: isPresent ? Colors.green : Colors.red,
+                              color: Colors.red,
                             ),
                           ),
                         ],
                       ),
                     );
                   }).toList(),
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  'Present Students (${presentCount} - ${presentPercentage.toStringAsFixed(1)}%)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8.0),
+                Column(
+                  children: _filteredStudents.where((student) => student['Attendance'] == 1).map((student) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              student['StudentName'],
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis, // Handle overflow
+                            ),
+                          ),
+                          Text(
+                            'Present',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  'Total Students: $totalStudents',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
