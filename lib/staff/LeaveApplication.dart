@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'Service/leave.dart';
 import 'package:http/http.dart'as http;
@@ -11,6 +12,8 @@ class LeaveApplicationScreen extends StatefulWidget {
 }
 
 class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
+  List<Map<String, dynamic>> programWiseDisplayList = [];
+  List<Map<String, dynamic>> facultyDropdownList = [];
   List<dynamic> _leaveTypes = [];
   dynamic _selectedLeaveType;
   TextEditingController _reasonController = TextEditingController();
@@ -215,7 +218,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       "Reason": _reasonController.text,
       "LeaveApplicationSaveTablevariable": _leaveApplications.map((application) {
         return {
-          "AbsenceType": application['AbsenceType'], // Use the appropriate absence type ID
+          "AbsenceType": application['AbsenceType'],
           "FromDate": application['FromDate'],
           "ToDate": application['ToDate'],
           "LeaveDuration": application['LeaveDuration'],
@@ -242,6 +245,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
         datesList = List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
         periodsList = List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
         facultyList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']);
+        programWiseDisplayList = List<Map<String, dynamic>>.from(parsedResponse['programWiseDisplayList']); // Store the list
+        facultyDropdownList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']); // Store the list
       });
 
       // Handle successful response
@@ -251,6 +256,121 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       print('Failed to submit leave application');
     }
   }
+
+  void _saveLeaveApplication() async {
+    if (_selectedDate == null || _selectedPeriod == null || _selectedFaculty == null) {
+      Fluttertoast.showToast(
+        msg: 'Please select all required fields',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return;
+    }
+
+    // Use the stored programWiseDisplayList and facultyDropdownList
+    List<dynamic> programWiseDisplayList = this.programWiseDisplayList;
+    List<dynamic> facultyDropdownList = this.facultyDropdownList;
+
+    // Print the lists for debugging
+    print('Faculty Dropdown List: $facultyDropdownList');
+
+    // Find the matching program details
+    final programDetails = programWiseDisplayList.where((program) =>
+    program['dates'] == _selectedDate && program['period'] == _selectedPeriod
+    ).toList();
+
+    if (programDetails.isNotEmpty) {
+      final program = programDetails.first;
+      final startTime = program['startTime'];
+      final endTime = program['endTime'];
+
+      // Debug: Print selected values
+      print('Selected Date: $_selectedDate');
+      print('Selected Period: $_selectedPeriod');
+      print('Selected Faculty: $_selectedFaculty');
+
+      // Find the matching free faculty by ID
+      final facultyDetails = facultyDropdownList.where((faculty) =>
+      faculty['date'] == _selectedDate &&
+          faculty['period'] == _selectedPeriod &&
+          faculty['freeFacultyName'] == _selectedFaculty // Match by faculty name
+      ).toList();
+
+      // Debug: Print filtered faculty details
+      print('Filtered Faculty Details: $facultyDetails');
+
+      // Extract free faculty details
+      final freeFaculty = facultyDetails.isNotEmpty ? facultyDetails.first['freeFaculty'].toString() : '';
+
+      // Create the final request body with actual StartTime, EndTime, and FreeFaculty
+      final finalRequestBody = {
+        "GrpCode": "Bees",
+        "CollegeId": "1",
+        "ColCode": "0001",
+        "EmployeeId": "1",
+        "ApplicationId": "0",
+        "AdjustmentId": "0",
+        "Flag": "REVIEW",
+        "UserId": "1",
+        "LeaveApplicationSaveTablevariable": [
+          {
+            "ApplicationId": 0,
+            "AdjustmentId": "0",
+            "StartTime": startTime,
+            "EndTime": endTime,
+            "Periods": _selectedPeriod,
+            "Date": _selectedDate,
+            "Faculty": "1", // Assuming this is the name
+            "FreeFaculty": freeFaculty,
+          }
+        ]
+      };
+
+      // Print the final request body
+      print('Final Request Body: ${json.encode(finalRequestBody)}');
+
+      final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplicationSave';
+      final headers = {'Content-Type': 'application/json'};
+
+      try {
+        final response = await http.post(Uri.parse(url), headers: headers, body: json.encode(finalRequestBody));
+        if (response.statusCode == 200) {
+          Fluttertoast.showToast(
+            msg: 'Leave application saved successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: 'Failed to save leave application',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
+      } catch (e) {
+        Fluttertoast.showToast(
+          msg: 'Error: $e',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } else {
+      print('No matching program details found');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +395,11 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                     child: Text(leave['absenceName']),
                   );
                 }).toList(),
-                onChanged: _onLeaveTypeChanged,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedLeaveType = value;
+                  });
+                },
                 value: _selectedLeaveType,
               ),
               if (_selectedLeaveType != null) ...[
@@ -431,6 +555,25 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                     ),
                   ],
                 ],
+              ],
+              if (_selectedDate != null && _selectedPeriod != null && _selectedFaculty != null) ...[
+                Row(mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 220,
+                      child: ElevatedButton(
+                        onPressed: _saveLeaveApplication,
+                        child: Text(
+                          'Add Faculty  +',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ],
           ),
