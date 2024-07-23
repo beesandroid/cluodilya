@@ -52,6 +52,8 @@ dependencies:
   shared_preferences:
   scrollable_positioned_list:
   expansion_tile_list:
+  progress_bar_chart:
+  multi_select_flutter: ^4.0.0
 
 
 dev_dependencies:
