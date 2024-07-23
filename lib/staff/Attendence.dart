@@ -1,4 +1,3 @@
-import 'package:cloudilya/staff/EmpDashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +8,6 @@ class AttendanceScreen extends StatefulWidget {
   @override
   _AttendanceScreenState createState() => _AttendanceScreenState();
 }
-
 class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime _selectedDate = DateTime.now();
   List<String> _periods = [];
@@ -19,8 +17,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _selectedPeriod;
   final TextEditingController _searchController = TextEditingController();
   String _selectedDateText = 'Pick a date';
-  bool _allPresent = false; // State to track if all are set to present
-  bool _allAbsent = false; // State to track if all are set to absent
 
   @override
   void initState() {
@@ -57,7 +53,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           _selectedDateText); // Fetch data with default period value '0'
     }
   }
-
   Future<void> _fetchAttendanceData(String formattedDate) async {
     final String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
@@ -74,7 +69,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       "Perioddisplay": "0",
       "Flag": "FacultyWise"
     };
-
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -115,9 +109,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           setState(() {
             _periods = periods.keys.toList();
             _periodData = periods;
-
-            // Update students and filtered students based on selected period if available
-            if (_selectedPeriod != null &&
+if (_selectedPeriod != null &&
                 _periodData.containsKey(_selectedPeriod)) {
               _students = _periodData[_selectedPeriod]?['Students'] ?? [];
             } else {
@@ -142,24 +134,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     setState(() {
       _selectedPeriod = period;
     });
-
-    // Fetch data for the selected period
-    _fetchAttendanceData(_selectedDateText);
+ _fetchAttendanceData(_selectedDateText);
   }
-
   void _toggleAttendance(int index) {
     setState(() {
       final student = _filteredStudents[index];
       student['Attendance'] = student['Attendance'] == 1 ? 0 : 1;
-
-      // Update _students directly if needed
       final originalIndex = _students.indexOf(student);
       if (originalIndex != -1) {
         _students[originalIndex] = student;
       }
     });
   }
-
   List<PieChartSectionData> _createChartData() {
     int presentCount =
         _filteredStudents.where((student) => student['Attendance'] == 1).length;
@@ -184,15 +170,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     return sections;
   }
-
   void _showPreviewDialog() {
-    // Count present and absent students
     final int totalStudents = _filteredStudents.length;
     final int presentCount = _filteredStudents.where((student) => student['Attendance'] == 1).length;
     final int absentCount = totalStudents - presentCount;
     final double presentPercentage = totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
     final double absentPercentage = totalStudents > 0 ? (absentCount / totalStudents) * 100 : 0;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -249,14 +232,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              student['StudentName'],
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Handle overflow
+                          Text(
+                            student['HallticketNumber'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
@@ -293,14 +273,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              student['StudentName'],
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Handle overflow
+                          Text(
+                            student['HallticketNumber'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
@@ -361,9 +338,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       },
     );
   }
-
-
-  Future<void> _saveAttendance() async {
+Future<void> _saveAttendance() async {
     final String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveFacultyWiseAttendance';
 
@@ -382,8 +357,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         "Attended": student['Attendance'] == 1 ? 1 : 2,
       };
     }).toList();
-
-    final Map<String, dynamic> requestBody = {
+ final Map<String, dynamic> requestBody = {
       "GrpCode": "bees",
       "ColCode": "0001",
       "CollegeId": "1",
@@ -392,8 +366,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       "UserId": "1",
       "SaveFacultyWiseAttendenceTableVariable": studentsList,
     };
-
-    print('Request Body: ${jsonEncode(requestBody)}');
+ print('Request Body: ${jsonEncode(requestBody)}');
 
     try {
       final response = await http.post(
@@ -429,32 +402,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       fontSize: 16.0, // Font size
     );
   }
-
-  void _setAllPresent() {
+ void _setAllPresent() {
     setState(() {
       for (var student in _filteredStudents) {
         student['Attendance'] = 1 ?? ''; // Set attendance to present
       }
     });
   }
-
-  void _setAllAbsent() {
+ void _setAllAbsent() {
     setState(() {
       for (var student in _filteredStudents) {
         student['Attendance'] = 2 ?? ''; // Set attendance to absent
       }
     });
   }
-
-  @override
+@override
   Widget build(BuildContext context) {
     int presentCount =
         _filteredStudents.where((student) => student['Attendance'] == 1).length;
     int absentCount = _filteredStudents.length - presentCount;
-
-    // Safely access the 'Posted' field and provide a default value if null
-
-    return
+return
       Scaffold(
         appBar: AppBar(
           title: Text('Attendance Screen'),
@@ -790,6 +757,5 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         )
             : null,
       );
-
   }
 }

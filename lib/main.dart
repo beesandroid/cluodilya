@@ -57,7 +57,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Navigate to login page after a delay
     Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('LeaveApplication');
+      Get.offNamed('dashboard');
     });
 
     return Scaffold(
