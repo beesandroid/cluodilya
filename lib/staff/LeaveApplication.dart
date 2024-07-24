@@ -297,9 +297,9 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       "AttachFile": " ",
       "Reason": _reasonController.text,
       "LeaveApplicationSaveTablevariable":
-          _leaveApplications.map((application) {
+      _leaveApplications.map((application) {
         return {
-          "AbsenceType": application['AbsenceType'],
+          "AbsenceId": application['leaveId'],
           "FromDate": application['FromDate'],
           "ToDate": application['ToDate'],
           "LeaveDuration": application['LeaveDuration'],
@@ -324,9 +324,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       print(response.body.toString());
       Map<String, dynamic> parsedResponse = json.decode(response.body);
 
-      // Check for the specific message in the response
-      if (parsedResponse['message'] ==
-          "Dates Overlapped Check Once With Existed Records") {
+      // Check for specific messages in the response
+      if (parsedResponse['message'] == "Dates Overlapped Check Once With Existed Records") {
         Fluttertoast.showToast(
           msg: "Dates overlapped with existing records. Please review.",
           toastLength: Toast.LENGTH_LONG,
@@ -335,12 +334,21 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
+      } else if (parsedResponse['message'] == "You are trying to apply for more leave days than your available balance/usage allows") {
+        Fluttertoast.showToast(
+          msg: "You are trying to apply for more leave days than your available balance allows.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
       } else {
         setState(() {
           datesList =
-              List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
+          List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
           periodsList =
-              List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
+          List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
           facultyList = List<Map<String, dynamic>>.from(
               parsedResponse['facultyDropdownList']);
           programWiseDisplayList = List<Map<String, dynamic>>.from(
@@ -361,6 +369,27 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
         fontSize: 16.0,
       );
     }
+  }
+
+
+  void _showOverlapDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Dates Overlapped Check Once'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _applyLeave() async {
@@ -391,7 +420,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
         };
       }).toList(),
       "LeaveApplicationSaveTablevariable":
-          _leaveApplications.map((application) {
+      _leaveApplications.map((application) {
         return {
           "AbsenceId": application['leaveId'], // Directly use the leaveId
           "FromDate": application['FromDate'],
@@ -418,7 +447,14 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       if (responseData['message'] == 'Dates Overlapped Check Once') {
         _showOverlapDialog();
       } else if (responseData['message'] == 'Record is Successfully Saved') {
-        _showSuccessDialog();
+        var application = responseData['multiList'][0];
+        _showSuccessDialog(
+          absenceName: application['absenceName'],
+          fromDate: application['fromDate'],
+          toDate: application['toDate'],
+          applicationDate: application['applicationDate'],
+          applicationId: application['applicationId'],
+        );
       } else {
         _showErrorDialog('${responseData['message']}');
       }
@@ -428,37 +464,39 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
   }
 
-  void _showOverlapDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text('Dates Overlapped Check Once'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog() {
+  void _showSuccessDialog({
+    required String absenceName,
+    required String fromDate,
+    required String toDate,
+    required String applicationDate,
+    required int applicationId,
+  }) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Success'),
-          content: Text('Record is Successfully Saved'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Record is Successfully Saved'),
+              SizedBox(height: 8.0),
+              Text('Absence Name: $absenceName'),
+              Text('From Date: $fromDate'),
+              Text('To Date: $toDate'),
+              Text('Application Date: $applicationDate'),
+              Text('Application ID: $applicationId'),
+            ],
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
+                Navigator.of(context).pop(); // Dismiss the dialog first
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => LeaveApplicationScreen()),
+                ); // Reload the screen
               },
               child: Text('OK'),
             ),
@@ -467,6 +505,14 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       },
     );
   }
+  void _removeLeaveApplication(int index) {
+    setState(() {
+      _leaveApplications.removeAt(index);
+    });
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -726,7 +772,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                       ),
                     ),
                     margin: EdgeInsets.symmetric(vertical: 8.0),
-                    child: ListTile(
+                    child:
+                    ListTile(
                       title: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -738,8 +785,9 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                                   fontWeight: FontWeight.bold),
                               children: [
                                 TextSpan(
-                                    text: '${application['leaveId']}',
-                                    style: TextStyle(fontWeight: FontWeight.normal)),
+                                  text: '${application['leaveId']}',
+                                  style: TextStyle(fontWeight: FontWeight.normal),
+                                ),
                               ],
                             ),
                           ),
@@ -751,15 +799,24 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                           style: TextStyle(color: Colors.blueGrey),
                           children: [
                             TextSpan(
-                                text: 'Duration: ${application['LeaveDuration']} days\n',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
+                              text: 'Duration: ${application['LeaveDuration']} days\n',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                             TextSpan(
-                                text: 'Reason: ${application['Reason']}',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                              text: 'Reason: ${application['Reason']}',
+                              style: TextStyle(fontWeight: FontWeight.normal),
+                            ),
                           ],
                         ),
                       ),
-                    ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _removeLeaveApplication(index);
+
+                        },
+                      ),
+                    )
                   ),
                 );
               },

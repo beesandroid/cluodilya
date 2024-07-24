@@ -720,31 +720,34 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                         ),
                                       ],
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                    child:
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                student['HallticketNumber'] ??
-                                                    '',
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              Text(
-                                                student['StudentName'],
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
+                                              if (student['HallticketNumber'] != null && student['HallticketNumber'].isNotEmpty) ...[
+                                                Text(
+                                                  student['HallticketNumber'] ?? '',
+                                                  style: TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w500,
-                                                    color: Colors.grey),
-                                              ),
+                                                  ),
+                                                ),
+                                              ],
+                                              if (student['StudentName'] != null && student['StudentName'].isNotEmpty) ...[
+                                                Text(
+                                                  student['StudentName'] ?? '',
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ),
@@ -752,29 +755,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                           onTap: () => _toggleAttendance(index),
                                           child: Container(
                                             padding: EdgeInsets.symmetric(
-                                                vertical: 8.0,
-                                                horizontal: 16.0),
+                                              vertical: 8.0,
+                                              horizontal: 16.0,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: isPresent
-                                                  ? Colors.green
-                                                      .withOpacity(0.2)
+                                                  ? Colors.green.withOpacity(0.2)
                                                   : Colors.red.withOpacity(0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(12.0),
+                                              borderRadius: BorderRadius.circular(12.0),
                                             ),
                                             child: Text(
                                               isPresent ? 'Present' : 'Absent',
                                               style: TextStyle(
-                                                color: isPresent
-                                                    ? Colors.green
-                                                    : Colors.red,
+                                                color: isPresent ? Colors.green : Colors.red,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
                                         ),
                                       ],
-                                    ),
+                                    )
+
                                   );
                                 },
                               ),
@@ -987,7 +988,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           int.tryParse(_selectedPeriod!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
       return {
-        "Period": periodNumber,
+        "Period": periodNumber.toString(),
         "TopicId": topic['topicId'].toString(),
       };
     }).toList();
