@@ -25,9 +25,11 @@ class LeaveService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      print('API Response: $data'); // Log the entire response to inspect the structure
       return data['employeeLeavesDisplayList'] as List<dynamic>;
     } else {
       throw Exception('Failed to load leave types');
     }
   }
+
 }

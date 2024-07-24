@@ -156,7 +156,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       "ColCode": "0001",
       "EmployeeId": "1088",
       "Period": "4",
-      "Date": formattedDate
+      "Date": "2024-07-01"
     };
     print("Request Body: ${requestBody.toString()}");
 
@@ -185,18 +185,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             _topics = fetchedTopics;
           });
 
-          print('Fetched Topics: $_topics');
+          print('sssssssssFetched Topics: $_topics');
         } else {
-          print('No topic data available');
+          print('sssssssssNo topic data available');
         }
       } else {
-        print('Failed to load data, status code: ${response.statusCode}');
+        print('ssssssssssssssssFailed to load data, status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      print('sssssssssError: $e');
     }
-  }
-  Future<void> _saveAttendance() async {
+  }  Future<void> _saveAttendance() async {
     final String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveFacultyWiseAttendance';
 

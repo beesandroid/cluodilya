@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +15,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
   List<Map<String, dynamic>> programWiseDisplayList = [];
   List<Map<String, dynamic>> facultyDropdownList = [];
   List<dynamic> _leaveTypes = [];
+  List<Map<String, dynamic>> _addedFacultyList = [];
   dynamic _selectedLeaveType;
   TextEditingController _reasonController = TextEditingController();
   DateTime? _fromDate;
@@ -26,11 +26,9 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
   String? _selectedDate;
   int? _selectedPeriod;
   String? _selectedFaculty;
-
   List<Map<String, dynamic>> datesList = [];
   List<Map<String, dynamic>> periodsList = [];
-  List<Map<String, dynamic>> facultyList =
-      []; // List to store leave applications
+  List<Map<String, dynamic>> facultyList = [];
 
   @override
   void initState() {
@@ -53,7 +51,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != _fromDate) {
@@ -141,6 +139,43 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
   }
 
+  void _addFaculty() {
+    if (_selectedDate != null &&
+        _selectedPeriod != null &&
+        _selectedFaculty != null) {
+      // Find the selected faculty
+      final selectedFaculty = facultyList.firstWhere((faculty) =>
+          faculty['date'] == _selectedDate &&
+          faculty['period'] == _selectedPeriod &&
+          faculty['freeFacultyName'] == _selectedFaculty);
+
+      // Find the corresponding program details for the selected date and period
+      final programDetails = programWiseDisplayList.firstWhere(
+          (program) =>
+              program['dates'] == _selectedDate &&
+              program['period'] == _selectedPeriod,
+          orElse: () => {
+                'startTime': 'N/A',
+                'endTime': 'N/A',
+              });
+
+      setState(() {
+        _addedFacultyList.add({
+          'date': _selectedDate,
+          'period': _selectedPeriod,
+          'faculty': _selectedFaculty,
+          'freeFaculty': selectedFaculty['freeFaculty'],
+          'startTime': programDetails['startTime'],
+          'endTime': programDetails['endTime'],
+        });
+        // Clear selections
+        _selectedDate = null;
+        _selectedPeriod = null;
+        _selectedFaculty = null;
+      });
+    }
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -180,7 +215,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     if (_isFormValid()) {
       bool canAdd = true;
       for (var application in _leaveApplications) {
-        if (application['AbsenceType'] == _selectedLeaveType['absenceType']) {
+        if (application['leaveId'] == _selectedLeaveType!['leaveId']) {
           canAdd = false;
           _showErrorDialog('The same type of leave cannot be selected twice.');
           break;
@@ -204,11 +239,15 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       }
       if (canAdd) {
         final leaveApplication = {
-          'AbsenceType': _selectedLeaveType['absenceType'],
+          'leaveId': _selectedLeaveType!['leaveId'], // Include leaveId
+          'AbsenceType': _selectedLeaveType!['absenceTypeName'],
           'FromDate': DateFormat('yyyy-MM-dd').format(_fromDate!),
           'ToDate': DateFormat('yyyy-MM-dd').format(_toDate!),
           'LeaveDuration': _calculateSelectedDays(),
           'Reason': _reasonController.text,
+          'AccrualPeriodName': _selectedLeaveType!['accrualPeriodName'],
+          'Accrued': _selectedLeaveType!['accrued'],
+          'Balance': _selectedLeaveType!['balance'],
         };
         setState(() {
           _leaveApplications.add(leaveApplication);
@@ -216,7 +255,6 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
           _reasonController.clear();
           _fromDate = null;
           _toDate = null;
-          _leaveDuration = null;
         });
       }
     }
@@ -233,7 +271,8 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       "UserId": 759,
       "AttachFile": " ",
       "Reason": _reasonController.text,
-      "LeaveApplicationSaveTablevariable": _leaveApplications.map((application) {
+      "LeaveApplicationSaveTablevariable":
+          _leaveApplications.map((application) {
         return {
           "AbsenceType": application['AbsenceType'],
           "FromDate": application['FromDate'],
@@ -245,59 +284,164 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       }).toList(),
     };
 
-    try {
-      final response = await http.post(
-        Uri.parse(
-            'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer YOUR_ACCESS_TOKEN', // Add authorization if required
-        },
-        body: json.encode(requestBody),
-      );
+    print(requestBody);
 
-      if (response.statusCode == 200) {
-        final parsedResponse = json.decode(response.body);
-        setState(() {
-          datesList = List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
-          periodsList = List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
-          facultyList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']);
-          programWiseDisplayList = List<Map<String, dynamic>>.from(parsedResponse['programWiseDisplayList']);
-          facultyDropdownList = List<Map<String, dynamic>>.from(parsedResponse['facultyDropdownList']);
-        });
+    final response = await http.post(
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplication'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(requestBody),
+    );
 
-        // Call the success dialog or next steps here
-        _showSuccessDialog();
+    if (response.statusCode == 200) {
+      print(response.body.toString());
+      Map<String, dynamic> parsedResponse = json.decode(response.body);
 
-        print('Leave application submitted successfully');
-      } else {
-        // Handle the response error here
-        print('Failed to submit leave application: ${response.statusCode}');
+      // Check for the specific message in the response
+      if (parsedResponse['message'] ==
+          "Dates Overlapped Check Once With Existed Records") {
         Fluttertoast.showToast(
-            msg: "Failed to submit leave application.",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
-        );
-      }
-    } catch (e) {
-      // Handle any exceptions or errors here
-      print('Error: $e');
-      Fluttertoast.showToast(
-          msg: "An error occurred while submitting leave application.",
+          msg: "Dates overlapped with existing records. Please review.",
           toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
+          gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.red,
           textColor: Colors.white,
-          fontSize: 16.0
+          fontSize: 16.0,
+        );
+      } else {
+        setState(() {
+          datesList =
+              List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
+          periodsList =
+              List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
+          facultyList = List<Map<String, dynamic>>.from(
+              parsedResponse['facultyDropdownList']);
+          programWiseDisplayList = List<Map<String, dynamic>>.from(
+              parsedResponse['programWiseDisplayList']); // Store the list
+          facultyDropdownList = List<Map<String, dynamic>>.from(
+              parsedResponse['facultyDropdownList']); // Store the list
+        });
+        print('Leave application submitted successfully');
+      }
+    } else {
+      print('Failed to submit leave application');
+      Fluttertoast.showToast(
+        msg: "Failed to submit leave application.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }
 
+  void _applyLeave() async {
+    var dateFormat = DateFormat('yyyy-MM-dd'); // Define the output date format
+    var inputDateFormat = DateFormat('dd-MM-yyyy');
+    var payload = {
+      "GrpCode": "Bees",
+      "CollegeId": "1",
+      "ColCode": "0001",
+      "EmployeeId": "2",
+      "ApplicationId": "0",
+      "Flag": "CREATE",
+      "UserId": "1",
+      "AttachFile": "",
+      "Reason": _reasonController.text,
+      "SaveLeaveApplicationEmployee": _addedFacultyList.map((faculty) {
+        DateTime parsedDate = inputDateFormat.parse(faculty['date']);
+        String formattedDate = dateFormat.format(parsedDate);
+        return {
+          "ApplicationId": 0,
+          "AdjustmentId": "0",
+          "StartTime": faculty['startTime'],
+          "EndTime": faculty['endTime'],
+          "Periods": faculty['period'],
+          "Date": formattedDate,
+          "Faculty": "2",
+          "FreeFaculty": faculty['freeFaculty']
+        };
+      }).toList(),
+      "LeaveApplicationSaveTablevariable":
+          _leaveApplications.map((application) {
+        return {
+          "AbsenceId": application['leaveId'], // Directly use the leaveId
+          "FromDate": application['FromDate'],
+          "ToDate": application['ToDate'],
+          "LeaveDuration": application['LeaveDuration'],
+          "Reason": application['Reason'],
+          "AttachFile": ""
+        };
+      }).toList()
+    };
+
+    print('Request payload: ${json.encode(payload)}');
+
+    var response = await http.post(
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/EmployeeLeaveApplicationSave'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      var responseData = json.decode(response.body);
+      print(responseData);
+      if (responseData['message'] == 'Dates Overlapped Check Once') {
+        _showOverlapDialog();
+      } else if (responseData['message'] == 'Record is Successfully Saved') {
+        _showSuccessDialog();
+      } else {
+        _showErrorDialog('Unexpected response: ${responseData['message']}');
+      }
+    } else {
+      _showErrorDialog(
+          'Failed to submit leave application: ${response.statusCode}');
+    }
+  }
+
+  void _showOverlapDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Dates Overlapped Check Once'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text('Record is Successfully Saved'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,217 +455,400 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DropdownButtonFormField<dynamic>(
-              decoration: InputDecoration(
-                labelText: 'Select Leave Type',
-                labelStyle: TextStyle(color: Colors.blueGrey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          DropdownButtonFormField<dynamic>(
+            decoration: InputDecoration(
+              labelText: 'Select Leave Type',
+              labelStyle: TextStyle(color: Colors.blueGrey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              items: _leaveTypes.map((leave) {
-                return DropdownMenuItem<dynamic>(
-                  value: leave,
-                  child: Text(leave['absenceName']),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedLeaveType = value;
-                });
-              },
-              value: _selectedLeaveType,
+              filled: true,
+              fillColor: Colors.white,
             ),
-            if (_selectedLeaveType != null) ...[
-              SizedBox(height: 16.0),
-              RichText(
-                text: TextSpan(
-                  text: 'Leave ID: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['leaveId']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Accrual Period: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['accrualPeriodName']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Accrued: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['accrued']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Absence Type: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['absenceTypeName']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Accrual Period: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['accrualPeriod']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Balance: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '${_selectedLeaveType!['balance']}',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: 16.0),
-            TextField(
-              controller: _reasonController,
-              decoration: InputDecoration(
-                labelText: 'Reason for Leave',
-                labelStyle: TextStyle(color: Colors.blueGrey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
-            SizedBox(height: 16.0),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _fromDate == null
-                        ? 'Select From Date'
-                        : DateFormat.yMd().format(_fromDate!),
-                    style: TextStyle(color: Colors.blueGrey),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => _selectFromDate(context),
-                  child: Text(
-                    'From Date',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.0),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _toDate == null
-                        ? 'Select To Date'
-                        : DateFormat.yMd().format(_toDate!),
-                    style: TextStyle(color: Colors.blueGrey),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => _selectToDate(context),
-                  child: Text(
-                    'To Date',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
-                  ),
-                ),
-              ],
-            ),
-            if (_fromDate != null &&
-                _toDate != null &&
-                _fromDate == _toDate &&
-                _leaveDuration != null) ...[
-              SizedBox(height: 16.0),
-              RichText(
-                text: TextSpan(
-                  text: 'Leave Duration: ',
-                  style: TextStyle(
-                      color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: '$_leaveDuration',
-                        style: TextStyle(fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-            ],
+            items: _leaveTypes.map((leave) {
+              return DropdownMenuItem<dynamic>(
+                value: leave,
+                child: Text(leave['absenceName']),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedLeaveType = value;
+              });
+            },
+            value: _selectedLeaveType,
+          ),
+          if (_selectedLeaveType != null) ...[
             SizedBox(height: 16.0),
             RichText(
               text: TextSpan(
-                text: 'Selected Days: ',
+                text: 'Leave ID: ',
                 style: TextStyle(
                     color: Colors.blueGrey, fontWeight: FontWeight.bold),
                 children: [
                   TextSpan(
-                      text: '${_calculateSelectedDays()}',
+                      text: '${_selectedLeaveType!['leaveId']}',
                       style: TextStyle(fontWeight: FontWeight.normal)),
                 ],
               ),
             ),
+            RichText(
+              text: TextSpan(
+                text: 'Accrual Period: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '${_selectedLeaveType!['accrualPeriodName']}',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                text: 'Accrued: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '${_selectedLeaveType!['accrued']}',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                text: 'Absence Type: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '${_selectedLeaveType!['absenceTypeName']}',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                text: 'Accrual Period: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '${_selectedLeaveType!['accrualPeriod']}',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                text: 'Balance: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '${_selectedLeaveType!['balance']}',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+          ],
+          SizedBox(height: 16.0),
+          TextField(
+            controller: _reasonController,
+            decoration: InputDecoration(
+              labelText: 'Reason for Leave',
+              labelStyle: TextStyle(color: Colors.blueGrey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _fromDate == null
+                      ? 'Select From Date'
+                      : DateFormat.yMd().format(_fromDate!),
+                  style: TextStyle(color: Colors.blueGrey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => _selectFromDate(context),
+                child: Text(
+                  'From Date',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 5,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _toDate == null
+                      ? 'Select To Date'
+                      : DateFormat.yMd().format(_toDate!),
+                  style: TextStyle(color: Colors.blueGrey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => _selectToDate(context),
+                child: Text(
+                  'To Date',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 5,
+                ),
+              ),
+            ],
+          ),
+          if (_fromDate != null &&
+              _toDate != null &&
+              _fromDate == _toDate &&
+              _leaveDuration != null) ...[
             SizedBox(height: 16.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            RichText(
+              text: TextSpan(
+                text: 'Leave Duration: ',
+                style: TextStyle(
+                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: '$_leaveDuration',
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+          ],
+          SizedBox(height: 16.0),
+          RichText(
+            text: TextSpan(
+              text: 'Selected Days: ',
+              style: TextStyle(
+                  color: Colors.blueGrey, fontWeight: FontWeight.bold),
               children: [
-                Container(
-                  width: 220,
-                  child: ElevatedButton(
-                    onPressed: _isFormValid() ? _addLeaveApplication : null,
-                    child: Text('Add', style: TextStyle(color: Colors.white)),
+                TextSpan(
+                    text: '${_calculateSelectedDays()}',
+                    style: TextStyle(fontWeight: FontWeight.normal)),
+              ],
+            ),
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 220,
+                child: ElevatedButton(
+                  onPressed: _isFormValid() ? _addLeaveApplication : null,
+                  child: Text('Add', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.0),
+          if (_leaveApplications.isNotEmpty) ...[
+            Text('Leave Applications:',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: _leaveApplications.length,
+              itemBuilder: (context, index) {
+                final application = _leaveApplications[index];
+                print('Application Data: $application');
+                print('Leave ID: ${application['leaveId']}');
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  elevation: 4,
+                  child: ListTile(
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            text: 'Absence Type: ',
+                            style: TextStyle(
+                                color: Colors.blueGrey,
+                                fontWeight: FontWeight.bold),
+                            children: [
+                              TextSpan(
+                                  text: '${application['leaveId']}',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.normal)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: RichText(
+                      text: TextSpan(
+                        text:
+                            'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
+                        style: TextStyle(color: Colors.blueGrey),
+                        children: [
+                          TextSpan(
+                              text:
+                                  'Duration: ${application['LeaveDuration']} days\n',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          TextSpan(
+                              text: 'Reason: ${application['Reason']}',
+                              style: TextStyle(fontWeight: FontWeight.normal)),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 250,
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: _continueWithAdjustment,
+                      child: Text("Continue with adjustment",
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16.0),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Select Date',
+                labelStyle: TextStyle(color: Colors.blueGrey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              value: _selectedDate,
+              items: datesList.map((date) {
+                return DropdownMenuItem<String>(
+                  value: date['date'],
+                  child: Text(date['date']),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedDate = newValue;
+                  _selectedPeriod = null; // Reset the selected period
+                  _selectedFaculty = null; // Reset the selected faculty
+                });
+              },
+            ),
+            SizedBox(height: 16.0),
+            if (_selectedDate != null) ...[
+              DropdownButtonFormField<int>(
+                decoration: InputDecoration(
+                  labelText: 'Select Period',
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                value: _selectedPeriod,
+                items: periodsList
+                    .where((period) => period['date'] == _selectedDate)
+                    .map((period) {
+                  return DropdownMenuItem<int>(
+                    value: period['period'],
+                    child: Text('Period ${period['period']}'),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedPeriod = newValue;
+                    _selectedFaculty = null; // Reset the selected faculty
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              if (_selectedPeriod != null) ...[
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Select Faculty',
+                    labelStyle: TextStyle(color: Colors.blueGrey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  value: _selectedFaculty,
+                  items: facultyList
+                      .where((faculty) =>
+                          faculty['date'] == _selectedDate &&
+                          faculty['period'] == _selectedPeriod)
+                      .map((faculty) {
+                    return DropdownMenuItem<String>(
+                      value: faculty['freeFacultyName'],
+                      child: Text(faculty['freeFacultyName']),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedFaculty = newValue;
+                    });
+                  },
+                ),
+              ],
+            ],
+            if (_selectedDate != null &&
+                _selectedPeriod != null &&
+                _selectedFaculty != null) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _addFaculty,
+                    child: Text('Add Faculty',
+                        style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(
@@ -530,32 +857,32 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                       elevation: 5,
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             SizedBox(height: 16.0),
-            if (_leaveApplications.isNotEmpty) ...[
-              Text('Leave Applications:',
+            if (_addedFacultyList.isNotEmpty) ...[
+              Text('Added Faculty:',
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: Colors.blueGrey)),
               ListView.builder(
                 shrinkWrap: true,
-                itemCount: _leaveApplications.length,
+                itemCount: _addedFacultyList.length,
                 itemBuilder: (context, index) {
-                  final application = _leaveApplications[index];
+                  final faculty = _addedFacultyList[index];
                   return Card(
                     margin: EdgeInsets.symmetric(vertical: 8.0),
                     elevation: 4,
                     child: ListTile(
                       title: RichText(
                         text: TextSpan(
-                          text: 'AbsenceType: ',
+                          text: 'Date: ',
                           style: TextStyle(
                               color: Colors.blueGrey,
                               fontWeight: FontWeight.bold),
                           children: [
                             TextSpan(
-                                text: '${application['AbsenceType']}',
+                                text: '${faculty['date']}',
                                 style:
                                     TextStyle(fontWeight: FontWeight.normal)),
                           ],
@@ -563,16 +890,24 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                       ),
                       subtitle: RichText(
                         text: TextSpan(
-                          text:
-                              'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
+                          text: 'Period: ${faculty['period']}\n',
                           style: TextStyle(color: Colors.blueGrey),
                           children: [
                             TextSpan(
-                                text:
-                                    'Duration: ${application['LeaveDuration']} days\n',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
+                                text: 'Faculty: ${faculty['faculty']}\n',
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                                text: 'Reason: ${application['Reason']}',
+                                text:
+                                    'Free Faculty: ${faculty['freeFaculty']}\n',
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
+                            TextSpan(
+                                text: 'Start Time: ${faculty['startTime']}\n',
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
+                            TextSpan(
+                                text: 'End Time: ${faculty['endTime']}',
                                 style:
                                     TextStyle(fontWeight: FontWeight.normal)),
                           ],
@@ -582,93 +917,17 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                   );
                 },
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 18.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 250,
-                      height: 45,
-                      child: ElevatedButton(
-                        onPressed: _continueWithAdjustment,
-                        child: Text(
-                          "Continue with adjustment",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-
-
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _applyLeave
+                // Handle apply button press
+                ,
+                child: Text('Apply'),
+              ),
             ],
           ],
-        ),
+        ]),
       ),
-    );
-  }
-
-
-  void _showFacultySelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Select Free Faculty'),
-          content: Container(
-            width: double.minPositive,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: facultyDropdownList.length,
-              itemBuilder: (context, index) {
-                final faculty = facultyDropdownList[index];
-                return ListTile(
-                  title: Text(faculty['freeFacultyName']),
-                  subtitle: Text(faculty['freeFacultyEmail']),
-                  onTap: () {
-                    setState(() {
-                      _selectedFaculty = faculty['freeFacultyName'];
-                    });
-                    Navigator.of(context).pop();
-
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Success'),
-          content: Text('Leave applied successfully!'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pop(); // Pop the leave application screen
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }
