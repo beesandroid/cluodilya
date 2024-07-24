@@ -68,7 +68,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != _toDate) {
@@ -420,7 +420,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       } else if (responseData['message'] == 'Record is Successfully Saved') {
         _showSuccessDialog();
       } else {
-        _showErrorDialog('Unexpected response: ${responseData['message']}');
+        _showErrorDialog('${responseData['message']}');
       }
     } else {
       _showErrorDialog(
@@ -684,7 +684,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
+              Container(color: Colors.white,
                 width: 220,
                 child: ElevatedButton(
                   onPressed: _isFormValid() ? _addLeaveApplication : null,
@@ -712,49 +712,60 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                 final application = _leaveApplications[index];
                 print('Application Data: $application');
                 print('Leave ID: ${application['leaveId']}');
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                return Material(
                   elevation: 4,
-                  child: ListTile(
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            text: 'Absence Type: ',
-                            style: TextStyle(
-                                color: Colors.blueGrey,
-                                fontWeight: FontWeight.bold),
-                            children: [
-                              TextSpan(
-                                  text: '${application['leaveId']}',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.normal)),
-                            ],
-                          ),
-                        ),
-                      ],
+                  shadowColor: Colors.black.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Set background color to white
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(
+                        color: Colors.black, // Set border color to black
+                        width: 1.0, // Set border width
+                      ),
                     ),
-                    subtitle: RichText(
-                      text: TextSpan(
-                        text:
-                            'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
-                        style: TextStyle(color: Colors.blueGrey),
+                    margin: EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                              text:
-                                  'Duration: ${application['LeaveDuration']} days\n',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(
-                              text: 'Reason: ${application['Reason']}',
-                              style: TextStyle(fontWeight: FontWeight.normal)),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Absence Type: ',
+                              style: TextStyle(
+                                  color: Colors.blueGrey,
+                                  fontWeight: FontWeight.bold),
+                              children: [
+                                TextSpan(
+                                    text: '${application['leaveId']}',
+                                    style: TextStyle(fontWeight: FontWeight.normal)),
+                              ],
+                            ),
+                          ),
                         ],
+                      ),
+                      subtitle: RichText(
+                        text: TextSpan(
+                          text: 'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
+                          style: TextStyle(color: Colors.blueGrey),
+                          children: [
+                            TextSpan(
+                                text: 'Duration: ${application['LeaveDuration']} days\n',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(
+                                text: 'Reason: ${application['Reason']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 );
               },
-            ),
+            )
+
+            ,
             Padding(
               padding: const EdgeInsets.only(bottom: 18.0),
               child: Row(

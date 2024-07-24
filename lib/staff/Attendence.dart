@@ -21,8 +21,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _selectedPeriod;
   final TextEditingController _searchController = TextEditingController();
   String _selectedDateText = 'Pick a date';
-  List<String> _topics = []; // To store the list of topics
-  List<String> _selectedTopics = [];
+
+  List<Map<String, dynamic>> _topics = [];
+  List<Map<String, dynamic>> _selectedTopics = [];
 
   @override
   void initState() {
@@ -57,202 +58,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       String formattedDate = _selectedDateText;
       await _fetchAttendanceData(
           _selectedDateText); // Fetch data with default period value '0'
-    }
-  }
-
-  Future<void> _fetchAttendanceData(String formattedDate) async {
-    final String url =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
-
-    final Map<String, dynamic> requestBody = {
-      "GrpCode": "Bees",
-      "ColCode": "0001",
-      "Date": formattedDate,
-      "ProgramId": "0",
-      "BranchId": "0",
-      "SemId": "0",
-      "SectionId": "0",
-      "EmployeeId": "1088",
-      "Perioddisplay": "0",
-      "Flag": "FacultyWise"
-    };
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print(
-            'Response data: $data'); // Print entire response data for debugging
-
-        if (data['FacultyDailyAttendanceDisplayList'] != null &&
-            data['FacultyDailyAttendanceDisplayList'].isNotEmpty) {
-          final attendanceList = data['FacultyDailyAttendanceDisplayList'];
-
-          // Print the outer level Posted field
-          if (attendanceList[0] != null &&
-              attendanceList[0]['Posted'] != null) {
-            print('Outer Posted: ${attendanceList[0]['Posted']}');
-          } else {
-            print('Outer Posted field not found');
-          }
-
-          final periods = attendanceList[0]['Periods'] as Map<String, dynamic>;
-
-          // Print the Posted field for each period
-          periods.forEach((key, value) {
-            if (value['Posted'] != null) {
-              print('Period $key Posted: ${value['Posted']}');
-            } else {
-              print('Period $key Posted field not found');
-            }
-          });
-
-          setState(() {
-            _periods = periods.keys.toList();
-            _periodData = periods;
-            if (_selectedPeriod != null &&
-                _periodData.containsKey(_selectedPeriod)) {
-              _students = _periodData[_selectedPeriod]?['Students'] ?? [];
-            } else {
-              _students = [];
-            }
-            _filteredStudents = _students;
-          });
-        } else {
-          print('No attendance data available');
-        }
-      } else {
-        print('Failed to load data, status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
-
-  int getPeriodNumber(String selectedPeriod) {
-    final RegExp periodRegExp = RegExp(r'period(\d+)');
-    final match = periodRegExp.firstMatch(selectedPeriod);
-
-    if (match != null && match.groupCount > 0) {
-      return int.parse(match.group(1)!);
-    } else {
-      throw ArgumentError('Invalid period format');
-    }
-  }
-
-  Future<void> _fetchAndPrintTopics(String formattedDate) async {
-    final String url =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/TopicDropDown';
-
-    final Map<String, dynamic> requestBody = {
-      "GrpCode": "Bees",
-      "ColCode": "0001",
-      "EmployeeId": "1088",
-      "Period": "4",
-      "Date": "2024-07-01"
-    };
-    print("Request Body: ${requestBody.toString()}");
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('Response data: $data');
-
-        if (data['topicDropDownList'] != null &&
-            data['topicDropDownList'].isNotEmpty) {
-          final topicList = data['topicDropDownList'] as List<dynamic>;
-          final fetchedTopics = topicList
-              .map((topic) => topic['topicName'] as String? ?? '')
-              .where((name) => name.isNotEmpty)
-              .toList();
-
-          setState(() {
-            _topics = fetchedTopics;
-          });
-
-          print('sssssssssFetched Topics: $_topics');
-        } else {
-          print('sssssssssNo topic data available');
-        }
-      } else {
-        print(
-            'ssssssssssssssssFailed to load data, status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('sssssssssError: $e');
-    }
-  }
-
-  Future<void> _saveAttendance() async {
-    final String url =
-        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveFacultyWiseAttendance';
-
-    String formattedDate = '${_selectedDate.toLocal()}'.split(' ')[0];
-
-    List<Map<String, dynamic>> studentsList = _filteredStudents.map((student) {
-      return {
-        "AttId": student['AttdId'] ?? '',
-        "ProgramId": student['ProgramId'] ?? '',
-        "BranchId": student['BranchId'] ?? '',
-        "SemId": student['SemId'] ?? '',
-        "SectionId": student['SectionId'] ?? '',
-        "CourseId": student['CourseId'] ?? '',
-        "Period": student['Period'].toString(),
-        "StudentId": student['StudentId'] ?? '',
-        "Attended": student['Attendance'] == 1 ? 1 : 2,
-      };
-    }).toList();
-
-    final Map<String, dynamic> requestBody = {
-      "GrpCode": "bees",
-      "ColCode": "0001",
-      "CollegeId": "1",
-      "EmployeeId": "1088",
-      "Date": formattedDate,
-      "UserId": "1",
-      "FacultyWiseAttendenceTableVariable": studentsList,
-      "AttendanceTopicTableVariablesListForFaculty": [
-        {"Period": "4", "TopicId": _selectedTopics},
-      ]
-    };
-
-    print('Request Body: ${jsonEncode(requestBody)}');
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      if (response.statusCode == 200) {
-        print('Attendance data saved successfully!');
-        _showToast('Attendance data saved successfully!'); // Show success toast
-      } else {
-        print('Failed to save data: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        _showToast('Failed to save data.'); // Show failure toast
-      }
-    } catch (e) {
-      print('Error: $e');
-      _showToast('An error occurred while saving data.'); // Show error toast
     }
   }
 
@@ -499,14 +304,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       timeInSecForIosWeb: 1,
       backgroundColor: Colors.black,
       textColor: Colors.white,
-      fontSize: 16.0, // Font size
+      fontSize: 16.0,
     );
   }
 
   void _setAllPresent() {
     setState(() {
       for (var student in _filteredStudents) {
-        student['Attendance'] = 1 ?? ''; // Set attendance to present
+        student['Attendance'] = 1 ?? '';
       }
     });
   }
@@ -633,10 +438,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ],
                           ),
-                          child: MultiSelectDialogField<String>(
+                          child: MultiSelectDialogField<Map<String, dynamic>>(
                             items: _topics
                                 .map((topic) =>
-                                    MultiSelectItem<String>(topic, topic))
+                                    MultiSelectItem<Map<String, dynamic>>(
+                                        topic, topic['topicName']))
                                 .toList(),
                             title: Text("Select Topics"),
                             selectedColor: Colors.blue,
@@ -661,7 +467,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             chipDisplay: MultiSelectChipDisplay(
                               items: _selectedTopics
                                   .map((topic) =>
-                                      MultiSelectItem<String>(topic, topic))
+                                      MultiSelectItem<Map<String, dynamic>>(
+                                          topic, topic['topicName']))
                                   .toList(),
                               onTap: (value) {
                                 setState(() {
@@ -766,18 +573,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 8.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Present',
-                                    style: TextStyle(
-                                        color: Colors.green, fontSize: 14.0)),
-                                Text('Absent',
-                                    style: TextStyle(
-                                        color: Colors.red, fontSize: 14.0)),
-                              ],
-                            ),
                           ],
                         );
                       },
@@ -813,7 +608,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 38.0),
+                              padding: const EdgeInsets.only(left: 15.0),
                               child: Text(
                                 'Absent: $absentCount',
                                 style: TextStyle(
@@ -824,7 +619,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 38.0),
+                              padding: const EdgeInsets.only(left: 30.0),
                               child: Text(
                                 _periodData[_selectedPeriod]?['Posted'] ?? '',
                                 style: TextStyle(
@@ -1035,5 +830,203 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             )
           : null,
     );
+  }
+
+  Future<void> _fetchAttendanceData(String formattedDate) async {
+    final String url =
+        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
+
+    final Map<String, dynamic> requestBody = {
+      "GrpCode": "Bees",
+      "ColCode": "0001",
+      "Date": formattedDate,
+      "ProgramId": "0",
+      "BranchId": "0",
+      "SemId": "0",
+      "SectionId": "0",
+      "EmployeeId": "1088",
+      "Perioddisplay": "0",
+      "Flag": "FacultyWise"
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(
+            'Response data: $data'); // Print entire response data for debugging
+
+        if (data['FacultyDailyAttendanceDisplayList'] != null &&
+            data['FacultyDailyAttendanceDisplayList'].isNotEmpty) {
+          final attendanceList = data['FacultyDailyAttendanceDisplayList'];
+
+          // Print the outer level Posted field
+          if (attendanceList[0] != null &&
+              attendanceList[0]['Posted'] != null) {
+            print('Outer Posted: ${attendanceList[0]['Posted']}');
+          } else {
+            print('Outer Posted field not found');
+          }
+
+          final periods = attendanceList[0]['Periods'] as Map<String, dynamic>;
+
+          // Print the Posted field for each period
+          periods.forEach((key, value) {
+            if (value['Posted'] != null) {
+              print('Period $key Posted: ${value['Posted']}');
+            } else {
+              print('Period $key Posted field not found');
+            }
+          });
+
+          setState(() {
+            _periods = periods.keys.toList();
+            _periodData = periods;
+            if (_selectedPeriod != null &&
+                _periodData.containsKey(_selectedPeriod)) {
+              _students = _periodData[_selectedPeriod]?['Students'] ?? [];
+            } else {
+              _students = [];
+            }
+            _filteredStudents = _students;
+          });
+        } else {
+          print('No attendance data available');
+        }
+      } else {
+        print('Failed to load data, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _fetchAndPrintTopics(String formattedDate) async {
+    final periodNumber =
+        int.tryParse(_selectedPeriod!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final String url =
+        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/TopicDropDown';
+
+    final Map<String, dynamic> requestBody = {
+      "GrpCode": "Bees",
+      "ColCode": "0001",
+      "EmployeeId": "1088",
+      "Period": periodNumber,
+      "Date": "2024-07-01"
+    };
+    print("Request Body: ${requestBody.toString()}");
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('Response data: $data');
+
+        if (data['topicDropDownList'] != null &&
+            data['topicDropDownList'].isNotEmpty) {
+          final topicList = data['topicDropDownList'] as List<dynamic>;
+          final fetchedTopics = topicList
+              .map((topic) => {
+                    'topicId': topic['topicId'] as int,
+                    'topicName': topic['topicName'] as String
+                  })
+              .toList();
+
+          setState(() {
+            _topics = fetchedTopics;
+          });
+
+          print('Fetched Topics: $_topics');
+        } else {
+          print('No topic data available');
+        }
+      } else {
+        print('Failed to load data, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _saveAttendance() async {
+    final String url =
+        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveFacultyWiseAttendance';
+
+    String formattedDate = '${_selectedDate.toLocal()}'.split(' ')[0];
+
+    List<Map<String, dynamic>> studentsList = _filteredStudents.map((student) {
+      return {
+        "AttId": student['AttdId'] ?? '',
+        "ProgramId": student['ProgramId'] ?? '',
+        "BranchId": student['BranchId'] ?? '',
+        "SemId": student['SemId'] ?? '',
+        "SectionId": student['SectionId'] ?? '',
+        "CourseId": student['CourseId'] ?? '',
+        "Period": student['Period'].toString(),
+        "StudentId": student['StudentId'] ?? '',
+        "Attended": student['Attendance'] == 1 ? 1 : 2,
+      };
+    }).toList();
+
+    List<Map<String, dynamic>> topicsList = _selectedTopics.map((topic) {
+      final periodNumber =
+          int.tryParse(_selectedPeriod!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+      return {
+        "Period": periodNumber,
+        "TopicId": topic['topicId'].toString(),
+      };
+    }).toList();
+
+    final Map<String, dynamic> requestBody = {
+      "GrpCode": "bees",
+      "ColCode": "0001",
+      "CollegeId": "1",
+      "EmployeeId": "1088",
+      "Date": formattedDate,
+      "UserId": "1",
+      "LoginIpAddress": "",
+      "LoginSystemName": "",
+      "FacultyWiseAttendenceTableVariable": studentsList,
+      "AttendanceTopicTableVariablesListForFaculty": topicsList,
+    };
+
+    print('Request Body: ${jsonEncode(requestBody)}');
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        print('Attendance data saved successfully!');
+        _showToast('Attendance data saved successfully!'); // Show success toast
+      } else {
+        print('Failed to save data: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        _showToast('Failed to save data.'); // Show failure toast
+      }
+    } catch (e) {
+      print('Error: $e');
+      _showToast('An error occurred while saving data.'); // Show error toast
+    }
   }
 }
