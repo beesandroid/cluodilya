@@ -139,40 +139,65 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
   }
 
+  bool _isFacultyDuplicate(Map<String, dynamic> faculty) {
+    return _addedFacultyList.any((existingFaculty) =>
+    existingFaculty['date'] == faculty['date'] &&
+        existingFaculty['period'] == faculty['period'] &&
+        existingFaculty['faculty'] == faculty['faculty'] &&
+        existingFaculty['freeFaculty'] == faculty['freeFaculty'] &&
+        existingFaculty['startTime'] == faculty['startTime'] &&
+        existingFaculty['endTime'] == faculty['endTime']);
+  }
+
   void _addFaculty() {
     if (_selectedDate != null &&
         _selectedPeriod != null &&
         _selectedFaculty != null) {
       // Find the selected faculty
-      final selectedFaculty = facultyList.firstWhere((faculty) =>
+      final selectedFaculty = facultyList.firstWhere(
+              (faculty) =>
           faculty['date'] == _selectedDate &&
-          faculty['period'] == _selectedPeriod &&
-          faculty['freeFacultyName'] == _selectedFaculty);
+              faculty['period'] == _selectedPeriod &&
+              faculty['freeFacultyName'] == _selectedFaculty,
+          orElse: () => {
+            'freeFaculty': 'N/A' // Provide a default value if not found
+          });
 
       // Find the corresponding program details for the selected date and period
       final programDetails = programWiseDisplayList.firstWhere(
-          (program) =>
-              program['dates'] == _selectedDate &&
+              (program) =>
+          program['dates'] == _selectedDate &&
               program['period'] == _selectedPeriod,
           orElse: () => {
-                'startTime': 'N/A',
-                'endTime': 'N/A',
-              });
+            'startTime': 'N/A',
+            'endTime': 'N/A',
+          });
 
-      setState(() {
-        _addedFacultyList.add({
-          'date': _selectedDate,
-          'period': _selectedPeriod,
-          'faculty': _selectedFaculty,
-          'freeFaculty': selectedFaculty['freeFaculty'],
-          'startTime': programDetails['startTime'],
-          'endTime': programDetails['endTime'],
+      final newFaculty = {
+        'date': _selectedDate!,
+        'period': _selectedPeriod!,
+        'faculty': _selectedFaculty!,
+        'freeFaculty': selectedFaculty['freeFaculty'],
+        'startTime': programDetails['startTime'],
+        'endTime': programDetails['endTime'],
+      };
+
+      if (!_isFacultyDuplicate(newFaculty)) {
+        setState(() {
+          _addedFacultyList.add(newFaculty);
+          // Clear selections
+          _selectedDate = null;
+          _selectedPeriod = null;
+          _selectedFaculty = null;
         });
-        // Clear selections
-        _selectedDate = null;
-        _selectedPeriod = null;
-        _selectedFaculty = null;
-      });
+      } else {
+        // Optionally show a message indicating the faculty is a duplicate
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('This faculty entry already exists.'),
+          ),
+        );
+      }
     }
   }
 
@@ -883,8 +908,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                           children: [
                             TextSpan(
                                 text: '${faculty['date']}',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.normal)),
+                                style: TextStyle(fontWeight: FontWeight.normal)),
                           ],
                         ),
                       ),
@@ -895,36 +919,50 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                           children: [
                             TextSpan(
                                 text: 'Faculty: ${faculty['faculty']}\n',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.normal)),
+                                style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                                text:
-                                    'Free Faculty: ${faculty['freeFaculty']}\n',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.normal)),
+                                text: 'Free Faculty: ${faculty['freeFaculty']}\n',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                                 text: 'Start Time: ${faculty['startTime']}\n',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.normal)),
+                                style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                                 text: 'End Time: ${faculty['endTime']}',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.normal)),
+                                style: TextStyle(fontWeight: FontWeight.normal)),
                           ],
                         ),
+                      ),
+                      trailing: TextButton(
+                        child: Text('Delete', style: TextStyle(color: Colors.red)),
+                        onPressed: () {
+                          setState(() {
+                            _addedFacultyList.removeAt(index);
+                          });
+                        },
                       ),
                     ),
                   );
                 },
               ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _applyLeave
-                // Handle apply button press
-                ,
-                child: Text('Apply'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 220,
+                    child: ElevatedButton(
+                      onPressed: _applyLeave,
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(Colors.blue), // Background color
+                        foregroundColor: MaterialStateProperty.all(Colors.white), // Text color
+                      ),
+                      child: Text('Apply'),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ]
+
           ],
         ]),
       ),
