@@ -2,7 +2,6 @@ import 'package:cloudilya/student/feepayment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-
 import 'staff/Attendence.dart';
 import 'staff/EmpDashboard.dart';
 import 'staff/LeaveApplication.dart';
@@ -19,7 +18,7 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/splash', page: () => SplashScreen()),
         GetPage(name: '/login', page: () => LoginPage()),
-        GetPage(name: '/dashboard', page: () => EmpDashboard()),
+        GetPage(name: '/Empdashboard', page: () => EmpDashboard()),
         GetPage(name: '/signup', page: () => NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
         GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
@@ -57,7 +56,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Navigate to login page after a delay
     Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('dashboard');
+      Get.offNamed('Empdashboard');
     });
 
     return Scaffold(

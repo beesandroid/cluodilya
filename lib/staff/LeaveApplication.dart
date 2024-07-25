@@ -475,18 +475,31 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Success'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          elevation: 10.0,
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 28.0),
+              SizedBox(width: 8.0),
+              Text('Success', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Record is Successfully Saved'),
-              SizedBox(height: 8.0),
-              Text('Absence Name: $absenceName'),
-              Text('From Date: $fromDate'),
-              Text('To Date: $toDate'),
-              Text('Application Date: $applicationDate'),
-              Text('Application ID: $applicationId'),
+              Text(
+                'Record is successfully saved!',
+                style: TextStyle(fontSize: 16.0, color: Colors.black54),
+              ),
+              SizedBox(height: 12.0),
+              _buildInfoRow('Absence Name:', absenceName),
+              _buildInfoRow('From Date:', fromDate),
+              _buildInfoRow('To Date:', toDate),
+              _buildInfoRow('Application Date:', applicationDate),
+              _buildInfoRow('Application ID:', applicationId.toString()),
             ],
           ),
           actions: <Widget>[
@@ -498,13 +511,26 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
                       builder: (BuildContext context) => LeaveApplicationScreen()),
                 ); // Reload the screen
               },
-              child: Text('OK'),
+              child: Text('OK', style: TextStyle(color: Colors.blue)),
             ),
           ],
         );
       },
     );
   }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
+          Text(value, style: TextStyle(color: Colors.blueAccent)),
+        ],
+      ),
+    );
+  }
+
   void _removeLeaveApplication(int index) {
     setState(() {
       _leaveApplications.removeAt(index);

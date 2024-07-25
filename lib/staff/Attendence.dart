@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
@@ -14,7 +15,6 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime _selectedDate = DateTime.now();
   List<String> _periods = [];
-
   Map<String, dynamic> _periodData = {};
   List<dynamic> _students = [];
   List<dynamic> _filteredStudents = [];
@@ -28,12 +28,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchAttendanceDataForToday();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchAttendanceDataForToday() async {
+    final formattedDate = '${_selectedDate.toLocal()}'.split(' ')[0];
+    await _fetchAttendanceData(formattedDate);
+    setState(() {
+      _selectedDateText = formattedDate;
+      if (_periods.isNotEmpty) {
+        _onPeriodSelected(_periods.first);
+      }
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -54,10 +66,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _filteredStudents = [];
         _periods = [];
       });
-
-      String formattedDate = _selectedDateText;
-      await _fetchAttendanceData(
-          _selectedDateText); // Fetch data with default period value '0'
+      final formattedDate = '${_selectedDate.toLocal()}'.split(' ')[0];
+      await _fetchAttendanceData(formattedDate);
+      setState(() {
+        _selectedDateText = formattedDate; // Update the text
+      }); // Fetch data with default period value '0'
     }
   }
 
@@ -66,10 +79,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     setState(() {
       _selectedPeriod = period;
+      // Update _filteredStudents with data for the selected period
+      if (_periodData.containsKey(_selectedPeriod)) {
+        _filteredStudents = _periodData[_selectedPeriod]['Students'] ?? [];
+      } else {
+        _filteredStudents = [];
+      }
+      // Clear selected topics when a new period is selected
+      _selectedTopics = [];
     });
 
     // Fetch data for the selected period
     _fetchAttendanceData(_selectedDateText);
+    // Fetch and print topics **after** updating the UI
     _fetchAndPrintTopics(_selectedDateText);
   }
 
@@ -87,25 +109,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _showPreviewDialog() {
-    final totalCount = _filteredStudents.length;
-    final presentCount =
-        _filteredStudents.where((student) => student['Attendance'] == 1).length;
-    final absentCount = totalCount - presentCount;
-
-    // Sort students so that absentees are first
-    final sortedStudents = _filteredStudents
-      ..sort((a, b) => (a['Attendance'] == 1 ? 1 : 0)
-          .compareTo(b['Attendance'] == 1 ? 1 : 0));
-
-    // Separate students into present and absent lists
-    final presentStudents =
-        sortedStudents.where((student) => student['Attendance'] == 1).toList();
-    final absentStudents =
-        sortedStudents.where((student) => student['Attendance'] == 0).toList();
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // Separate the list into absent and present students
+        final absentStudents = _filteredStudents
+            .where((student) => student['Attendance'] != 1)
+            .toList();
+        final presentStudents = _filteredStudents
+            .where((student) => student['Attendance'] == 1)
+            .toList();
+
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
@@ -113,149 +127,90 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           contentPadding: EdgeInsets.all(16.0),
           content: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Attendance Preview',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                // Display total, present, and absent counts
-                Text(
-                  'Total Students: $totalCount',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  'Present: $presentCount',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.green,
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  'Absent: $absentCount',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red,
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                // Heading and list for absent students
+                // Heading for absent students
                 if (absentStudents.isNotEmpty) ...[
                   Text(
                     'Absent Students',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
                   ),
                   SizedBox(height: 8.0),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: 300, // Adjust as needed
-                    ),
-                    child: Column(
-                      children: absentStudents.map((student) {
-                        return Container(
-                          margin: EdgeInsets.symmetric(vertical: 4.0),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  student['StudentName'],
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                'Absent',
+                  Column(
+                    children: absentStudents.map((student) {
+                      return Container(
+                        margin: EdgeInsets.symmetric(vertical: 4.0),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                student['HallticketNumber'],
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                            ),
+                            SizedBox(width: 8.0),
+
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                   SizedBox(height: 16.0),
                 ],
-                // Heading and list for present students
+
+                // Heading for present students
                 if (presentStudents.isNotEmpty) ...[
                   Text(
                     'Present Students',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
                     ),
                   ),
                   SizedBox(height: 8.0),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: 300, // Adjust as needed
-                    ),
-                    child: Column(
-                      children: presentStudents.map((student) {
-                        return Container(
-                          margin: EdgeInsets.symmetric(vertical: 4.0),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  student['StudentName'],
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                'Present',
+                  Column(
+                    children: presentStudents.map((student) {
+                      return Container(
+                        margin: EdgeInsets.symmetric(vertical: 4.0),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                student['HallticketNumber'],
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  fontWeight: FontWeight.w500,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                            ),
+                            SizedBox(width: 8.0),
+
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ],
@@ -401,12 +356,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               isExpanded: true,
                               value: _selectedPeriod,
                               hint: Text(
-                                'Pick a Date to Select Period',
+                                '      Pick a Date to Select Period',
                                 style: TextStyle(color: Colors.white),
                               ),
                               dropdownColor: Colors.blue,
-                              icon: Icon(Icons.arrow_drop_down,
-                                  color: Colors.white),
+                              icon: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(Icons.arrow_drop_down,
+                                    color: Colors.white),
+                              ),
                               onChanged: _onPeriodSelected,
                               items: _periods.map((period) {
                                 return DropdownMenuItem<String>(
@@ -450,7 +408,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               color: Colors.white,
                               borderRadius:
                                   BorderRadius.all(Radius.circular(12)),
-                              border: Border.all(color: Colors.grey, width: 2),
                             ),
                             buttonIcon:
                                 Icon(Icons.arrow_drop_down, color: Colors.grey),
@@ -506,20 +463,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       ],
                     ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final totalCount = _students?.length ?? 0;
-                        final presentCount = _students
-                                ?.where((student) => student['Attendance'] == 1)
-                                .length ??
-                            0;
-                        final absentCount = totalCount - presentCount;
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      final totalCount = _students?.length ?? 0;
+                      final presentCount = _students
+                              ?.where((student) => student['Attendance'] == 1)
+                              .length ??
+                          0;
+                      final absentCount = totalCount - presentCount;
 
-                        final presentWidth =
-                            (presentCount / totalCount) * constraints.maxWidth;
-                        final absentWidth =
-                            (absentCount / totalCount) * constraints.maxWidth;
-
+                      final presentWidth =
+                          (presentCount / totalCount) * constraints.maxWidth;
+                      final absentWidth =
+                          (absentCount / totalCount) * constraints.maxWidth;
+                      if (totalCount == 0) {
+                        return Container(
+                          height: 30.0,
+                          child: Center(
+                            child: Text('No Students'),
+                          ),
+                        );
+                      } else {
                         return Column(
                           children: [
                             Container(
@@ -575,8 +538,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ),
                           ],
                         );
-                      },
-                    ),
+                      }
+                    }),
                   ),
                   Container(
                     margin:
@@ -693,91 +656,115 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ],
                         ),
                         SizedBox(height: 16.0),
-                        SingleChildScrollView(
-                          child: Container(
-                            padding: EdgeInsets.all(0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: List<Widget>.generate(
-                                _filteredStudents.length,
-                                (index) {
-                                  final student = _filteredStudents[index];
-                                  final isPresent = student['Attendance'] == 1;
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 80.0),
+                          child: SingleChildScrollView(
+                            child: Container(
+                              padding: EdgeInsets.all(0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: List<Widget>.generate(
+                                  _filteredStudents.length,
+                                  (index) {
+                                    final student = _filteredStudents[index];
+                                    final isPresent =
+                                        student['Attendance'] == 1;
 
-                                  return Container(
-                                    margin: EdgeInsets.only(bottom: 12.0),
-                                    padding: EdgeInsets.all(12.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(
-                                          color: Colors.grey.shade300),
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black26,
-                                          blurRadius: 4.0,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child:
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              if (student['HallticketNumber'] != null && student['HallticketNumber'].isNotEmpty) ...[
-                                                Text(
-                                                  student['HallticketNumber'] ?? '',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                              if (student['StudentName'] != null && student['StudentName'].isNotEmpty) ...[
-                                                Text(
-                                                  student['StudentName'] ?? '',
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () => _toggleAttendance(index),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 8.0,
-                                              horizontal: 16.0,
+                                    return Container(
+                                        margin: EdgeInsets.only(bottom: 12.0),
+                                        padding: EdgeInsets.all(12.0),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black26,
+                                              blurRadius: 4.0,
+                                              offset: Offset(0, 2),
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: isPresent
-                                                  ? Colors.green.withOpacity(0.2)
-                                                  : Colors.red.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(12.0),
-                                            ),
-                                            child: Text(
-                                              isPresent ? 'Present' : 'Absent',
-                                              style: TextStyle(
-                                                color: isPresent ? Colors.green : Colors.red,
-                                                fontWeight: FontWeight.bold,
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  if (student['HallticketNumber'] !=
+                                                          null &&
+                                                      student['HallticketNumber']
+                                                          .isNotEmpty) ...[
+                                                    Text(
+                                                      student['HallticketNumber'] ??
+                                                          '',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (student['StudentName'] !=
+                                                          null &&
+                                                      student['StudentName']
+                                                          .isNotEmpty) ...[
+                                                    Text(
+                                                      student['StudentName'] ??
+                                                          '',
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-
-                                  );
-                                },
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  _toggleAttendance(index),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 8.0,
+                                                  horizontal: 16.0,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: isPresent
+                                                      ? Colors.green
+                                                          .withOpacity(0.2)
+                                                      : Colors.red
+                                                          .withOpacity(0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          12.0),
+                                                ),
+                                                child: Text(
+                                                  isPresent
+                                                      ? 'Present'
+                                                      : 'Absent',
+                                                  style: TextStyle(
+                                                    color: isPresent
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ));
+                                  },
+                                ),
                               ),
                             ),
                           ),
@@ -836,7 +823,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<void> _fetchAttendanceData(String formattedDate) async {
     final String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
-
+    final DateTime now = DateTime.now();
+    final String currentDatetime =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
     final Map<String, dynamic> requestBody = {
       "GrpCode": "Bees",
       "ColCode": "0001",
@@ -847,9 +836,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       "SectionId": "0",
       "EmployeeId": "1088",
       "Perioddisplay": "0",
-      "Flag": "FacultyWise"
+      "Flag": "FacultyWise",
+      "CurrentDatetime": currentDatetime
+      // Add the current date and time to the request body
     };
-
+    print(requestBody);
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -858,50 +849,50 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         },
         body: jsonEncode(requestBody),
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print(
             'Response data: $data'); // Print entire response data for debugging
+        if (data != null && data is Map<String, dynamic>) {
+          if (data['FacultyDailyAttendanceDisplayList'] != null &&
+              data['FacultyDailyAttendanceDisplayList'].isNotEmpty) {
+            final attendanceList = data['FacultyDailyAttendanceDisplayList'];
+            if (attendanceList[0] != null &&
+                attendanceList[0]['Posted'] != null) {
+              print('Outer Posted: ${attendanceList[0]['Posted']}');
+            } else {
+              print('Outer Posted field not found');
+            }
 
-        if (data['FacultyDailyAttendanceDisplayList'] != null &&
-            data['FacultyDailyAttendanceDisplayList'].isNotEmpty) {
-          final attendanceList = data['FacultyDailyAttendanceDisplayList'];
-
-          // Print the outer level Posted field
-          if (attendanceList[0] != null &&
-              attendanceList[0]['Posted'] != null) {
-            print('Outer Posted: ${attendanceList[0]['Posted']}');
+            final periods =
+                attendanceList[0]['Periods'] as Map<String, dynamic>;
+            periods.forEach((key, value) {
+              if (value['Posted'] != null) {
+                print('Period $key Posted: ${value['Posted']}');
+              } else {
+                print('Period $key Posted field not found');
+              }
+            });
+            setState(() {
+              _periods = periods.keys.toList();
+              _periodData = periods;
+              if (_selectedPeriod != null &&
+                  _periodData.containsKey(_selectedPeriod)) {
+                _students = _periodData[_selectedPeriod]?['Students'] ?? [];
+              } else {
+                _students = [];
+              }
+              _filteredStudents = _students;
+            });
           } else {
-            print('Outer Posted field not found');
+            _showToast("No attendance data available'");
+            print('No attendance data available');
           }
-
-          final periods = attendanceList[0]['Periods'] as Map<String, dynamic>;
-
-          // Print the Posted field for each period
-          periods.forEach((key, value) {
-            if (value['Posted'] != null) {
-              print('Period $key Posted: ${value['Posted']}');
-            } else {
-              print('Period $key Posted field not found');
-            }
-          });
-
-          setState(() {
-            _periods = periods.keys.toList();
-            _periodData = periods;
-            if (_selectedPeriod != null &&
-                _periodData.containsKey(_selectedPeriod)) {
-              _students = _periodData[_selectedPeriod]?['Students'] ?? [];
-            } else {
-              _students = [];
-            }
-            _filteredStudents = _students;
-          });
         } else {
-          print('No attendance data available');
+          print('Unexpected response format');
         }
       } else {
+        _showToast('Failed to load data, status code: ${response.statusCode}');
         print('Failed to load data, status code: ${response.statusCode}');
       }
     } catch (e) {
@@ -1019,7 +1010,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       if (response.statusCode == 200) {
         print('Attendance data saved successfully!');
-        _showToast('Attendance data saved successfully!'); // Show success toast
+        _showToast('Attendance data saved successfully!');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AttendanceScreen()),
+        );// Show success toast
       } else {
         print('Failed to save data: ${response.statusCode}');
         print('Response body: ${response.body}');
