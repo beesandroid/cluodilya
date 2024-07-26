@@ -227,16 +227,14 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
     return 0;
   }
-
-  bool _isFormValid() {
+ bool _isFormValid() {
     return _selectedLeaveType != null &&
         _reasonController.text.isNotEmpty &&
         _fromDate != null &&
         _toDate != null &&
         (_fromDate != _toDate || _leaveDuration != null);
   }
-
-  void _addLeaveApplication() {
+void _addLeaveApplication() {
     if (_isFormValid()) {
       bool canAdd = true;
       for (var application in _leaveApplications) {
@@ -284,8 +282,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
       }
     }
   }
-
-  void _continueWithAdjustment() async {
+void _continueWithAdjustment() async {
     final requestBody = {
       "GrpCode": "bees",
       "CollegeId": 1,

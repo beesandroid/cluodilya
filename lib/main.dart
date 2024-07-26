@@ -19,10 +19,10 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/splash', page: () => SplashScreen()),
         GetPage(name: '/login', page: () => LoginPage()),
         GetPage(name: '/Empdashboard', page: () => EmpDashboard()),
-        GetPage(name: '/signup', page: () => NewSignupScreen()),
+        GetPage(name: '/signup', page: () =>  NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
         GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
-        GetPage(name: '/FeePaymentScreen', page: () => FeeDetailsScreen()),
+        GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -54,12 +54,10 @@ class MyApp extends StatelessWidget {
 class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Navigate to login page after a delay
     Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('Empdashboard');
+      Get.offNamed('FeePaymentScreen');
     });
-
-    return Scaffold(
+return Scaffold(
       body: Center(
         child: Image.asset('assets/image.png', width: 150, height: 150),
       ),
@@ -211,21 +209,16 @@ class LoginController extends GetxController {
       );
       if (response.statusCode == 200) {
         final responseData = response.data;
-
-        // Check if the response contains 'singleLoginUesrDetails' and 'message'
         if (responseData is Map<String, dynamic> &&
             responseData.containsKey('singleLoginUesrDetails') &&
             responseData.containsKey('message')) {
-
-          final singleLoginUserDetails = responseData['singleLoginUesrDetails'];
+ final singleLoginUserDetails = responseData['singleLoginUesrDetails'];
           final message = responseData['message'];
 
           if (message == 'Login Successfully' && singleLoginUserDetails != null) {
-            // Handle successful login
-            Get.offNamed('/dashboard');
+         Get.offNamed('/dashboard');
           } else {
-            // Handle invalid credentials or other issues
-            Get.snackbar(
+   Get.snackbar(
               'Error',
               'Invalid credentials. Please try again.',
               snackPosition: SnackPosition.BOTTOM,
@@ -240,21 +233,18 @@ class LoginController extends GetxController {
           );
         }
       } else {
-        // Handle errors based on status code
-        Get.snackbar(
+    Get.snackbar(
           'Error',
           'Login failed with status code: ${response.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } catch (e) {
-      // Handle exceptions
-      Get.snackbar(
+Get.snackbar(
         'Error',
         'An error occurred: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
-
 }

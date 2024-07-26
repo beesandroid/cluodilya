@@ -85,6 +85,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       } else {
         _filteredStudents = [];
       }
+      _topics = [];
       // Clear selected topics when a new period is selected
       _selectedTopics = [];
     });
@@ -99,8 +100,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     setState(() {
       final student = _filteredStudents[index];
       student['Attendance'] = student['Attendance'] == 1 ? 0 : 1;
-
-      // Update _students directly if needed
       final originalIndex = _students.indexOf(student);
       if (originalIndex != -1) {
         _students[originalIndex] = student;
@@ -163,7 +162,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                             SizedBox(width: 8.0),
-
                           ],
                         ),
                       );
@@ -206,7 +204,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                             SizedBox(width: 8.0),
-
                           ],
                         ),
                       );
@@ -1014,7 +1011,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AttendanceScreen()),
-        );// Show success toast
+        ); // Show success toast
       } else {
         print('Failed to save data: ${response.statusCode}');
         print('Response body: ${response.body}');
