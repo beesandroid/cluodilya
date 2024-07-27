@@ -54,6 +54,7 @@ dependencies:
   expansion_tile_list:
   progress_bar_chart:
   multi_select_flutter: ^4.0.0
+  paytm_allinonesdk: ^1.2.6
 
 
 dev_dependencies:

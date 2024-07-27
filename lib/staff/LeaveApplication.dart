@@ -141,7 +141,7 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
 
   bool _isFacultyDuplicate(Map<String, dynamic> faculty) {
     return _addedFacultyList.any((existingFaculty) =>
-    existingFaculty['date'] == faculty['date'] &&
+        existingFaculty['date'] == faculty['date'] &&
         existingFaculty['period'] == faculty['period'] &&
         existingFaculty['faculty'] == faculty['faculty'] &&
         existingFaculty['freeFaculty'] == faculty['freeFaculty'] &&
@@ -153,25 +153,20 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     if (_selectedDate != null &&
         _selectedPeriod != null &&
         _selectedFaculty != null) {
-      // Find the selected faculty
       final selectedFaculty = facultyList.firstWhere(
-              (faculty) =>
-          faculty['date'] == _selectedDate &&
+          (faculty) =>
+              faculty['date'] == _selectedDate &&
               faculty['period'] == _selectedPeriod &&
               faculty['freeFacultyName'] == _selectedFaculty,
-          orElse: () => {
-            'freeFaculty': 'N/A' // Provide a default value if not found
-          });
-
-      // Find the corresponding program details for the selected date and period
+          orElse: () => {'freeFaculty': 'N/A'});
       final programDetails = programWiseDisplayList.firstWhere(
-              (program) =>
-          program['dates'] == _selectedDate &&
+          (program) =>
+              program['dates'] == _selectedDate &&
               program['period'] == _selectedPeriod,
           orElse: () => {
-            'startTime': 'N/A',
-            'endTime': 'N/A',
-          });
+                'startTime': 'N/A',
+                'endTime': 'N/A',
+              });
 
       final newFaculty = {
         'date': _selectedDate!,
@@ -227,14 +222,16 @@ class _LeaveApplicationScreenState extends State<LeaveApplicationScreen> {
     }
     return 0;
   }
- bool _isFormValid() {
+
+  bool _isFormValid() {
     return _selectedLeaveType != null &&
         _reasonController.text.isNotEmpty &&
         _fromDate != null &&
         _toDate != null &&
         (_fromDate != _toDate || _leaveDuration != null);
   }
-void _addLeaveApplication() {
+
+  void _addLeaveApplication() {
     if (_isFormValid()) {
       bool canAdd = true;
       for (var application in _leaveApplications) {
@@ -262,16 +259,21 @@ void _addLeaveApplication() {
       }
       if (canAdd) {
         final leaveApplication = {
+          // Include leaveId
           'leaveId': _selectedLeaveType!['leaveId'], // Include leaveId
+          'absenceName': _selectedLeaveType!['absenceName'], // Include leaveId
           'AbsenceType': _selectedLeaveType!['absenceTypeName'],
           'FromDate': DateFormat('yyyy-MM-dd').format(_fromDate!),
           'ToDate': DateFormat('yyyy-MM-dd').format(_toDate!),
           'LeaveDuration': _calculateSelectedDays(),
           'Reason': _reasonController.text,
+          'leavename': _selectedLeaveType.toString(),
+
           'AccrualPeriodName': _selectedLeaveType!['accrualPeriodName'],
           'Accrued': _selectedLeaveType!['accrued'],
           'Balance': _selectedLeaveType!['balance'],
         };
+        print('Selected Leave Type: ${_selectedLeaveType!['absenceTypeName']}');
         setState(() {
           _leaveApplications.add(leaveApplication);
           _selectedLeaveType = null;
@@ -282,7 +284,8 @@ void _addLeaveApplication() {
       }
     }
   }
-void _continueWithAdjustment() async {
+
+  void _continueWithAdjustment() async {
     final requestBody = {
       "GrpCode": "bees",
       "CollegeId": 1,
@@ -294,7 +297,7 @@ void _continueWithAdjustment() async {
       "AttachFile": " ",
       "Reason": _reasonController.text,
       "LeaveApplicationSaveTablevariable":
-      _leaveApplications.map((application) {
+          _leaveApplications.map((application) {
         return {
           "AbsenceId": application['leaveId'],
           "FromDate": application['FromDate'],
@@ -320,9 +323,8 @@ void _continueWithAdjustment() async {
     if (response.statusCode == 200) {
       print(response.body.toString());
       Map<String, dynamic> parsedResponse = json.decode(response.body);
-
-      // Check for specific messages in the response
-      if (parsedResponse['message'] == "Dates Overlapped Check Once With Existed Records") {
+      if (parsedResponse['message'] ==
+          "Dates Overlapped Check Once With Existed Records") {
         Fluttertoast.showToast(
           msg: "Dates overlapped with existing records. Please review.",
           toastLength: Toast.LENGTH_LONG,
@@ -331,9 +333,11 @@ void _continueWithAdjustment() async {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-      } else if (parsedResponse['message'] == "You are trying to apply for more leave days than your available balance/usage allows") {
+      } else if (parsedResponse['message'] ==
+          "You are trying to apply for more leave days than your available balance/usage allows") {
         Fluttertoast.showToast(
-          msg: "You are trying to apply for more leave days than your available balance allows.",
+          msg:
+              "You are trying to apply for more leave days than your available balance allows.",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.black,
@@ -343,9 +347,9 @@ void _continueWithAdjustment() async {
       } else {
         setState(() {
           datesList =
-          List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
+              List<Map<String, dynamic>>.from(parsedResponse['datesMultiList']);
           periodsList =
-          List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
+              List<Map<String, dynamic>>.from(parsedResponse['periodsList']);
           facultyList = List<Map<String, dynamic>>.from(
               parsedResponse['facultyDropdownList']);
           programWiseDisplayList = List<Map<String, dynamic>>.from(
@@ -367,7 +371,6 @@ void _continueWithAdjustment() async {
       );
     }
   }
-
 
   void _showOverlapDialog() {
     showDialog(
@@ -417,8 +420,10 @@ void _continueWithAdjustment() async {
         };
       }).toList(),
       "LeaveApplicationSaveTablevariable":
-      _leaveApplications.map((application) {
+          _leaveApplications.map((application) {
         return {
+
+          "leavename": application['absenceName'], // Directly use the leaveId
           "AbsenceId": application['leaveId'], // Directly use the leaveId
           "FromDate": application['FromDate'],
           "ToDate": application['ToDate'],
@@ -444,13 +449,10 @@ void _continueWithAdjustment() async {
       if (responseData['message'] == 'Dates Overlapped Check Once') {
         _showOverlapDialog();
       } else if (responseData['message'] == 'Record is Successfully Saved') {
-        var application = responseData['multiList'][0];
+        var records = responseData['multiList'] as List<dynamic>;
         _showSuccessDialog(
-          absenceName: application['absenceName'],
-          fromDate: application['fromDate'],
-          toDate: application['toDate'],
-          applicationDate: application['applicationDate'],
-          applicationId: application['applicationId'],
+          context: context,
+          records: records.map((e) => e as Map<String, dynamic>).toList(),
         );
       } else {
         _showErrorDialog('${responseData['message']}');
@@ -462,11 +464,8 @@ void _continueWithAdjustment() async {
   }
 
   void _showSuccessDialog({
-    required String absenceName,
-    required String fromDate,
-    required String toDate,
-    required String applicationDate,
-    required int applicationId,
+    required BuildContext context,
+    required List<Map<String, dynamic>> records,
   }) {
     showDialog(
       context: context,
@@ -483,21 +482,31 @@ void _continueWithAdjustment() async {
               Text('Success', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Record is successfully saved!',
-                style: TextStyle(fontSize: 16.0, color: Colors.black54),
-              ),
-              SizedBox(height: 12.0),
-              _buildInfoRow('Absence Name:', absenceName),
-              _buildInfoRow('From Date:', fromDate),
-              _buildInfoRow('To Date:', toDate),
-              _buildInfoRow('Application Date:', applicationDate),
-              _buildInfoRow('Application ID:', applicationId.toString()),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: records.map((record) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Record is successfully saved!',
+                      style: TextStyle(fontSize: 16.0, color: Colors.black54),
+                    ),
+                    SizedBox(height: 12.0),
+                    _buildInfoRow(
+                        'Absence Name:', record['absenceName'] ?? 'N/A'),
+                    _buildInfoRow('From Date:', record['fromDate'] ?? 'N/A'),
+                    _buildInfoRow('To Date:', record['toDate'] ?? 'N/A'),
+                    _buildInfoRow('Application Date:',
+                        record['applicationDate'] ?? 'N/A'),
+                    _buildInfoRow('Application ID:',
+                        record['applicationId']?.toString() ?? 'N/A'),
+                    SizedBox(height: 12.0),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -505,7 +514,8 @@ void _continueWithAdjustment() async {
                 Navigator.of(context).pop(); // Dismiss the dialog first
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                      builder: (BuildContext context) => LeaveApplicationScreen()),
+                      builder: (BuildContext context) =>
+                          LeaveApplicationScreen()),
                 ); // Reload the screen
               },
               child: Text('OK', style: TextStyle(color: Colors.blue)),
@@ -521,7 +531,9 @@ void _continueWithAdjustment() async {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child:
+                  Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
           Text(value, style: TextStyle(color: Colors.blueAccent)),
         ],
       ),
@@ -533,9 +545,6 @@ void _continueWithAdjustment() async {
       _leaveApplications.removeAt(index);
     });
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -553,7 +562,7 @@ void _continueWithAdjustment() async {
           DropdownButtonFormField<dynamic>(
             decoration: InputDecoration(
               labelText: 'Select Leave Type',
-              labelStyle: TextStyle(color: Colors.blueGrey),
+              labelStyle: TextStyle(color: Colors.black),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -575,85 +584,126 @@ void _continueWithAdjustment() async {
           ),
           if (_selectedLeaveType != null) ...[
             SizedBox(height: 16.0),
-            RichText(
-              text: TextSpan(
-                text: 'Leave ID: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['leaveId']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
+            Container(width: double.maxFinite,
+              margin: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+
               ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: 'Accrual Period: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['accrualPeriodName']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
+              child:
+              Material(
+                elevation: 15,
+          color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Leave ID: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['leaveId']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Accrual Period: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['accrualPeriodName']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Accrued: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['accrued']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Absence Type: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['absenceTypeName']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Accrual Period: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['accrualPeriod']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Balance: ',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                                text: '${_selectedLeaveType!['balance']}',
+                                style: TextStyle(fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: 'Accrued: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['accrued']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: 'Absence Type: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['absenceTypeName']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: 'Accrual Period: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['accrualPeriod']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: 'Balance: ',
-                style: TextStyle(
-                    color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                      text: '${_selectedLeaveType!['balance']}',
-                      style: TextStyle(fontWeight: FontWeight.normal)),
-                ],
-              ),
-            ),
+            )
+
+
+
+
           ],
           SizedBox(height: 16.0),
           TextField(
             controller: _reasonController,
             decoration: InputDecoration(
               labelText: 'Reason for Leave',
-              labelStyle: TextStyle(color: Colors.blueGrey),
+              labelStyle: TextStyle(color: Colors.black),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -672,7 +722,7 @@ void _continueWithAdjustment() async {
                   _fromDate == null
                       ? 'Select From Date'
                       : DateFormat.yMd().format(_fromDate!),
-                  style: TextStyle(color: Colors.blueGrey),
+                  style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),
                 ),
               ),
               ElevatedButton(
@@ -699,7 +749,7 @@ void _continueWithAdjustment() async {
                   _toDate == null
                       ? 'Select To Date'
                       : DateFormat.yMd().format(_toDate!),
-                  style: TextStyle(color: Colors.blueGrey),
+                  style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),
                 ),
               ),
               ElevatedButton(
@@ -741,7 +791,7 @@ void _continueWithAdjustment() async {
             text: TextSpan(
               text: 'Selected Days: ',
               style: TextStyle(
-                  color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                  color: Colors.black, fontWeight: FontWeight.bold),
               children: [
                 TextSpan(
                     text: '${_calculateSelectedDays()}',
@@ -753,7 +803,8 @@ void _continueWithAdjustment() async {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(color: Colors.white,
+              Container(
+                color: Colors.white,
                 width: 220,
                 child: ElevatedButton(
                   onPressed: _isFormValid() ? _addLeaveApplication : null,
@@ -773,7 +824,7 @@ void _continueWithAdjustment() async {
           if (_leaveApplications.isNotEmpty) ...[
             Text('Leave Applications:',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                    fontWeight: FontWeight.bold, color: Colors.black)),
             ListView.builder(
               shrinkWrap: true,
               itemCount: _leaveApplications.length,
@@ -781,71 +832,87 @@ void _continueWithAdjustment() async {
                 final application = _leaveApplications[index];
                 print('Application Data: $application');
                 print('Leave ID: ${application['leaveId']}');
-                return Material(
+                print('absenceName: ${application['absenceName']}');
+
+                return Material(color: Colors.white,
                   elevation: 4,
                   shadowColor: Colors.black.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8.0),
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Set background color to white
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(
-                        color: Colors.black, // Set border color to black
-                        width: 1.0, // Set border width
-                      ),
-                    ),
-                    margin: EdgeInsets.symmetric(vertical: 8.0),
-                    child:
-                    ListTile(
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              text: 'Absence Type: ',
-                              style: TextStyle(
-                                  color: Colors.blueGrey,
-                                  fontWeight: FontWeight.bold),
-                              children: [
-                                TextSpan(
-                                  text: '${application['leaveId']}',
-                                  style: TextStyle(fontWeight: FontWeight.normal),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      subtitle: RichText(
-                        text: TextSpan(
-                          text: 'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
-                          style: TextStyle(color: Colors.blueGrey),
-                          children: [
-                            TextSpan(
-                              text: 'Duration: ${application['LeaveDuration']} days\n',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            TextSpan(
-                              text: 'Reason: ${application['Reason']}',
-                              style: TextStyle(fontWeight: FontWeight.normal),
-                            ),
-                          ],
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Set background color to white
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: Colors.black, // Set border color to black
+                          width: 1.0, // Set border width
                         ),
                       ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _removeLeaveApplication(index);
+                      margin: EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                text: 'Leave Type: ',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '${application['absenceName']}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.normal,color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            RichText(
+                              text: TextSpan(
+                                text: 'Absence Type: ',
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    ),
+                                children: [
+                                  TextSpan(
+                                    text: '${application['leaveId']}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.normal,color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                            ),
 
-                        },
-                      ),
-                    )
-                  ),
+                          ],
+                        ),
+                        subtitle: RichText(
+                          text: TextSpan(
+                            text:
+                                'From: ${application['FromDate']} - To: ${application['ToDate']}\n',
+                            style: TextStyle(color: Colors.black),
+                            children: [
+                              TextSpan(
+                                text:
+                                    'Duration: ${application['LeaveDuration']} days\n',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(
+                                text: 'Reason: ${application['Reason']}',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                            ],
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            _removeLeaveApplication(index);
+                          },
+                        ),
+                      )),
                 );
               },
-            )
-
-            ,
+            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 18.0),
               child: Row(
@@ -980,13 +1047,13 @@ void _continueWithAdjustment() async {
             if (_addedFacultyList.isNotEmpty) ...[
               Text('Added Faculty:',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      fontWeight: FontWeight.bold, color: Colors.black)),
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: _addedFacultyList.length,
                 itemBuilder: (context, index) {
                   final faculty = _addedFacultyList[index];
-                  return Card(
+                  return Card(color: Colors.white,
                     margin: EdgeInsets.symmetric(vertical: 8.0),
                     elevation: 4,
                     child: ListTile(
@@ -994,43 +1061,50 @@ void _continueWithAdjustment() async {
                         text: TextSpan(
                           text: 'Date: ',
                           style: TextStyle(
-                              color: Colors.blueGrey,
-                              fontWeight: FontWeight.bold),
+                              color: Colors.black,
+                              fontWeight: FontWeight.normal),
                           children: [
                             TextSpan(
                                 text: '${faculty['date']}',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                           ],
                         ),
                       ),
                       subtitle: RichText(
                         text: TextSpan(
                           text: 'Period: ${faculty['period']}\n',
-                          style: TextStyle(color: Colors.blueGrey),
+                          style: TextStyle(color: Colors.black),
                           children: [
                             TextSpan(
                                 text: 'Faculty: ${faculty['faculty']}\n',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                                text: 'Free Faculty: ${faculty['freeFaculty']}\n',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                                text:
+                                    'Free Faculty: ${faculty['freeFaculty']}\n',
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                                 text: 'Start Time: ${faculty['startTime']}\n',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                                 text: 'End Time: ${faculty['endTime']}',
-                                style: TextStyle(fontWeight: FontWeight.normal)),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
                           ],
                         ),
                       ),
-                      trailing: TextButton(
-                        child: Text('Delete', style: TextStyle(color: Colors.red)),
-                        onPressed: () {
-                          setState(() {
-                            _addedFacultyList.removeAt(index);
-                          });
-                        },
-                      ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _addedFacultyList.removeAt(index);
+                            });
+                          },
+                        )
+
                     ),
                   );
                 },
@@ -1044,8 +1118,10 @@ void _continueWithAdjustment() async {
                     child: ElevatedButton(
                       onPressed: _applyLeave,
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(Colors.blue), // Background color
-                        foregroundColor: MaterialStateProperty.all(Colors.white), // Text color
+                        backgroundColor: MaterialStateProperty.all(Colors.blue),
+                        // Background color
+                        foregroundColor: MaterialStateProperty.all(
+                            Colors.white), // Text color
                       ),
                       child: Text('Apply'),
                     ),
@@ -1053,7 +1129,6 @@ void _continueWithAdjustment() async {
                 ],
               ),
             ]
-
           ],
         ]),
       ),

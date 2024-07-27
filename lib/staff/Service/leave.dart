@@ -11,7 +11,8 @@ class LeaveService {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: json.encode({
+      body: json.encode(
+          {
         "GrpCode": "bees",
         "ColCode": "0001",
         "CollegeId": "1",
@@ -20,7 +21,8 @@ class LeaveService {
         "Description": "",
         "Balance": "0",
         "Flag": "DISPLAY",
-      }),
+      }
+      ),
     );
 
     if (response.statusCode == 200) {

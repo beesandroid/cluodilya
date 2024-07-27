@@ -4,11 +4,7 @@ import 'package:cloudilya/views/webview_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../main.dart';
-
-
-
 class NewSignupScreen extends StatefulWidget {
   const NewSignupScreen({super.key});
 

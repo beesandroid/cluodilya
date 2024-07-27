@@ -6,12 +6,10 @@ import 'dart:convert';
 import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
 import 'package:multi_select_flutter/util/multi_select_item.dart';
-
 class AttendanceScreen extends StatefulWidget {
   @override
   _AttendanceScreenState createState() => _AttendanceScreenState();
 }
-
 class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime _selectedDate = DateTime.now();
   List<String> _periods = [];
@@ -21,7 +19,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _selectedPeriod;
   final TextEditingController _searchController = TextEditingController();
   String _selectedDateText = 'Pick a date';
-
   List<Map<String, dynamic>> _topics = [];
   List<Map<String, dynamic>> _selectedTopics = [];
 
@@ -60,7 +57,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       setState(() {
         _selectedDate = pickedDate;
         _selectedDateText =
-            '${_selectedDate.toLocal()}'.split(' ')[0]; // Update the text
+            '${_selectedDate.toLocal()}'.split(' ')[0];
         _selectedPeriod = null;
         _students = [];
         _filteredStudents = [];
@@ -79,21 +76,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     setState(() {
       _selectedPeriod = period;
-      // Update _filteredStudents with data for the selected period
-      if (_periodData.containsKey(_selectedPeriod)) {
+    if (_periodData.containsKey(_selectedPeriod)) {
         _filteredStudents = _periodData[_selectedPeriod]['Students'] ?? [];
       } else {
         _filteredStudents = [];
       }
       _topics = [];
-      // Clear selected topics when a new period is selected
-      _selectedTopics = [];
+   _selectedTopics = [];
     });
-
-    // Fetch data for the selected period
-    _fetchAttendanceData(_selectedDateText);
-    // Fetch and print topics **after** updating the UI
-    _fetchAndPrintTopics(_selectedDateText);
+ _fetchAttendanceData(_selectedDateText);
+   _fetchAndPrintTopics(_selectedDateText);
   }
 
   void _toggleAttendance(int index) {
@@ -111,15 +103,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // Separate the list into absent and present students
         final absentStudents = _filteredStudents
             .where((student) => student['Attendance'] != 1)
             .toList();
         final presentStudents = _filteredStudents
             .where((student) => student['Attendance'] == 1)
             .toList();
-
-        return AlertDialog(
+  return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
