@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
+import '../student/Hostal.dart';
+import '../student/feepayment.dart';
 import 'Attendence.dart';
 import 'LeaveApplication.dart';
+// Import Fee Payments screen
 
 class EmpDashboard extends StatelessWidget {
   @override
@@ -44,17 +46,56 @@ class EmpDashboard extends StatelessWidget {
               Colors.greenAccent,
               LeaveApplicationScreen(),
             ),
+            _buildGridTile(
+              context,
+              'Fee Payments',
+              Icons.payment,
+              Colors.orangeAccent,
+              FeePaymentScreen(),
+            ),
+            _buildGridTile(
+              context,
+              'Transport',
+              Icons.directions_bus,
+              Colors.purpleAccent,
+              null, // No navigation
+              showToast: true, // Show toast message
+            ),
+            _buildGridTile(
+              context,
+              'Hostal',
+              Icons.house,
+              Colors.redAccent,
+                HostelSelector() // Show toast message
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildGridTile(BuildContext context, String title, IconData icon, Color color, Widget screen) {
+  Widget _buildGridTile(
+      BuildContext context,
+      String title,
+      IconData icon,
+      Color color,
+      Widget? screen, {
+        bool showToast = false,
+      }) {
     return GestureDetector(
       onTap: () {
         try {
-          Get.to(() => screen);
+          if (showToast) {
+            Get.snackbar(
+              'Info',
+              'This feature is not available yet.',
+              backgroundColor: Colors.black,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          } else if (screen != null) {
+            Get.to(() => screen);
+          }
         } catch (e) {
           // Log or handle navigation errors
           print('Navigation error: $e');
@@ -69,7 +110,17 @@ class EmpDashboard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.0),
           onTap: () {
             try {
-              Get.to(() => screen);
+              if (showToast) {
+                Get.snackbar(
+                  'Info',
+                  'This feature is not available yet.',
+                  backgroundColor: Colors.black,
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              } else if (screen != null) {
+                Get.to(() => screen);
+              }
             } catch (e) {
               // Log or handle navigation errors
               print('Navigation error: $e');

@@ -34,4 +34,32 @@ class LeaveService {
     }
   }
 
+
+
+  Future<Map<String, dynamic>> fetchHostelData() async {
+    final response = await http.post(
+      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        "GrpCode": "Bees",
+        "ColCode": "0001",
+        "AcYear": "2024 - 2025",
+        "UserTypeName": "STUDENT",
+        "RegistrationDate": "",
+        "StudentId": "1679",
+        "HostelId": "0",
+        "RoomTypeId": "0",
+        "RoomId": "0"
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
 }

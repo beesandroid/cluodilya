@@ -57,7 +57,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       setState(() {
         _selectedDate = pickedDate;
         _selectedDateText =
-            '${_selectedDate.toLocal()}'.split(' ')[0];
+        '${_selectedDate.toLocal()}'.split(' ')[0];
         _selectedPeriod = null;
         _students = [];
         _filteredStudents = [];
@@ -76,16 +76,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     setState(() {
       _selectedPeriod = period;
-    if (_periodData.containsKey(_selectedPeriod)) {
+      if (_periodData.containsKey(_selectedPeriod)) {
         _filteredStudents = _periodData[_selectedPeriod]['Students'] ?? [];
       } else {
         _filteredStudents = [];
       }
       _topics = [];
-   _selectedTopics = [];
+      _selectedTopics = [];
     });
- _fetchAttendanceData(_selectedDateText);
-   _fetchAndPrintTopics(_selectedDateText);
+    _fetchAttendanceData(_selectedDateText);
+    _fetchAndPrintTopics(_selectedDateText);
   }
 
   void _toggleAttendance(int index) {
@@ -109,7 +109,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final presentStudents = _filteredStudents
             .where((student) => student['Attendance'] == 1)
             .toList();
-  return AlertDialog(
+        return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
@@ -386,18 +386,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           child: MultiSelectDialogField<Map<String, dynamic>>(
                             items: _topics
                                 .map((topic) =>
-                                    MultiSelectItem<Map<String, dynamic>>(
-                                        topic, topic['topicName']))
+                                MultiSelectItem<Map<String, dynamic>>(
+                                    topic, topic['topicName']))
                                 .toList(),
                             title: Text("Select Topics"),
                             selectedColor: Colors.blue,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(12)),
+                              BorderRadius.all(Radius.circular(12)),
                             ),
                             buttonIcon:
-                                Icon(Icons.arrow_drop_down, color: Colors.grey),
+                            Icon(Icons.arrow_drop_down, color: Colors.grey),
                             buttonText: Text(
                               "Select Topics",
                               style: TextStyle(
@@ -411,8 +411,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             chipDisplay: MultiSelectChipDisplay(
                               items: _selectedTopics
                                   .map((topic) =>
-                                      MultiSelectItem<Map<String, dynamic>>(
-                                          topic, topic['topicName']))
+                                  MultiSelectItem<Map<String, dynamic>>(
+                                      topic, topic['topicName']))
                                   .toList(),
                               onTap: (value) {
                                 setState(() {
@@ -422,12 +422,46 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ),
                           ),
                         ),
+                      ),Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 5,
+                                blurRadius: 7,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(
+                                child: Text(
+                                  'Saved Topics : ${_periodData[_selectedPeriod]?['TopicName'] ?? 'No Saved Topics'}', // Display the topic name
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       )
+
+
                     ],
                   ),
                 ),
               ),
             ),
+
             SizedBox(height: 16.0),
             if (_selectedDateText != 'Pick a date' && _selectedPeriod != null)
               Column(
@@ -453,8 +487,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     child: LayoutBuilder(builder: (context, constraints) {
                       final totalCount = _students?.length ?? 0;
                       final presentCount = _students
-                              ?.where((student) => student['Attendance'] == 1)
-                              .length ??
+                          ?.where((student) => student['Attendance'] == 1)
+                          .length ??
                           0;
                       final absentCount = totalCount - presentCount;
 
@@ -530,7 +564,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   Container(
                     margin:
-                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                     padding: EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -587,8 +621,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             setState(() {
                               _filteredStudents = _students.where((student) {
                                 return student['HallticketNumber']
-                                        .toString()
-                                        .contains(value) ||
+                                    .toString()
+                                    .contains(value) ||
                                     student['StudentName']
                                         .toString()
                                         .toLowerCase()
@@ -600,15 +634,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             prefixIcon: Icon(Icons.search),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: Icon(Icons.clear, color: Colors.red),
-                                    onPressed: () {
-                                      setState(() {
-                                        _searchController.clear();
-                                        _filteredStudents =
-                                            _students; // Reset to show all students
-                                      });
-                                    },
-                                  )
+                              icon: Icon(Icons.clear, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _filteredStudents =
+                                      _students; // Reset to show all students
+                                });
+                              },
+                            )
                                 : null,
                             labelText: 'Search Students',
                             border: OutlineInputBorder(
@@ -652,7 +686,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: List<Widget>.generate(
                                   _filteredStudents.length,
-                                  (index) {
+                                      (index) {
                                     final student = _filteredStudents[index];
                                     final isPresent =
                                         student['Attendance'] == 1;
@@ -665,7 +699,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                           border: Border.all(
                                               color: Colors.grey.shade300),
                                           borderRadius:
-                                              BorderRadius.circular(8.0),
+                                          BorderRadius.circular(8.0),
                                           boxShadow: [
                                             BoxShadow(
                                               color: Colors.black26,
@@ -676,15 +710,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                         ),
                                         child: Row(
                                           mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                          MainAxisAlignment.spaceBetween,
                                           children: [
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                CrossAxisAlignment.start,
                                                 children: [
                                                   if (student['HallticketNumber'] !=
-                                                          null &&
+                                                      null &&
                                                       student['HallticketNumber']
                                                           .isNotEmpty) ...[
                                                     Text(
@@ -693,23 +727,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                       style: TextStyle(
                                                         fontSize: 16,
                                                         fontWeight:
-                                                            FontWeight.w500,
+                                                        FontWeight.w500,
                                                       ),
                                                     ),
                                                   ],
                                                   if (student['StudentName'] !=
-                                                          null &&
+                                                      null &&
                                                       student['StudentName']
                                                           .isNotEmpty) ...[
                                                     Text(
                                                       student['StudentName'] ??
                                                           '',
                                                       overflow:
-                                                          TextOverflow.ellipsis,
+                                                      TextOverflow.ellipsis,
                                                       style: TextStyle(
                                                         fontSize: 16,
                                                         fontWeight:
-                                                            FontWeight.w500,
+                                                        FontWeight.w500,
                                                         color: Colors.black,
                                                       ),
                                                     ),
@@ -728,12 +762,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                 decoration: BoxDecoration(
                                                   color: isPresent
                                                       ? Colors.green
-                                                          .withOpacity(0.2)
+                                                      .withOpacity(0.2)
                                                       : Colors.red
-                                                          .withOpacity(0.2),
+                                                      .withOpacity(0.2),
                                                   borderRadius:
-                                                      BorderRadius.circular(
-                                                          12.0),
+                                                  BorderRadius.circular(
+                                                      12.0),
                                                 ),
                                                 child: Text(
                                                   isPresent
@@ -766,43 +800,43 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       floatingActionButton: _students.isNotEmpty
           ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 48.0),
-                  child: Container(
-                    width: 100,
-                    child: FloatingActionButton(
-                      onPressed: _saveAttendance,
-                      backgroundColor: Colors.blue,
-                      tooltip: 'Save',
-                      child: Text(
-                        "Save",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 48.0),
+            child: Container(
+              width: 100,
+              child: FloatingActionButton(
+                onPressed: _saveAttendance,
+                backgroundColor: Colors.blue,
+                tooltip: 'Save',
+                child: Text(
+                  "Save",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Container(
-                  width: 220,
-                  child: FloatingActionButton(
-                    onPressed: _showPreviewDialog,
-                    backgroundColor: Colors.blue,
-                    tooltip: 'Preview Attendance',
-                    child: Text(
-                      "Preview Attendance",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+              ),
+            ),
+          ),
+          Container(
+            width: 220,
+            child: FloatingActionButton(
+              onPressed: _showPreviewDialog,
+              backgroundColor: Colors.blue,
+              tooltip: 'Preview Attendance',
+              child: Text(
+                "Preview Attendance",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            )
+              ),
+            ),
+          ),
+        ],
+      )
           : null,
     );
   }
@@ -812,7 +846,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FacultyDailyAttendanceDisplay';
     final DateTime now = DateTime.now();
     final String currentDatetime =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+    DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
     final Map<String, dynamic> requestBody = {
       "GrpCode": "Bees",
       "ColCode": "0001",
@@ -852,7 +886,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             }
 
             final periods =
-                attendanceList[0]['Periods'] as Map<String, dynamic>;
+            attendanceList[0]['Periods'] as Map<String, dynamic>;
             periods.forEach((key, value) {
               if (value['Posted'] != null) {
                 print('Period $key Posted: ${value['Posted']}');
@@ -920,9 +954,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           final topicList = data['topicDropDownList'] as List<dynamic>;
           final fetchedTopics = topicList
               .map((topic) => {
-                    'topicId': topic['topicId'] as int,
-                    'topicName': topic['topicName'] as String
-                  })
+            'topicId': topic['topicId'] as int,
+            'topicName': topic['topicName'] as String
+          })
               .toList();
 
           setState(() {
@@ -961,15 +995,30 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       };
     }).toList();
 
-    List<Map<String, dynamic>> topicsList = _selectedTopics.map((topic) {
-      final periodNumber =
-          int.tryParse(_selectedPeriod!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    List<Map<String, dynamic>> topicsList = [];
+    final periodNumber = int.tryParse(_selectedPeriod!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
-      return {
+    // Adding selected topics individually
+    _selectedTopics.forEach((topic) {
+      topicsList.add({
         "Period": periodNumber.toString(),
         "TopicId": topic['topicId'].toString(),
-      };
-    }).toList();
+      });
+    });
+
+    // Adding additional TopicId if available
+    final additionalTopicId = _periodData[_selectedPeriod]?['TopicId'];
+    if (additionalTopicId != null) {
+      final additionalTopicIds = additionalTopicId.split(','); // Ensure we handle multiple IDs if needed
+      additionalTopicIds.forEach((id) {
+        if (!topicsList.any((t) => t['TopicId'] == id)) {
+          topicsList.add({
+            "Period": periodNumber.toString(),
+            "TopicId": id,
+          });
+        }
+      });
+    }
 
     final Map<String, dynamic> requestBody = {
       "GrpCode": "bees",
@@ -1012,4 +1061,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       _showToast('An error occurred while saving data.'); // Show error toast
     }
   }
+
+
 }
