@@ -363,5 +363,4 @@ class _HostelSelectorState extends State<HostelSelector> {
       ),
     );
   }
-
 }
