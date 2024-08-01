@@ -1,3 +1,5 @@
+import 'package:cloudilya/student/Hostal.dart';
+import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +25,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
         GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
         GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
+        GetPage(name: '/StudentDashboard', page: () => StudentDashboard()),
+        GetPage(name: '/HostelSelector', page: () => HostelSelector()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -55,7 +59,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('Empdashboard');
+      Get.offNamed('StudentDashboard');
     });
 return Scaffold(
       body: Center(

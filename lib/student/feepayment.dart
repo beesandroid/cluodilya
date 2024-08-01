@@ -708,19 +708,20 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
       // Handle API response
       if (apiResponse.statusCode == 200) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => FeePaymentScreen()),
-        );
         Fluttertoast.showToast(
           msg: "Fee data saved successfully",
-          toastLength: Toast.LENGTH_SHORT,
+          toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
           backgroundColor: Colors.green,
           textColor: Colors.white,
           fontSize: 16.0,
         );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FeePaymentScreen()),
+        );
+
       } else {
         Fluttertoast.showToast(
           msg: "Failed to save fee data",
