@@ -157,20 +157,17 @@ class StudentDashboard extends StatelessWidget {
     final body = json.encode({
       'GrpCode': 'bees',
       'ColCode': '0001',
-      'StudentId': '1681',
+      // 'StudentId': '1642',
+      'StudentId': '1642',
       'Flag': 'HostelStatus',
     });
 
     try {
       final response = await http.post(Uri.parse(url), headers: headers, body: body);
-
-      // Check if the response status code is 200 (OK)
-      if (response.statusCode == 200) {
+if (response.statusCode == 200) {
         final responseData = json.decode(response.body) as Map<String, dynamic>;
         print(responseData);
-
-        // Extract the status
-        final statusList = responseData['statusdisplayList'] as List<dynamic>;
+final statusList = responseData['statusdisplayList'] as List<dynamic>;
         if (statusList.isNotEmpty) {
           final status = statusList[0]['status'] as int?;
 
@@ -180,16 +177,13 @@ class StudentDashboard extends StatelessWidget {
             Get.to(() => HostelManagement());
           }
         } else {
-          // Handle the case where statusdisplayList is empty or missing
-          Get.to(() => HostelManagement());
+  Get.to(() => HostelManagement());
         }
       } else {
-        // Handle the case where the status code is not 200
-        Get.snackbar('Error', 'Failed to fetch hostel status');
+    Get.snackbar('Error', 'Failed to fetch hostel status');
       }
     } catch (e) {
-      // Log or handle API errors
-      print('API call error: $e');
+    print('API call error: $e');
       Get.snackbar('Error', 'Unable to fetch hostel status');
     }
   }

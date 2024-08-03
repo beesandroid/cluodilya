@@ -31,6 +31,7 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
     );
 
     if (response.statusCode == 200) {
+      print(response.body);
 
 
       setState(() {
@@ -71,7 +72,7 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
                       Text('Floor Name: ${history['floorName']}'),
                       Text('Amount: ${history['amount']}'),
                       Text('Due Amount: ${history['dueAmount']}'),
-                      Text('Collected Amount: ${history['collectedAmount']}'),
+                      Text('Paid Amount: ${history['collectedAmount']}'),
                     ],
                   ),
                 );
@@ -145,7 +146,7 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
                           Text('Room Number: ${item['roomNumber']}'),
                           Text('Block Name: ${item['blockName']}'),
                           Text('Floor Name: ${item['floorName']}'),
-                          Text('Total Collected Amount: ${item['totalCollectedAmount']}'),
+                          Text('Total Paid Amount: ${item['totalCollectedAmount']}'),
                           Text('Due Amount: ${item['dueAmount']}'),
                         ],
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 
 class StudentComplaintsScreen extends StatefulWidget {
   @override
@@ -38,6 +39,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
+      print(response.body);
+      print(response.body);
       setState(() {
         complaintTypes = List<Map<String, dynamic>>.from(data['complaintTypeDropdownList']);
       });
@@ -72,6 +75,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
+      print(response.body);
       setState(() {
         complaintRequests = List<Map<String, dynamic>>.from(data['complaintRequestList']);
       });
@@ -83,6 +87,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   }
 
   Future<void> sendComplaint() async {
+    String registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (selectedComplaintTypeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select a complaint type.')),
@@ -100,7 +105,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       "ComplaintDescription": complaintDescriptionController.text,
       "TypeOfComplaint": selectedComplaintTypeId,
       "File": selectedFilePath ?? "",
-      "ComplaintDate": "2024-08-01",
+      "ComplaintDate":selectedDate.toString(),
       "LoginIpAddress": "",
       "LoginSystemName": "",
       "Flag": "Hostel",
