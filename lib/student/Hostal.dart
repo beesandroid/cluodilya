@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'StudentDashboard.dart';
 
@@ -26,6 +27,30 @@ class _HostelSelectorState extends State<HostelSelector> {
   }
 
   Future<Map<String, dynamic>> fetchHostelData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
     final response = await http.post(
       Uri.parse(
           'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
@@ -33,13 +58,13 @@ class _HostelSelectorState extends State<HostelSelector> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode({
-        "GrpCode": "Bees",
-        "ColCode": "0001",
-        "AcYear": "2024 - 2025",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
+        "AcYear": acYear,
         "UserTypeName": "STUDENT",
         "RegistrationDate": "",
         // "StudentId": "1681",
-        "StudentId": "1642",
+        "StudentId": studId,
         "HostelId": "0",
         "RoomTypeId": "0",
         "RoomId": "0"
@@ -73,6 +98,30 @@ class _HostelSelectorState extends State<HostelSelector> {
 // Call this function with your allottedBedsDisplayList data
 
   Future<void> fetchFilteredData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
     if (selectedHostelId == null ||
         selectedRoomTypeId == null ||
         selectedRoomId == null) {
@@ -90,12 +139,12 @@ class _HostelSelectorState extends State<HostelSelector> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode({
-        "GrpCode": "Bees",
-        "ColCode": "0001",
-        "AcYear": "2024 - 2025",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
+        "AcYear": acYear,
         "UserTypeName": "STUDENT",
         "RegistrationDate": "",
-        "StudentId": "1642",
+        "StudentId": studId,
         // "StudentId": "1642",
         "HostelId": selectedHostelId.toString(),
         "RoomTypeId": selectedRoomTypeId.toString(),
@@ -152,6 +201,30 @@ class _HostelSelectorState extends State<HostelSelector> {
   }
 
   Future<void> saveRegistration() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
     String registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     List<Map<String, dynamic>> selectedRooms = selectedItemIndices.map((index) {
@@ -164,20 +237,20 @@ class _HostelSelectorState extends State<HostelSelector> {
     }).toList();
 
     final requestBody = jsonEncode({
-      "GrpCode": "Bees",
-      "ColCode": "0001",
+      "GrpCode": grpCode,
+      "ColCode": colCode,
       "CollegeId": "1",
-      "StudentId": "1642",
-      "HostelId": "1",
+      "StudentId": studId,
+      "HostelId": selectedHostelId,
       "UserTypeName": "STUDENT",
-      "AcYear": "2024 - 2025",
+      "AcYear": acYear,
       "StartDate": "", // Check if this field needs a value
       "RegistrationDate":registrationDate,
       "RoomTypeId": selectedRoomTypeId?.toString() ?? "",
       "RoomId": selectedRoomId?.toString() ?? "",
       "LoginIpAddress": "",
       "LoginSystemName": "",
-      "UserId": "1",
+      "UserId": adminUserId,
       "HostelSaveRegularStudentRegistrationWithFeestablevariable":
           selectedRooms,
     });

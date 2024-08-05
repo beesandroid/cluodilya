@@ -59,7 +59,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       String grpCode = _groupcodeController.text;
       String mobile = _phoneNumberController.text;
 
-      var url = Uri.parse('https://beessoftware.cloud/CoreAPI/CloudilyaMobileAPP/CloudAPPRegistration');
+      var url = Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CloudAPPRegistration');
       var response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -140,12 +140,6 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
       _showToast('Error');
     }
   }
-
-
-
-
-
-
   void _verifyOtp() {
     String enteredOtp = _otpController.text.trim();
     String? serverOtp = _serverOtp?.trim();
@@ -196,7 +190,7 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
 
       if (response.statusCode == 204) {
         // No content to decode
-        _showToast('User registered successfully');
+        _showToast('You are getting redirected to payments screen');
         Navigator.push(
             context,
             MaterialPageRoute(

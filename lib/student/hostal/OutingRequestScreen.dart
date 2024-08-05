@@ -20,82 +20,100 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
   String? _selectedFilePath;
   String _message = '';
   List<dynamic> _responseList = [];
-  bool _isEditing = false; // Flag to check if editing or creating
+  bool _isEditing = false;
+ // Flag to check if editing or creating
 
   @override
   void initState() {
     super.initState();
     _fetchRequests();
+    _selectedOutTime = _outTimeDisplayList.firstWhere(
+          (item) => item['id'] == _selectedOutTime['id'],
+      orElse: () => null,
+    );
   }
 
-  void _fetchRequests() async {
-    final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'GrpCode': 'BEES',
-        'ColCode': '0001',
-        'CollegeId': '1',
-        'Id': '0',
-        'StudentId': '2548',
-        'Date': '',
-        'DateOfRequest': '',
-        'VisitingId': '0',
-        'EmployeeId': '0',
-        'Description': '',
-        'RequestStartTime': '',
-        'RequestEndTime': '',
-        'Contact': '',
-        'File': '',
-        'LoginIpAddress': '',
-        'LoginSystemName': '',
-        'Flag': 'VIEW',
-      }),
-    );
+  Future<void> _fetchRequests() async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'GrpCode': 'BEES',
+          'ColCode': '0001',
+          'CollegeId': '1',
+          'Id': '0',
+          'StudentId': '2548',
+          'Date': '',
+          'DateOfRequest': '',
+          'VisitingId': '0',
+          'EmployeeId': '0',
+          'Description': '',
+          'RequestStartTime': '',
+          'RequestEndTime': '',
+          'Contact': '',
+          'File': '',
+          'LoginIpAddress': '',
+          'LoginSystemName': '',
+          'Flag': 'VIEW',
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print("ttt"+response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _responseList = data['saveStudentHostelRequestList'] ?? [];
+          _message = data['message'] ?? '';
+        });
+      } else {
+        setState(() {
+          _message = 'Failed to fetch requests';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _responseList = data['saveStudentHostelRequestList'] ?? [];
-        _message = data['message'] ?? '';
-      });
-    } else {
-      setState(() {
-        _message = 'Failed to fetch requests';
+        _message = 'Error: $e';
       });
     }
   }
 
-  void _fetchOutTimeDisplayList() async {
+  Future<void> _fetchOutTimeDisplayList() async {
     if (_selectedDate == null) return;
 
-    final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/OutRequestTimeDisplay'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'GrpCode': 'Bees',
-        'ColCode': '0001',
-        'CollegeId': '1',
-        'StudentId': '2548',
-        'Date': DateFormat('yyyy-MM-dd').format(_selectedDate!),
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/OutRequestTimeDisplay'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'GrpCode': 'Bees',
+          'ColCode': '0001',
+          'CollegeId': '1',
+          'StudentId': '2548',
+          'Date': DateFormat('yyyy-MM-dd').format(_selectedDate!),
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print(data);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _outTimeDisplayList = data['outTimeDisplayList'] ?? [];
+          _message = _outTimeDisplayList.isEmpty ? data['message'] ?? '' : '';
+          // If in editing mode, re-select the previously selected out time
+          if (_isEditing && _selectedOutTime != null) {
+            _selectedOutTime = _outTimeDisplayList.firstWhere(
+                  (item) => item['id'] == _selectedOutTime['id'],
+              orElse: () => null,
+            );
+          }
+        });
+      } else {
+        setState(() {
+          _message = 'Failed to fetch outing hours';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _outTimeDisplayList = data['outTimeDisplayList'] ?? [];
-        _message = _outTimeDisplayList.isEmpty ? data['message'] ?? '' : '';
-      });
-    } else {
-      setState(() {
-        _message = 'Failed to fetch outing hours';
+        _message = 'Error: $e';
       });
     }
   }
@@ -109,15 +127,16 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
     }
   }
 
-  void _sendRequest(String flag) async {
-    if (_selectedOutTime == null && flag != 'VIEW') return;
+  Future<void> _sendRequest(String flag) async {
+    if (flag != 'VIEW' && _selectedOutTime == null) {
+      setState(() {
+        _message = 'No record selected';
+      });
+      return;
+    }
 
-    final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
+    try {
+      final requestBody = {
         'GrpCode': 'BEES',
         'ColCode': '0001',
         'CollegeId': '1',
@@ -135,22 +154,32 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
         'LoginIpAddress': '',
         'LoginSystemName': '',
         'Flag': flag,
-      }),
-    );
+      };
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print(data);
+      final response = await http.post(
+        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _responseList = data['saveStudentHostelRequestList'] ?? [];
+          _message = data['message'] ?? '';
+          if (flag == 'CREATE') {
+            _initializeRequestState(); // Reset state after creation
+          }
+          _fetchRequests(); // Refresh the list
+        });
+      } else {
+        setState(() {
+          _message = 'Failed to send request';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _responseList = data['saveStudentHostelRequestList'] ?? [];
-        _message = data['message'] ?? '';
-        if (flag == 'CREATE') {
-          _initializeRequestState(); // Reset state after creation
-        }
-      });
-    } else {
-      setState(() {
-        _message = 'Failed to send request';
+        _message = 'Error: $e';
       });
     }
   }
@@ -164,10 +193,18 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
       _contactController.text = request['contact'];
       _selectedDate = DateTime.parse(request['date']);
       _isEditing = true; // Set to editing mode
+      _fetchOutTimeDisplayList();
     });
   }
 
   void _deleteRequest(dynamic request) {
+    if (request == null || request['id'] == null) {
+      setState(() {
+        _message = 'Invalid request selected for deletion';
+      });
+      return;
+    }
+
     setState(() {
       _selectedOutTime = request;
     });
@@ -186,24 +223,30 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
     });
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(mainAxisAlignment: MainAxisAlignment.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(width: 220,
+                  Container(
+                    width: 220,
                     child: ElevatedButton(
                       onPressed: _pickDate,
-                      child: Text(_selectedDate == null
-                          ? 'Select Date'
-                          : DateFormat('yyyy-MM-dd').format(_selectedDate!),style: TextStyle(color: Colors.white),),
+                      child: Text(
+                        _selectedDate == null
+                            ? 'Select Date'
+                            : DateFormat('yyyy-MM-dd').format(_selectedDate!),
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         padding: EdgeInsets.symmetric(vertical: 14),
@@ -221,106 +264,115 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                     style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 ),
-              if (_outTimeDisplayList.isNotEmpty) ...[
-                DropdownButtonFormField<dynamic>(
-                  hint: Text('Select Out Time'),
-                  value: _selectedOutTime,
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedOutTime = newValue;
-                      if (_selectedOutTime != null) {
-                        _startTimeController.text = _selectedOutTime['startTime'];
-                        _endTimeController.text = _selectedOutTime['endTime'];
-                      }
-                    });
-                  },
-                  items: _outTimeDisplayList.map((outTime) {
-                    return DropdownMenuItem<dynamic>(
-                      value: outTime,
-                      child: Text(
-                        '${outTime['startTime']} - ${outTime['endTime']} (${outTime['permissionTypeName']})',
-                      ),
-                    );
-                  }).toList(),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                TextField(
-                  controller: _startTimeController,
-                  decoration: InputDecoration(
-                    labelText: 'Start Time',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                TextField(
-                  controller: _endTimeController,
-                  decoration: InputDecoration(
-                    labelText: 'End Time',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                TextField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                TextField(
-                  controller: _contactController,
-                  decoration: InputDecoration(
-                    labelText: 'Contact',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                Container(width: 120,
-                  child: ElevatedButton(
-                    onPressed: _pickFile,
-                    child: Text('Pick File',style: TextStyle(color: Colors.white),),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.0),
-                if (_selectedFilePath != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+              DropdownButtonFormField<dynamic>(
+                hint: Text('Select Out Time'),
+                value: _selectedOutTime,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedOutTime = newValue;
+                    if (_selectedOutTime != null) {
+                      _startTimeController.text = _selectedOutTime['startTime'];
+                      _endTimeController.text = _selectedOutTime['endTime'];
+                    }
+                  });
+                },
+                items: _outTimeDisplayList.map((outTime) {
+                  return DropdownMenuItem<dynamic>(
+                    value: outTime,
                     child: Text(
-                      'Selected file: $_selectedFilePath',
-                      style: TextStyle(fontSize: 16),
+                      '${outTime['startTime']} - ${outTime['endTime']} (${outTime['permissionTypeName']})',
                     ),
+                  );
+                }).toList(),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+              ),
+
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _startTimeController,
+                decoration: InputDecoration(
+                  labelText: 'Start Time',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _endTimeController,
+                decoration: InputDecoration(
+                  labelText: 'End Time',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _contactController,
+                decoration: InputDecoration(
+                  labelText: 'Contact',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              Container(
+                width: 120,
+                child: ElevatedButton(
+                  onPressed: _pickFile,
+                  child: Text(
+                    'Pick File',
+                    style: TextStyle(color: Colors.white),
                   ),
-                Row(mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 220,
-                      child: ElevatedButton(
-                        onPressed: () => _sendRequest(_isEditing ? 'OVERWRITE' : 'CREATE'),
-                        child: Text(_isEditing ? 'Modify Request' : 'Send Request',style: TextStyle(color: Colors.white),),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: EdgeInsets.symmetric(vertical: 14),
-                        ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              if (_selectedFilePath != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Selected file: $_selectedFilePath',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 220,
+                    child: ElevatedButton(
+                      onPressed: () => _sendRequest(_isEditing ? 'OVERWRITE' : 'CREATE'),
+                      child: Text(
+                        _isEditing ? 'Modify Request' : 'Send Request',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 16.0),
-              ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.0),
               SizedBox(
                 height: 400,
                 child: ListView.builder(
                   itemCount: _responseList.length,
                   itemBuilder: (context, index) {
                     final item = _responseList[index];
-                    return Container(color: Colors.white,
+                    return Container(
+                      color: Colors.white,
                       margin: const EdgeInsets.symmetric(vertical: 8.0),
                       child: ListTile(
                         title: Text(
@@ -351,7 +403,6 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
       ),
     );
   }
-
 
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(

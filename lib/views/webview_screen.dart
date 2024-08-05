@@ -50,14 +50,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
           if (await _webViewController.canGoBack()) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => SplashScreen()),
+              MaterialPageRoute(builder: (context) => LoginPage()),
             );
             _webViewController.goBack();
             return false;
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => SplashScreen()),
+              MaterialPageRoute(builder: (context) => LoginPage()),
             );
             return true;
           }
@@ -166,7 +166,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
         print("Can't resolve intent: ${e.toString()}");
       }
     } else if (uri.host == "www.beessoftware.com" && uri.path.startsWith("/v1/")) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => SplashScreen()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
       return true;
     }
     return false;

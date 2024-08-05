@@ -1,34 +1,54 @@
+import 'dart:convert';
+
 import 'package:cloudilya/student/Hostal.dart';
 import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
+import 'package:cloudilya/views/pin%20verification.dart';
+import 'package:cloudilya/views/pinScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'staff/Attendence.dart';
 import 'staff/EmpDashboard.dart';
 import 'staff/LeaveApplication.dart';
 import 'views/Signup.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  final String? storedPin = prefs.getString('pin');
+
+  print('Stored PIN: $storedPin'); // Debugging line
+
+  runApp(MyApp(isLoggedIn: isLoggedIn, storedPin: storedPin));
 }
+
 class MyApp extends StatelessWidget {
+  final bool isLoggedIn;
+  final String? storedPin;
+
+  MyApp({required this.isLoggedIn, this.storedPin});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      initialRoute: '/splash',
+      initialRoute: determineInitialRoute(),
       getPages: [
-        GetPage(name: '/splash', page: () => SplashScreen()),
+        GetPage(name: '/splash', page: () => SplashScreen(isLoggedIn: isLoggedIn)),
         GetPage(name: '/login', page: () => LoginPage()),
         GetPage(name: '/Empdashboard', page: () => EmpDashboard()),
-        GetPage(name: '/signup', page: () =>  NewSignupScreen()),
+        GetPage(name: '/signup', page: () => NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
         GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
         GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
         GetPage(name: '/StudentDashboard', page: () => StudentDashboard()),
         GetPage(name: '/HostelSelector', page: () => HostelSelector()),
         GetPage(name: '/HostelManagement', page: () => HostelManagement()),
+        GetPage(name: '/pin_setup', page: () => PinSetupScreen()),
+        GetPage(name: '/pin_verification', page: () => PinVerificationScreen()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -36,34 +56,64 @@ class MyApp extends StatelessWidget {
         fontFamily: 'SF Pro Text',
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white, // White background
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
-            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border
+            borderSide: BorderSide(color: Colors.grey, width: 1.0),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
-            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border on focus
+            borderSide: BorderSide(color: Colors.grey, width: 1.0),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
-            borderSide: BorderSide(color: Colors.grey, width: 1.0), // Grey border when enabled
+            borderSide: BorderSide(color: Colors.grey, width: 1.0),
           ),
           contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
+          hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
     );
   }
+
+  String determineInitialRoute() {
+    if (storedPin != null && storedPin!.isNotEmpty) {
+      if (isLoggedIn) {
+        return '/pin_verification';
+      } else {
+        return '/login';
+      }
+    } else {
+      return '/login';
+    }
+  }
 }
 
 class SplashScreen extends StatelessWidget {
+  final bool isLoggedIn;
+
+  SplashScreen({required this.isLoggedIn});
+
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: 3), () {
-      Get.offNamed('login');
+    Future.delayed(Duration(seconds: 3), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final userType = prefs.getString('userType');
+
+      if (isLoggedIn) {
+        if (userType == 'STUDENT') {
+          Get.offNamed('/StudentDashboard');
+        } else if (userType == 'EMPLOYEE') {
+          Get.offNamed('/EmpDashboard');
+        } else {
+          Get.offNamed('/login');
+        }
+      } else {
+        Get.offNamed('/login');
+      }
     });
-return Scaffold(
+
+    return Scaffold(
       body: Center(
         child: Image.asset('assets/image.png', width: 150, height: 150),
       ),
@@ -187,7 +237,7 @@ class LoginController extends GetxController {
   var rememberMe = false.obs;
 
   final Dio _dio = Dio();
-  final String _loginUrl = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails'; // Replace with your API endpoint
+  final String _loginUrl = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails';
 
   void login() async {
     final userName = userIdController.text.trim();
@@ -201,6 +251,7 @@ class LoginController extends GetxController {
       );
       return;
     }
+
     try {
       final response = await _dio.post(
         _loginUrl,
@@ -213,25 +264,26 @@ class LoginController extends GetxController {
           headers: {'Content-Type': 'application/json'},
         ),
       );
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData is Map<String, dynamic> &&
-            responseData.containsKey('singleLoginUesrDetails') &&
-            responseData.containsKey('message')) {
- final singleLoginUserDetails = responseData['singleLoginUesrDetails'];
-          final message = responseData['message'];
 
-          if (message == 'Login Successfully' && singleLoginUserDetails != null) {
-         Get.offNamed('/dashboard');
-          } else {
-   Get.snackbar(
+      if (response.statusCode == 200) {
+        dynamic responseData = response.data;
+
+        if (responseData is String) {
+          try {
+            responseData = jsonDecode(responseData);
+          } catch (e) {
+            Get.snackbar(
               'Error',
-              'Invalid credentials. Please try again.',
+              'Failed to parse response data: ${e.toString()}',
               snackPosition: SnackPosition.BOTTOM,
             );
+            return;
           }
+        }
+
+        if (responseData is Map<String, dynamic>) {
+          handleLoginResponse(responseData);
         } else {
-          // Handle unexpected response format
           Get.snackbar(
             'Error',
             'Unexpected response format.',
@@ -239,18 +291,96 @@ class LoginController extends GetxController {
           );
         }
       } else {
-    Get.snackbar(
+        Get.snackbar(
           'Error',
           'Login failed with status code: ${response.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } catch (e) {
-Get.snackbar(
+      Get.snackbar(
         'Error',
         'An error occurred: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
+
+  void handleLoginResponse(Map<String, dynamic> responseData) async {
+    if (responseData.containsKey('loginUesrDetailsList') &&
+        responseData.containsKey('message')) {
+      final loginUserDetailsList = responseData['loginUesrDetailsList'];
+      final message = responseData['message'];
+
+      if (message == 'Login Successfully' &&
+          loginUserDetailsList != null &&
+          loginUserDetailsList.isNotEmpty) {
+        final singleLoginUserDetails = loginUserDetailsList[0];
+        final status = singleLoginUserDetails['status'] as int?;
+        final userType = singleLoginUserDetails['userType'] as String?;
+
+        await saveResponseToSharedPreferences(singleLoginUserDetails);
+
+        final prefs = await SharedPreferences.getInstance();
+        final pin = prefs.getString('pin');
+
+        if (pin == null || pin.isEmpty) {
+          Get.offNamed('/pin_setup');
+        } else {
+          if (status != null) {
+            if (userType == 'STUDENT' && status == 0) {
+              Get.offNamed('/StudentDashboard');
+            } else if (userType == 'EMPLOYEE' && status == 1) {
+              Get.offNamed('/Empdashboard');
+            } else {
+              Get.snackbar(
+                'Error',
+                'Unexpected status value or user type.',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            }
+          } else {
+            Get.snackbar(
+              'Error',
+              'Status value is null.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          'Invalid credentials. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } else {
+      Get.snackbar(
+        'Error',
+        'Unexpected response format.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+}
+
+Future<void> saveResponseToSharedPreferences(Map<String, dynamic> responseBody) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  responseBody.forEach((key, value) {
+    if (value is String) {
+      prefs.setString(key, value);
+    } else if (value is int) {
+      prefs.setInt(key, value);
+    } else if (value is bool) {
+      prefs.setBool(key, value);
+    } else if (value is double) {
+      prefs.setDouble(key, value);
+    } else if (value is List<String>) {
+      prefs.setStringList(key, value);
+    } else {
+      prefs.setString(key, value.toString());
+    }
+  });
+  await prefs.setBool('isLoggedIn', true);
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../student/Hostal.dart';
 import '../student/feepayment.dart';
@@ -152,38 +153,64 @@ class StudentDashboard extends StatelessWidget {
   }
 
   Future<void> _handleHostalTap() async {
-    final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch';
-    final headers = {'Content-Type': 'application/json'};
-    final body = json.encode({
-      'GrpCode': 'bees',
-      'ColCode': '0001',
-      // 'StudentId': '1642',
-      'StudentId': '1642',
-      'Flag': 'HostelStatus',
-    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+ String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
 
     try {
+      // Parse the JSON string into a Map
+
+      final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch';
+      final headers = {'Content-Type': 'application/json'};
+      final body = json.encode({
+        'GrpCode': grpCode,
+        'ColCode': colCode,
+        'StudentId': studId,
+        'Flag': 'HostelStatus',
+      });
+
       final response = await http.post(Uri.parse(url), headers: headers, body: body);
-if (response.statusCode == 200) {
+
+      if (response.statusCode == 200) {
         final responseData = json.decode(response.body) as Map<String, dynamic>;
         print(responseData);
-final statusList = responseData['statusdisplayList'] as List<dynamic>;
+        final statusList = responseData['statusdisplayList'] as List<dynamic>;
         if (statusList.isNotEmpty) {
           final status = statusList[0]['status'] as int?;
-
           if (status == 0) {
             Get.to(() => HostelSelector());
           } else {
             Get.to(() => HostelManagement());
           }
         } else {
-  Get.to(() => HostelManagement());
+          Get.to(() => HostelManagement());
         }
       } else {
-    Get.snackbar('Error', 'Failed to fetch hostel status');
+        Get.snackbar('Error', 'Failed to fetch hostel status');
       }
     } catch (e) {
-    print('API call error: $e');
+      print('API call error: $e');
       Get.snackbar('Error', 'Unable to fetch hostel status');
     }
   }
