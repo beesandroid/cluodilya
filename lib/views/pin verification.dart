@@ -9,7 +9,6 @@ class PinVerificationScreen extends StatefulWidget {
 }
 
 class _PinVerificationScreenState extends State<PinVerificationScreen> {
-
   final TextEditingController _pinController = TextEditingController();
   String? _currentText;
 
@@ -42,46 +41,25 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                 ),
                 animationDuration: Duration(milliseconds: 300),
                 enableActiveFill: true,
-                appContext: context, // Add this line
+                appContext: context,
                 onChanged: (value) {
                   setState(() {
                     _currentText = value;
                   });
                 },
                 onCompleted: (value) async {
-                  final prefs = await SharedPreferences.getInstance();
-                  final storedPin = prefs.getString('pin');
-
-                  if (value == storedPin) {
-                    Get.offNamed('/StudentDashboard'); // or '/EmpDashboard'
-                  } else {
-                    Get.snackbar(
-                      'Error',
-                      'Invalid PIN. Please try again.',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
+                  await _verifyPin(value);
                 },
               ),
             ),
-
-            Container(width: 220,
+            Container(
+              width: 220,
               child: ElevatedButton(
                 onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  final storedPin = prefs.getString('pin');
-
-                  if (_pinController.text == storedPin) {
-                    Get.offNamed('/StudentDashboard'); // or '/EmpDashboard'
-                  } else {
-                    Get.snackbar(
-                      'Error',
-                      'Invalid PIN. Please try again.',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
+                  final pin = _pinController.text;
+                  await _verifyPin(pin);
                 },
-                child: Text('Verify PIN',style: TextStyle(color: Colors.white),),
+                child: Text('Verify PIN', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   padding: EdgeInsets.symmetric(vertical: 14.0),
@@ -93,5 +71,51 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _verifyPin(String pin) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedPin = prefs.getString('pin');
+    final userType = prefs.getString('userType');
+
+    if (storedPin == null) {
+      Get.snackbar(
+        'Error',
+        'No PIN stored. Please check your settings.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (pin == storedPin) {
+      if (userType != null) {
+        switch (userType) {
+          case 'STUDENT':
+            Get.offNamed('/StudentDashboard');
+            break;
+          case 'EMPLOYEE':
+            Get.offNamed('/Empdashboard');
+            break;
+          default:
+            Get.snackbar(
+              'Error',
+              'Unexpected user type.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          'User type not found.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } else {
+      Get.snackbar(
+        'Error',
+        'Invalid PIN. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }

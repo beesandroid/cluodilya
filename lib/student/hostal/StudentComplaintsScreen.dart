@@ -361,9 +361,33 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                           IconButton(
                             icon: Icon(Icons.delete),
                             onPressed: () {
-                              deleteComplaint(complaint['complaintId']);
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("Are you sure?"),
+                                    content: Text("Do you really want to delete this complaint?"),
+                                    actions: [
+                                      TextButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("Delete"),
+                                        onPressed: () {
+                                          deleteComplaint(complaint['complaintId']);
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             },
                           ),
+
                         ],
                       ),
                     ),

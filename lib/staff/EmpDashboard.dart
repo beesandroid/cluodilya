@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../main.dart';
 import '../student/Hostal.dart';
 import '../student/feepayment.dart';
 import 'Attendence.dart';
@@ -12,7 +14,13 @@ class EmpDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Dashboard'),
+        title: Text('Employee Dashboard'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {},
+          ),
+        ],
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1.0,
@@ -41,33 +49,14 @@ class EmpDashboard extends StatelessWidget {
             ),
             _buildGridTile(
               context,
-              'Leave Application',
+              'Leave',
               Icons.attach_email,
               Colors.greenAccent,
               LeaveApplicationScreen(),
             ),
-            _buildGridTile(
-              context,
-              'Fee Payments',
-              Icons.payment,
-              Colors.orangeAccent,
-              FeePaymentScreen(),
-            ),
-            _buildGridTile(
-              context,
-              'Transport',
-              Icons.directions_bus,
-              Colors.purpleAccent,
-              null, // No navigation
-              showToast: true, // Show toast message
-            ),
-            _buildGridTile(
-              context,
-              'Hostal',
-              Icons.house,
-              Colors.redAccent,
-                HostelSelector() // Show toast message
-            ),
+
+
+
           ],
         ),
       ),
@@ -75,13 +64,13 @@ class EmpDashboard extends StatelessWidget {
   }
 
   Widget _buildGridTile(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      Widget? screen, {
-        bool showToast = false,
-      }) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    Widget? screen, {
+    bool showToast = false,
+  }) {
     return GestureDetector(
       onTap: () {
         try {
@@ -124,7 +113,8 @@ class EmpDashboard extends StatelessWidget {
             } catch (e) {
               // Log or handle navigation errors
               print('Navigation error: $e');
-              Get.snackbar('Error', 'Unable to navigate to the selected screen');
+              Get.snackbar(
+                  'Error', 'Unable to navigate to the selected screen');
             }
           },
           child: Container(

@@ -37,12 +37,14 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       initialRoute: determineInitialRoute(),
       getPages: [
-        GetPage(name: '/splash', page: () => SplashScreen(isLoggedIn: isLoggedIn)),
+        GetPage(
+            name: '/splash', page: () => SplashScreen(isLoggedIn: isLoggedIn)),
         GetPage(name: '/login', page: () => LoginPage()),
         GetPage(name: '/Empdashboard', page: () => EmpDashboard()),
         GetPage(name: '/signup', page: () => NewSignupScreen()),
         GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
-        GetPage(name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
+        GetPage(
+            name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
         GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
         GetPage(name: '/StudentDashboard', page: () => StudentDashboard()),
         GetPage(name: '/HostelSelector', page: () => HostelSelector()),
@@ -69,7 +71,8 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(color: Colors.grey, width: 1.0),
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          contentPadding:
+              EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
           hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
@@ -135,9 +138,12 @@ class LoginPage extends StatelessWidget {
             children: [
               Image.asset('assets/image.png', width: 150, height: 150),
               SizedBox(height: 20.0),
-              _buildTextField('UserID', controller: _loginController.userIdController),
+              _buildTextField('UserID',
+                  controller: _loginController.userIdController),
               SizedBox(height: 20.0),
-              _buildTextField('Password', obscureText: true, controller: _loginController.passwordController),
+              _buildTextField('Password',
+                  obscureText: true,
+                  controller: _loginController.passwordController),
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
@@ -145,7 +151,8 @@ class LoginPage extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF003d85),
-                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
@@ -219,7 +226,9 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
-  Widget _buildTextField(String hintText, {bool obscureText = false, required TextEditingController controller}) {
+
+  Widget _buildTextField(String hintText,
+      {bool obscureText = false, required TextEditingController controller}) {
     return TextField(
       obscureText: obscureText,
       controller: controller,
@@ -231,13 +240,15 @@ class LoginPage extends StatelessWidget {
     );
   }
 }
+
 class LoginController extends GetxController {
   var userIdController = TextEditingController();
   var passwordController = TextEditingController();
   var rememberMe = false.obs;
 
   final Dio _dio = Dio();
-  final String _loginUrl = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails';
+  final String _loginUrl =
+      'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails';
 
   void login() async {
     final userName = userIdController.text.trim();
@@ -364,7 +375,8 @@ class LoginController extends GetxController {
   }
 }
 
-Future<void> saveResponseToSharedPreferences(Map<String, dynamic> responseBody) async {
+Future<void> saveResponseToSharedPreferences(
+    Map<String, dynamic> responseBody) async {
   final prefs = await SharedPreferences.getInstance();
 
   responseBody.forEach((key, value) {

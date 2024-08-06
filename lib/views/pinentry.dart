@@ -12,6 +12,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   final TextEditingController _pinController = TextEditingController();
   String _currentText = '';
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +24,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Ensure the Column takes minimum vertical space
+          mainAxisSize: MainAxisSize.min,
+          // Ensure the Column takes minimum vertical space
           children: [
             SizedBox(height: 100.0), // Add space at the top for centering
             PinCodeTextField(
@@ -36,7 +38,10 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                   _currentText = value;
                 });
               },
-              onCompleted: _verifyPin,
+              onCompleted: (value) {
+                print('PIN Completed: $value'); // Debugging line to check if PIN is completed
+                _verifyPin(value);
+              },
               pinTheme: PinTheme(
                 shape: PinCodeFieldShape.box,
                 borderRadius: BorderRadius.circular(8),
@@ -52,10 +57,12 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
               animationType: AnimationType.fade,
               animationDuration: Duration(milliseconds: 300),
             ),
+
             SizedBox(height: 32.0),
             ElevatedButton(
               onPressed: () {
                 if (_currentText.length == 4) {
+                  print('Button Pressed with PIN: $_currentText'); // Debugging line
                   _verifyPin(_currentText);
                 } else {
                   Get.snackbar('Error', 'Please enter a 4-digit PIN.');
@@ -68,6 +75,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                 textStyle: TextStyle(fontSize: 16),
               ),
             ),
+
           ],
         ),
       ),
@@ -75,13 +83,41 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   }
 
   Future<void> _verifyPin(String pin) async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedPin = prefs.getString('pin');
+    print('Entered PIN for verification: $pin'); // Debugging line to confirm method call
 
-    if (pin == storedPin) {
-      Get.offNamed('/StudentDashboard'); // or other appropriate screen
-    } else {
-      Get.snackbar('Error', 'Incorrect PIN.');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedPin = prefs.getString('pin');
+      final userType = prefs.getString('userType');
+
+      print('Stored PIN: $storedPin'); // Debugging line
+      print('User Type: $userType'); // Debugging line
+
+      if (storedPin == null) {
+        print('Stored PIN is null'); // Debugging line
+        Get.snackbar('Error', 'Stored PIN not found.');
+        return;
+      }
+
+      if (pin.isNotEmpty && pin == storedPin) {
+        if (userType == 'EMPLOYEE') {
+          print('Navigating to Employee Dashboard'); // Debugging line
+          Get.offNamed('/Empdashboard');
+        } else if (userType == 'STUDENT') {
+          print('Navigating to Student Dashboard'); // Debugging line
+          Get.offNamed('/StudentDashboard');
+        } else {
+          print('Invalid user type: $userType'); // Debugging line
+          Get.snackbar('Error', 'Invalid user type.');
+        }
+      } else {
+        print('Invalid PIN entered: $pin'); // Debugging line
+        Get.snackbar('Error', 'Invalid PIN.');
+      }
+    } catch (e) {
+      print('Error: ${e.toString()}'); // Debugging line
+      Get.snackbar('Error', 'An error occurred: ${e.toString()}');
     }
   }
+
 }

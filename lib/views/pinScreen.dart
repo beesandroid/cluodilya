@@ -26,7 +26,6 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Set PIN'),
-
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -37,7 +36,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  "Setup a Four Digit Pin",
+                  "Setup a Four Digit PIN",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                 ),
               ),
@@ -73,7 +72,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  "Re-Enter Pin",
+                  "Re-Enter PIN",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                 ),
               ),
@@ -140,8 +139,23 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     }
 
     final prefs = await SharedPreferences.getInstance();
+    final storedPin = prefs.getString('pin');
+
+    if (storedPin != null) {
+      Get.snackbar('Error', 'PIN is already set.');
+      return;
+    }
+
     await prefs.setString('pin', _pin);
-    Get.snackbar('Success', 'PIN set successfully.');
-    Get.offNamed('/StudentDashboard'); // Redirect to Student Dashboard or other desired screen
+
+    // Assuming you need to get user type from SharedPreferences or another source
+    final userType = prefs.getString('userType') ?? 'STUDENT';
+
+    // Navigate based on user type
+    if (userType == 'EMPLOYEE') {
+      Get.offNamed('/Empdashboard'); // Redirect to Employee Dashboard
+    } else {
+      Get.offNamed('/StudentDashboard'); // Redirect to Student Dashboard
+    }
   }
 }
