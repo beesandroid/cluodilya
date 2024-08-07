@@ -66,6 +66,7 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(data);
         setState(() {
           _responseList = data['saveStudentHostelRequestList'] ?? [];
           _message = data['message'] ?? '';

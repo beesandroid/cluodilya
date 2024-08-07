@@ -25,7 +25,7 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
       body: json.encode({
         "GrpCode": "bees",
         "ColCode": "0001",
-        "StudentId": "1679",
+        "StudentId": "2548",
         "Flag": "HostelStatus"
       }),
     );

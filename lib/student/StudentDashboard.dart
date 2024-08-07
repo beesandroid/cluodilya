@@ -1,3 +1,4 @@
+import 'package:cloudilya/student/transport.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'dart:convert';
 import '../student/Hostal.dart';
 import '../student/feepayment.dart';
 import 'hostal/hostalManagement.dart';
+import 'leaveRequest.dart';
 class StudentDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -52,11 +54,17 @@ class StudentDashboard extends StatelessWidget {
             ),
             _buildGridTile(
               context,
+              'Service',
+              Icons.volunteer_activism,
+              Colors.green,
+              LeaveRequest(),
+            ),
+            _buildGridTile(
+              context,
               'Transport',
               Icons.directions_bus,
               Colors.purpleAccent,
-              null, // No navigation
-              showToast: true, // Show toast message
+                TransportRegistrationScreen()// Show toast message
             ),
             _buildGridTile(
               context,

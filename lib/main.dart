@@ -6,10 +6,12 @@ import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
 import 'package:cloudilya/views/pin%20verification.dart';
 import 'package:cloudilya/views/pinScreen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 import 'staff/Attendence.dart';
 import 'staff/EmpDashboard.dart';
 import 'staff/LeaveApplication.dart';
@@ -24,6 +26,9 @@ void main() async {
   print('Stored PIN: $storedPin'); // Debugging line
 
   runApp(MyApp(isLoggedIn: isLoggedIn, storedPin: storedPin));
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 }
 
 class MyApp extends StatelessWidget {
