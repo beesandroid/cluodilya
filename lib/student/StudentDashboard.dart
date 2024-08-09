@@ -67,6 +67,13 @@ class StudentDashboard extends StatelessWidget {
               Colors.purpleAccent,
                 TransportManagement()
                 // TransportRegistrationScreen()// Show toast message
+            )  , _buildGridTile(
+              context,
+              'Transport',
+              Icons.directions_bus,
+              Colors.purpleAccent,
+                TransportRegistrationScreen()
+                // TransportRegistrationScreen()// Show toast message
             ),
             _buildGridTile(
               context,

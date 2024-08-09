@@ -98,6 +98,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
     if (response.statusCode == 200) {
       _fetchLeaveRequests();
       final Map<String, dynamic> responseBody = json.decode(response.body);
+      print(responseBody);
 
       final String message = responseBody['message'];
       if (message != null) {

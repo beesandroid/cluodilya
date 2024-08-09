@@ -15,11 +15,11 @@ class _TransportRegistrationScreenState
   List<dynamic> busNoWithTimingsList = [];
   List<dynamic> layOutDisplayList = [];
   List<dynamic> displayFeesList = [];
-  List<Map<String, dynamic>> seatsList = [];
+  List<dynamic> seatsList = [];
   dynamic selectedStage;
   dynamic selectedBusType;
   dynamic selectedBusTiming;
-  int? selectedSeatIndex;
+  String? selectedSeat;
   int? selectedFeeIndex;
 
   @override
@@ -63,7 +63,9 @@ class _TransportRegistrationScreenState
           busNoWithTimingsList = data['busNoWithTimingsList'] ?? [];
           layOutDisplayList = data['layOutDisplayList'] ?? [];
           displayFeesList = data['displayFeesList'] ?? [];
-          seatsList = _flattenSeatLayout(layOutDisplayList);
+          seatsList = _flattenSeatLayout(layOutDisplayList)
+              .map((seat) => seat['seatNo'].toString())
+              .toList();
         });
       } else {
         _showErrorSnackbar('Failed to load data. Please try again.');
@@ -74,9 +76,14 @@ class _TransportRegistrationScreenState
   }
 
   Future<void> _registerSeat() async {
-    if (selectedSeatIndex == null || selectedBusTiming == null || selectedStage == null || selectedBusType == null || selectedFeeIndex == null) return;
+    if (selectedSeat == null ||
+        selectedBusTiming == null ||
+        selectedStage == null ||
+        selectedBusType == null ||
+        selectedFeeIndex == null) return;
 
-    const url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentTransportRegistration';
+    const url =
+        'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentTransportRegistration';
     final requestBody = {
       "GrpCode": "bees",
       "ColCode": "0001",
@@ -91,20 +98,25 @@ class _TransportRegistrationScreenState
       "RegistrationDate": "2024-07-30", // Adjust as necessary
       "BusTypeId": selectedBusType['busTypeId'].toString(),
       "BusId": selectedBusTiming['busId'].toString(),
-      "SeatNumber": seatsList[selectedSeatIndex!]['seatNo'].toString(),
+      "SeatNumber": selectedSeat,
       "Description": "rtryh", // Adjust as necessary
       "Saved": "1",
       "LoginIpAddress": "",
       "LoginSystemName": "",
       "TransportStudentRegistrationTablevariable": [
         {
-          "FeeId": displayFeesList.isNotEmpty ? displayFeesList[selectedFeeIndex!]['feeId'] : "0",
-          "Frequency": displayFeesList.isNotEmpty ? displayFeesList[selectedFeeIndex!]['frequency'] : "0",
-          "Installement": displayFeesList.isNotEmpty ? displayFeesList[selectedFeeIndex!]['installmentStatus'] : "no",
+          "FeeId": displayFeesList.isNotEmpty
+              ? displayFeesList[selectedFeeIndex!]['feeId']
+              : "0",
+          "Frequency": displayFeesList.isNotEmpty
+              ? displayFeesList[selectedFeeIndex!]['frequency']
+              : "0",
+          "Installement": displayFeesList.isNotEmpty
+              ? displayFeesList[selectedFeeIndex!]['installmentStatus']
+              : "no",
         }
       ]
     };
-    print(requestBody);
 
     try {
       final response = await http.post(
@@ -118,8 +130,10 @@ class _TransportRegistrationScreenState
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print(data);
-        final displayMessage = data['displayMessage'] ?? 'Registration successful.';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(displayMessage)));
+        final displayMessage =
+            data['displayMessage'] ?? 'Registration successful.';
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(displayMessage)));
         // Optionally clear the selection or refresh the UI
       } else {
         _showErrorSnackbar('Failed to register. Please try again.');
@@ -181,7 +195,9 @@ class _TransportRegistrationScreenState
         final data = json.decode(response.body);
         setState(() {
           layOutDisplayList = data['layOutDisplayList'] ?? [];
-          seatsList = _flattenSeatLayout(layOutDisplayList);
+          seatsList = _flattenSeatLayout(layOutDisplayList)
+              .map((seat) => seat['seatNo'].toString())
+              .toList();
           displayFeesList = data['displayFeesList'] ?? [];
         });
       } else {
@@ -214,12 +230,6 @@ class _TransportRegistrationScreenState
       return timing['busTypeId'] == selectedBusTypeId &&
           timing['stageId'] == selectedStage['stageId'];
     }).toList();
-  }
-
-  void _onSeatTapped(int index) {
-    setState(() {
-      selectedSeatIndex = index;
-    });
   }
 
   @override
@@ -255,8 +265,9 @@ class _TransportRegistrationScreenState
                   selectedStage = newValue;
                   selectedBusType = null;
                   selectedBusTiming = null;
-                  selectedSeatIndex = null;
+                  selectedSeat = null;
                   selectedFeeIndex = null;
+                  // Fetch bus types based on the selected stage
                   _fetchUpdatedTransportData();
                 });
               },
@@ -280,7 +291,7 @@ class _TransportRegistrationScreenState
                 setState(() {
                   selectedBusType = newValue;
                   selectedBusTiming = null;
-                  selectedSeatIndex = null;
+                  selectedSeat = null;
                   selectedFeeIndex = null;
                   _fetchUpdatedTransportData();
                 });
@@ -305,7 +316,7 @@ class _TransportRegistrationScreenState
               onChanged: (dynamic newValue) {
                 setState(() {
                   selectedBusTiming = newValue;
-                  selectedSeatIndex = null;
+                  selectedSeat = null;
                   selectedFeeIndex = null;
                   _fetchUpdatedTransportData();
                 });
@@ -314,11 +325,39 @@ class _TransportRegistrationScreenState
             SizedBox(height: 16),
             if (selectedStage != null &&
                 selectedBusType != null &&
-                selectedBusTiming != null)
+                selectedBusTiming != null &&
+                selectedBusTiming['layOutId'] == 0)
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Select Seat',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                ),
+                value: selectedSeat,
+                items: seatsList.map((seat) {
+                  return DropdownMenuItem<String>(
+                    value: seat,
+                    child: Text(seat),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedSeat = newValue;
+                  });
+                },
+              ),
+            SizedBox(height: 16),
+            if (selectedStage != null &&
+                selectedBusType != null &&
+                selectedBusTiming != null &&
+                selectedBusTiming['layOutId'] != 0)
               Expanded(
-                child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(width: 160,
+                    Container(
+                      width: 160,
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4, // Adjust based on your layout
@@ -328,18 +367,25 @@ class _TransportRegistrationScreenState
                         itemCount: seatsList.length,
                         itemBuilder: (context, index) {
                           final seat = seatsList[index];
-                          final isSelected = index == selectedSeatIndex;
+                          final isSelected = seat == selectedSeat;
                           return GestureDetector(
-                            onTap: () => _onSeatTapped(index),
+                            onTap: () {
+                              setState(() {
+                                selectedSeat = seat;
+                              });
+                            },
                             child: Container(
                               decoration: BoxDecoration(
-                                color: isSelected ? Colors.green.shade100 : Colors.grey.shade200,
+                                color: isSelected
+                                    ? Colors.green.shade100
+                                    : Colors.grey.shade200,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               child: Center(
                                 child: Icon(
                                   isSelected ? Icons.chair : Icons.chair_alt,
-                                  color: isSelected ? Colors.green : Colors.black,
+                                  color:
+                                      isSelected ? Colors.green : Colors.black,
                                 ),
                               ),
                             ),
@@ -350,12 +396,11 @@ class _TransportRegistrationScreenState
                   ],
                 ),
               ),
-            if (selectedSeatIndex != null &&
-                selectedSeatIndex! < seatsList.length)
+            if (selectedSeat != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Text(
-                  'Selected Seat: ${seatsList[selectedSeatIndex!]['seatNo']}',
+                  'Selected Seat: $selectedSeat',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -368,36 +413,46 @@ class _TransportRegistrationScreenState
                   itemBuilder: (context, index) {
                     final fee = displayFeesList[index];
                     final isSelected = index == selectedFeeIndex;
-                    return Container(decoration: BoxDecoration(border: Border.all(color: Colors.blue),borderRadius: BorderRadius.circular(15)),
-                      child: ListTile(
-                        tileColor: isSelected ? Colors.blue.shade50 : null,
-                        title: Text('Fee: ${fee['totalFeeAmount']} (${fee['frequency']})'),
-                        subtitle: Text('Installment status: ${fee['installmentStatus']}\nRoute Name: ${fee['routeName']}'),
-                        onTap: () {
-                          setState(() {
-                            selectedFeeIndex = index;
-                          });
-                        },
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 22.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blue),
+                            borderRadius: BorderRadius.circular(15)),
+                        child: ListTile(
+                          title: Text('Fee Name: ${fee['feeName']}'),
+                          subtitle: Text('Amount: ${fee['amount']}'),
+                          tileColor: isSelected ? Colors.blue.shade50 : null,
+                          onTap: () {
+                            setState(() {
+                              selectedFeeIndex = index;
+                            });
+                          },
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-            SizedBox(height: 16),
-            if (selectedSeatIndex != null )
+
+            if (selectedSeat != null && selectedFeeIndex != null)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     width: 220,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _registerSeat();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue, // Background color
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 18.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _registerSeat();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue, // Background color
+                        ),
+                        child: Text('Register',
+                            style: TextStyle(color: Colors.white)),
                       ),
-                      child: Text('Register', style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],

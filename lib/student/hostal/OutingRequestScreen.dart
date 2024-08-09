@@ -177,7 +177,8 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
       print("Request Body: " + requestBody.toString());
 
       final response = await http.post(
-        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
+        Uri.parse(
+            'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(requestBody),
       );
@@ -217,10 +218,11 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
       );
     }
   }
+
   void _editRequest(dynamic request) {
     setState(() {
       _selectedOutTime = _outTimeDisplayList.firstWhere(
-            (item) => item['id'] == request['visitingId'],
+        (item) => item['id'] == request['visitingId'],
         orElse: () => null,
       );
       _startTimeController.text = request['requestStartTime'] ?? '';
@@ -228,13 +230,12 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
       _descriptionController.text = request['description'] ?? '';
       _contactController.text = request['contact'] ?? '';
       _selectedDate =
-      request['date'] != null ? DateTime.parse(request['date']) : null;
+          request['date'] != null ? DateTime.parse(request['date']) : null;
       _isEditing = true;
       _editingRequestId = request['id'];
       _fetchOutTimeDisplayList();
     });
   }
-
 
   void _deleteRequest(dynamic request) {
     if (request == null || request['id'] == null) {
@@ -333,19 +334,23 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                 ),
               DropdownButtonFormField<dynamic>(
                 hint: Text('Select Out Time'),
-                value: _selectedOutTime,
+                value: _outTimeDisplayList.contains(_selectedOutTime)
+                    ? _selectedOutTime
+                    : null,
                 onChanged: (newValue) {
                   setState(() {
                     _selectedOutTime = newValue;
                     if (_selectedOutTime != null) {
-                      _startTimeController.text = _selectedOutTime['startTime'] ?? '';
-                      _endTimeController.text = _selectedOutTime['endTime'] ?? '';
+                      _startTimeController.text =
+                          _selectedOutTime['startTime'] ?? '';
+                      _endTimeController.text =
+                          _selectedOutTime['endTime'] ?? '';
                     }
                   });
                 },
                 items: _outTimeDisplayList.map((outTime) {
                   return DropdownMenuItem<dynamic>(
-                    value: outTime, // Ensure unique values
+                    value: outTime,
                     child: Text(
                       '${outTime['startTime']} - ${outTime['endTime']} (${outTime['permissionTypeName']})',
                     ),
@@ -354,8 +359,7 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                 ),
-              )
-,
+              ),
               SizedBox(height: 16.0),
               TextField(
                 controller: _startTimeController,
@@ -458,11 +462,15 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                     return Container(
                       color: Colors.white,
                       margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Container(decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(15)),
-                        child:
-                        ListTile(
+                      child: Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(15)),
+                        child: ListTile(
                           title: Text(
-                              'Selected Timings:${item['date']} ${item['requestStartTime']} - ${item['requestEndTime']}',style: TextStyle(fontWeight: FontWeight.bold),),
+                            'Selected Timings:${item['date']} ${item['requestStartTime']} - ${item['requestEndTime']}',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           subtitle: Text(
                               'Description: ${item['description']} \nContact: +91 ${item['contact']} \nid:${item['id']}'),
                           trailing: Row(
