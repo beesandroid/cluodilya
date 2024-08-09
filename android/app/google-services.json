@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "434226759409",
+    "project_id": "cloudilya",
+    "storage_bucket": "cloudilya.appspot.com"
+
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434226759409:android:e7d8ed9526b62be7eecb50",
+        "android_client_info": {
+          "package_name": "com.cloudilya.cloudilya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7a6KWUcRQ6Tht0OO4C56_I4Ep2n5zrZ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

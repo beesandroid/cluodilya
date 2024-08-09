@@ -84,7 +84,7 @@ class _TransportRegistrationScreenState
       "UserId": "1",
       "StudentId": "1689",
       "StartDate": "2024-07-29", // Adjust as necessary
-      "UserType": "1",
+      "UserType": "8",
       "AcYear": "2024 - 2025",
       "RouteId": selectedStage['routeId'].toString(),
       "StageId": selectedStage['stageId'].toString(),
@@ -316,32 +316,38 @@ class _TransportRegistrationScreenState
                 selectedBusType != null &&
                 selectedBusTiming != null)
               Expanded(
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5, // Adjust based on your layout
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                  ),
-                  itemCount: seatsList.length,
-                  itemBuilder: (context, index) {
-                    final seat = seatsList[index];
-                    final isSelected = index == selectedSeatIndex;
-                    return GestureDetector(
-                      onTap: () => _onSeatTapped(index),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.green.shade100 : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8.0),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 160,
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4, // Adjust based on your layout
+                          crossAxisSpacing: 8.0,
+                          mainAxisSpacing: 8.0,
                         ),
-                        child: Center(
-                          child: Icon(
-                            isSelected ? Icons.chair : Icons.chair_alt,
-                            color: isSelected ? Colors.green : Colors.black,
-                          ),
-                        ),
+                        itemCount: seatsList.length,
+                        itemBuilder: (context, index) {
+                          final seat = seatsList[index];
+                          final isSelected = index == selectedSeatIndex;
+                          return GestureDetector(
+                            onTap: () => _onSeatTapped(index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isSelected ? Colors.green.shade100 : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  isSelected ? Icons.chair : Icons.chair_alt,
+                                  color: isSelected ? Colors.green : Colors.black,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             if (selectedSeatIndex != null &&
@@ -362,22 +368,23 @@ class _TransportRegistrationScreenState
                   itemBuilder: (context, index) {
                     final fee = displayFeesList[index];
                     final isSelected = index == selectedFeeIndex;
-                    return ListTile(
-                      tileColor: isSelected ? Colors.blue.shade100 : null,
-                      title: Text('Fee: ${fee['totalFeeAmount']} (${fee['frequency']})'),
-                      subtitle: Text('Installment status: ${fee['installmentStatus']}\nRoute Name: ${fee['routeName']}'),
-                      onTap: () {
-                        setState(() {
-                          selectedFeeIndex = index;
-                        });
-                      },
+                    return Container(decoration: BoxDecoration(border: Border.all(color: Colors.blue),borderRadius: BorderRadius.circular(15)),
+                      child: ListTile(
+                        tileColor: isSelected ? Colors.blue.shade50 : null,
+                        title: Text('Fee: ${fee['totalFeeAmount']} (${fee['frequency']})'),
+                        subtitle: Text('Installment status: ${fee['installmentStatus']}\nRoute Name: ${fee['routeName']}'),
+                        onTap: () {
+                          setState(() {
+                            selectedFeeIndex = index;
+                          });
+                        },
+                      ),
                     );
                   },
                 ),
               ),
             SizedBox(height: 16),
-            if (selectedSeatIndex != null &&
-                selectedFeeIndex != null)
+            if (selectedSeatIndex != null )
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

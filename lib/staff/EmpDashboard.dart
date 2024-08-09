@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
-import '../student/Hostal.dart';
+import '../student/HostalRegistration.dart';
 import '../student/feepayment.dart';
 import 'Attendence.dart';
 import 'LeaveApplication.dart';

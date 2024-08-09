@@ -1,17 +1,14 @@
 import 'dart:convert';
-
-import 'package:cloudilya/student/Hostal.dart';
+import 'package:cloudilya/student/HostalRegistration.dart';
 import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
 import 'package:cloudilya/views/pin%20verification.dart';
 import 'package:cloudilya/views/pinScreen.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'firebase_options.dart';
 import 'staff/Attendence.dart';
 import 'staff/EmpDashboard.dart';
 import 'staff/LeaveApplication.dart';
@@ -22,21 +19,14 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final String? storedPin = prefs.getString('pin');
-
   print('Stored PIN: $storedPin'); // Debugging line
-
   runApp(MyApp(isLoggedIn: isLoggedIn, storedPin: storedPin));
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final String? storedPin;
-
   MyApp({required this.isLoggedIn, this.storedPin});
-
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -120,7 +110,6 @@ class SplashScreen extends StatelessWidget {
         Get.offNamed('/login');
       }
     });
-
     return Scaffold(
       body: Center(
         child: Image.asset('assets/image.png', width: 150, height: 150),

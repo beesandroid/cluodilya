@@ -1,25 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'OutingRequestScreen.dart';
-import 'RegisteredDetailsScreen.dart';
-import 'RoomChangeScreen.dart';
-import 'StudentComplaintsScreen.dart';
 
-class HostelManagement extends StatefulWidget {
-  const HostelManagement({super.key});
+import 'RegisteredDetails.dart';
+import 'TransportStudentComplaints.dart';
+
+
+class TransportManagement extends StatefulWidget {
+  const TransportManagement({super.key});
 
   @override
-  State<HostelManagement> createState() => _HostelManagementState();
+  State<TransportManagement> createState() => _TransportManagementState();
 }
 
-class _HostelManagementState extends State<HostelManagement>
+class _TransportManagementState extends State<TransportManagement>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -32,7 +32,7 @@ class _HostelManagementState extends State<HostelManagement>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hostel Management'),
+        title: Text('Transport Management'),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: Container(
@@ -42,8 +42,8 @@ class _HostelManagementState extends State<HostelManagement>
               controller: _tabController,
               tabs: [
                 Tab(text: '    Registered Details    '),
-                Tab(text: '    Room Change    '),
-                Tab(text: '    Outing Request    '),
+
+
                 Tab(text: '    Student Complaints    '),
               ],
               indicatorColor: Colors.white,
@@ -64,24 +64,12 @@ class _HostelManagementState extends State<HostelManagement>
           Navigator(
             onGenerateRoute: (RouteSettings settings) {
               return MaterialPageRoute(
-                builder: (context) => RegisteredDetailsScreen(),
+                builder: (context) => TransportRegistrationDetailsScreen(),
               );
             },
           ),
-          Navigator(
-            onGenerateRoute: (RouteSettings settings) {
-              return MaterialPageRoute(
-                builder: (context) => RoomChangeScreen(),
-              );
-            },
-          ),
-          Navigator(
-            onGenerateRoute: (RouteSettings settings) {
-              return MaterialPageRoute(
-                builder: (context) => OutingRequestScreen(),
-              );
-            },
-          ),
+
+
           Navigator(
             onGenerateRoute: (RouteSettings settings) {
               return MaterialPageRoute(

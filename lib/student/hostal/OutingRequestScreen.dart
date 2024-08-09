@@ -219,18 +219,22 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
   }
   void _editRequest(dynamic request) {
     setState(() {
-      _selectedOutTime = request;
+      _selectedOutTime = _outTimeDisplayList.firstWhere(
+            (item) => item['id'] == request['visitingId'],
+        orElse: () => null,
+      );
       _startTimeController.text = request['requestStartTime'] ?? '';
       _endTimeController.text = request['requestEndTime'] ?? '';
       _descriptionController.text = request['description'] ?? '';
       _contactController.text = request['contact'] ?? '';
       _selectedDate =
-          request['date'] != null ? DateTime.parse(request['date']) : null;
+      request['date'] != null ? DateTime.parse(request['date']) : null;
       _isEditing = true;
       _editingRequestId = request['id'];
       _fetchOutTimeDisplayList();
     });
   }
+
 
   void _deleteRequest(dynamic request) {
     if (request == null || request['id'] == null) {
@@ -334,16 +338,14 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                   setState(() {
                     _selectedOutTime = newValue;
                     if (_selectedOutTime != null) {
-                      _startTimeController.text =
-                          _selectedOutTime['startTime'] ?? '';
-                      _endTimeController.text =
-                          _selectedOutTime['endTime'] ?? '';
+                      _startTimeController.text = _selectedOutTime['startTime'] ?? '';
+                      _endTimeController.text = _selectedOutTime['endTime'] ?? '';
                     }
                   });
                 },
                 items: _outTimeDisplayList.map((outTime) {
                   return DropdownMenuItem<dynamic>(
-                    value: outTime,
+                    value: outTime, // Ensure unique values
                     child: Text(
                       '${outTime['startTime']} - ${outTime['endTime']} (${outTime['permissionTypeName']})',
                     ),
@@ -352,7 +354,8 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                 ),
-              ),
+              )
+,
               SizedBox(height: 16.0),
               TextField(
                 controller: _startTimeController,

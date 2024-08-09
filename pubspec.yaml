@@ -59,6 +59,7 @@ dependencies:
   firebase_core:
 
   firebase_messaging:
+  dropdown_search:
 
 dev_dependencies:
   flutter_test:
