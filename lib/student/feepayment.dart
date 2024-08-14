@@ -313,7 +313,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                                     ),
                                   if (fee['installments'] == null ||
                                       fee['installments'].isEmpty)
-                                    if (fee['modifyStatus'] == 0)
+                                    if (fee['modifyStatus'] == 1)
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: TextField(
@@ -358,9 +358,10 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 25.0,left: 15),
+            padding: const EdgeInsets.only(top: 25.0, left: 15),
             child: Container(
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
+              decoration:
+                  BoxDecoration(borderRadius: BorderRadius.circular(15)),
               width: 220.0, height: 50, // Set the width
               child: ElevatedButton(
                 onPressed: () => _showPaymentPreview(context),

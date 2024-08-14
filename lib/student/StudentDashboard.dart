@@ -6,27 +6,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../student/HostalRegistration.dart';
 import '../student/feepayment.dart';
+
+import 'AttendaceRequest/Rquest management.dart';
 import 'Transport/transportManagement.dart';
 import 'hostal/hostalManagement.dart';
 import 'leaveRequest.dart';
+
 class StudentDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-
-
         title: Text('Student Dashboard'),
         actions: [
-
-            IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: () {
-                _logoutController();
-              },
-            ),
-          ],
-
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              _logoutController();
+            },
+          ),
+        ],
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1.0,
@@ -55,26 +54,26 @@ class StudentDashboard extends StatelessWidget {
             ),
             _buildGridTile(
               context,
-              'Service',
+              'Attendance Request',
+              Icons.settings_applications,
+              Colors.blue,
+              requestManagement(),
+            ),
+            _buildGridTile(
+              context,
+              'Leave Request',
               Icons.volunteer_activism,
               Colors.green,
               LeaveRequest(),
             ),
-            _buildGridTile(
-              context,
-              'Transport',
-              Icons.directions_bus,
-              Colors.purpleAccent,
-                TransportManagement()
+            _buildGridTile(context, 'Transport', Icons.directions_bus,
+                Colors.purpleAccent, TransportManagement()
                 // TransportRegistrationScreen()// Show toast message
-            )  , _buildGridTile(
-              context,
-              'Transport',
-              Icons.directions_bus,
-              Colors.purpleAccent,
-                TransportRegistrationScreen()
+                ),
+            _buildGridTile(context, 'Transport', Icons.directions_bus,
+                Colors.purpleAccent, TransportRegistrationScreen()
                 // TransportRegistrationScreen()// Show toast message
-            ),
+                ),
             _buildGridTile(
               context,
               'Hostal',
@@ -89,13 +88,13 @@ class StudentDashboard extends StatelessWidget {
   }
 
   Widget _buildGridTile(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      Widget? screen, {
-        bool showToast = false,
-      }) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    Widget? screen, {
+    bool showToast = false,
+  }) {
     return GestureDetector(
       onTap: () async {
         if (title == 'Hostal') {
@@ -145,7 +144,8 @@ class StudentDashboard extends StatelessWidget {
               } catch (e) {
                 // Log or handle navigation errors
                 print('Navigation error: $e');
-                Get.snackbar('Error', 'Unable to navigate to the selected screen');
+                Get.snackbar(
+                    'Error', 'Unable to navigate to the selected screen');
               }
             }
           },
@@ -184,33 +184,14 @@ class StudentDashboard extends StatelessWidget {
   Future<void> _handleHostalTap() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-
-    String photo = prefs.getString('photo') ?? '';
-    String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
-    String userName = prefs.getString('userName') ?? '';
-    String password = prefs.getString('password') ?? '';
-String colCode = prefs.getString('colCode') ?? '';
-    String collegename = prefs.getString('collegename') ?? '';
- String studId = prefs.getString('studId') ?? '';
-    String groupUserId = prefs.getString('groupUserId') ?? '';
-    String hostelUserId = prefs.getString('hostelUserId') ?? '';
-    String transportUserId = prefs.getString('transportUserId') ?? '';
-    String adminUserId = prefs.getString('adminUserId') ?? '';
-    String empId = prefs.getString('empId') ?? '';
-    String databaseCode = prefs.getString('databaseCode') ?? '';
-    String description = prefs.getString('description') ?? '';
-    String dateDifference = prefs.getString('dateDifference') ?? '';
-    String userType = prefs.getString('userType') ?? '';
-    String acYear = prefs.getString('acYear') ?? '';
-    String finYear = prefs.getString('finYear') ?? '';
-    String email = prefs.getString('email') ?? '';
-    String studentStatus = prefs.getString('studentStatus') ?? '';
+
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
 
     try {
-      // Parse the JSON string into a Map
-
-      final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch';
+      final url =
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch';
       final headers = {'Content-Type': 'application/json'};
       final body = json.encode({
         'GrpCode': grpCode,
@@ -219,7 +200,8 @@ String colCode = prefs.getString('colCode') ?? '';
         'Flag': 'HostelStatus',
       });
 
-      final response = await http.post(Uri.parse(url), headers: headers, body: body);
+      final response =
+          await http.post(Uri.parse(url), headers: headers, body: body);
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body) as Map<String, dynamic>;
@@ -243,26 +225,18 @@ String colCode = prefs.getString('colCode') ?? '';
       Get.snackbar('Error', 'Unable to fetch hostel status');
     }
   }
-
 }
-
-
 
 class _logoutController extends GetxController {
   Future<void> logout() async {
     try {
-      // Clear all stored preferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();  // This clears all keys and values in SharedPreferences
-
-      // Optionally, you can also remove specific keys if you prefer
-      // await prefs.remove('key');
-
-      // Navigate back to the login screen
-      Get.offNamed('/login');  // Redirect to the login screen
+      await prefs
+          .clear(); // This clears all keys and values in SharedPreferences
+      Get.offNamed('/login'); // Redirect to the login screen
     } catch (e) {
-      // Handle any errors that may occur
-      Get.snackbar('Error', 'An error occurred while logging out: ${e.toString()}');
+      Get.snackbar(
+          'Error', 'An error occurred while logging out: ${e.toString()}');
     }
   }
 }

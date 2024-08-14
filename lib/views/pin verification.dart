@@ -59,7 +59,8 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                   final pin = _pinController.text;
                   await _verifyPin(pin);
                 },
-                child: Text('Verify PIN', style: TextStyle(color: Colors.white)),
+                child:
+                    Text('Verify PIN', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   padding: EdgeInsets.symmetric(vertical: 14.0),

@@ -1,24 +1,23 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'RegisteredDetails.dart';
-import 'TransportStudentComplaints.dart';
+import 'attendance.dart';
+import 'class.dart';
 
-class TransportManagement extends StatefulWidget {
-  const TransportManagement({super.key});
+class requestManagement extends StatefulWidget {
+  const requestManagement({super.key});
 
   @override
-  State<TransportManagement> createState() => _TransportManagementState();
+  State<requestManagement> createState() => _requestManagementState();
 }
 
-class _TransportManagementState extends State<TransportManagement>
+class _requestManagementState extends State<requestManagement>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -31,7 +30,7 @@ class _TransportManagementState extends State<TransportManagement>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Transport Management'),
+        title: Text('Request Management'),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: Container(
@@ -40,8 +39,9 @@ class _TransportManagementState extends State<TransportManagement>
             child: TabBar(
               controller: _tabController,
               tabs: [
-                Tab(text: '    Registered Details    '),
-                Tab(text: '    Student Complaints    '),
+                Tab(text: '       Class Request    '),
+                Tab(text: '    Attendance Request    '),
+
               ],
               indicatorColor: Colors.white,
               labelColor: Colors.white,
@@ -61,17 +61,18 @@ class _TransportManagementState extends State<TransportManagement>
           Navigator(
             onGenerateRoute: (RouteSettings settings) {
               return MaterialPageRoute(
-                builder: (context) => TransportRegistrationDetailsScreen(),
+                builder: (context) => ClassRequest(),
               );
             },
           ),
           Navigator(
             onGenerateRoute: (RouteSettings settings) {
               return MaterialPageRoute(
-                builder: (context) => StudentComplaintsScreen(),
+                builder: (context) => AttendanceRequest(),
               );
             },
           ),
+
         ],
       ),
     );

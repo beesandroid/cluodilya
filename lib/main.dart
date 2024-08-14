@@ -26,7 +26,9 @@ void main() async {
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final String? storedPin;
+
   MyApp({required this.isLoggedIn, this.storedPin});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(

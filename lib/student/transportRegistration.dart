@@ -21,11 +21,24 @@ class _TransportRegistrationScreenState
   dynamic selectedBusTiming;
   String? selectedSeat;
   int? selectedFeeIndex;
+  List<dynamic> transportMainDisplayList = [];
 
   @override
   void initState() {
     super.initState();
     _fetchTransportRegistrationData();
+  }
+
+  Color _getSeatColor(String? genderName, bool isSelected) {
+    if (isSelected) {
+      return Colors.green; // Color for selected seat
+    } else if (genderName == 'Male') {
+      return Colors.blue; // Color for male seats
+    } else if (genderName == 'Female') {
+      return Colors.pink; // Color for female seats
+    } else {
+      return Colors.grey; // Color for empty seats
+    }
   }
 
   Future<void> _fetchTransportRegistrationData() async {
@@ -181,6 +194,7 @@ class _TransportRegistrationScreenState
       "LayoutId": selectedBusTiming['layOutId'].toString(),
       "Saved": "1"
     };
+    print(requestBody);
 
     try {
       final response = await http.post(
@@ -193,8 +207,10 @@ class _TransportRegistrationScreenState
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print(data);
         setState(() {
           layOutDisplayList = data['layOutDisplayList'] ?? [];
+          transportMainDisplayList = data['transportMainDisplayList'] ?? [];
           seatsList = _flattenSeatLayout(layOutDisplayList)
               .map((seat) => seat['seatNo'].toString())
               .toList();
@@ -267,7 +283,6 @@ class _TransportRegistrationScreenState
                   selectedBusTiming = null;
                   selectedSeat = null;
                   selectedFeeIndex = null;
-                  // Fetch bus types based on the selected stage
                   _fetchUpdatedTransportData();
                 });
               },
@@ -310,7 +325,8 @@ class _TransportRegistrationScreenState
                 return DropdownMenuItem<dynamic>(
                   value: timing,
                   child: Text(
-                      'Bus ${timing['busNumber'] ?? 'Unknown'} (${timing['morningTime']} - ${timing['eveningTime']})'),
+                    'Bus ${timing['busNumber'] ?? 'Unknown'} (${timing['morningTime']} - ${timing['eveningTime']})',
+                  ),
                 );
               }).toList(),
               onChanged: (dynamic newValue) {
@@ -353,47 +369,68 @@ class _TransportRegistrationScreenState
                 selectedBusTiming != null &&
                 selectedBusTiming['layOutId'] != 0)
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 160,
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, // Adjust based on your layout
-                          crossAxisSpacing: 8.0,
-                          mainAxisSpacing: 8.0,
-                        ),
-                        itemCount: seatsList.length,
-                        itemBuilder: (context, index) {
-                          final seat = seatsList[index];
-                          final isSelected = seat == selectedSeat;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedSeat = seat;
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.green.shade100
-                                    : Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  width: 300,
+                  height: 200, // Ensure fixed height to avoid layout issues
+                  padding: EdgeInsets.all(8), // Padding around GridView
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, // Adjust columns as needed
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                    ),
+                    itemCount: seatsList.length,
+                    itemBuilder: (context, index) {
+                      final seat = seatsList[index];
+                      final seatData = layOutDisplayList.firstWhere(
+                        (layout) => layout['seatNo'] == seat,
+                        orElse: () => {},
+                      );
+
+                      // Get seat gender name from seatData
+                      final genderName =
+                          seatData['genderName'] ?? ''; // Added null check
+                      final isSelected = selectedSeat == seat;
+
+                      return GestureDetector(
+                        onTap: () {
+                          // No need for the if statement here!
+                          setState(() {
+                            selectedSeat = seat;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _getSeatColor(genderName, isSelected),
+                            // Use _getSeatColor
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chair, // Use the chair icon
+                                color: Colors.white,
+                                size: 24, // Adjust size as needed
                               ),
-                              child: Center(
-                                child: Icon(
-                                  isSelected ? Icons.chair : Icons.chair_alt,
-                                  color:
-                                      isSelected ? Colors.green : Colors.black,
+                              Text(
+                                seat,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             if (selectedSeat != null)
@@ -417,11 +454,13 @@ class _TransportRegistrationScreenState
                       padding: const EdgeInsets.only(top: 22.0),
                       child: Container(
                         decoration: BoxDecoration(
-                            border: Border.all(color: Colors.blue),
-                            borderRadius: BorderRadius.circular(15)),
+                          border: Border.all(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                         child: ListTile(
                           title: Text('Fee Name: ${fee['feeName']}'),
-                          subtitle: Text('Amount: ${fee['amount']}'),
+                          subtitle: Text(
+                              'Amount: ${fee['totalFeeAmount']} \nInstallment Status: ${fee['installmentStatus']} \nRoute Name: ${fee['routeName']}'),
                           tileColor: isSelected ? Colors.blue.shade50 : null,
                           onTap: () {
                             setState(() {
@@ -434,29 +473,25 @@ class _TransportRegistrationScreenState
                   },
                 ),
               ),
-
             if (selectedSeat != null && selectedFeeIndex != null)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: Container(
                     width: 220,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 18.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _registerSeat();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue, // Background color
-                        ),
-                        child: Text('Register',
-                            style: TextStyle(color: Colors.white)),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _registerSeat();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue, // Background color
                       ),
+                      child: Text('Register',
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ),
-                ],
-              )
+                ),
+              ),
           ],
         ),
       ),

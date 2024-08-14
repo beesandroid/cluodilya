@@ -38,6 +38,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
         "EmployeeId": "0",
         "Description": "",
         "Subject": "",
+        "RequestDate":"2024-08-12",
         "FromDate": "",
         "ToDate": "",
         "File": "",
@@ -52,13 +53,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
       final Map<String, dynamic> responseBody = json.decode(response.body);
 
       final String message = responseBody['message'];
-      if (message != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
-      }
+
       setState(() {
         _leaveRequestList = data['leaveRequestList'];
       });
@@ -84,6 +79,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
         "Id": requestId,
         "StudentId": "2548",
         "EmployeeId": "0",
+        "RequestDate":"2024-08-12",
         "Description": _descriptionController.text,
         "Subject": _subjectController.text,
         "FromDate": _fromDate?.toIso8601String(),
@@ -205,6 +201,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
         "StudentId": "2548",
         "EmployeeId": "0",
         "Description": "",
+        "RequestDate":"2024-08-12",
         "Subject": "",
         "FromDate": "",
         "ToDate": "",
@@ -300,7 +297,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
                                     onPressed: () => _modifyLeaveRequest(index),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.black),
+                                    icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () => _confirmDeleteLeaveRequest(index),
                                   ),
                                 ],
