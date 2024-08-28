@@ -15,6 +15,8 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+
       appBar: AppBar(title: Text('Enter PIN')),
       body: Padding(
         padding: const EdgeInsets.all(55.0),

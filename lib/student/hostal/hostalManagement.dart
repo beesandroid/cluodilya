@@ -31,6 +31,8 @@ class _HostelManagementState extends State<HostelManagement>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Hostel Management'),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),

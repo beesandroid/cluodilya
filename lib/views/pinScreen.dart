@@ -25,6 +25,8 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Set PIN'),
       ),
       body: SingleChildScrollView(

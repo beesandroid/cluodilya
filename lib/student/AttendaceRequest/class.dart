@@ -61,6 +61,7 @@ class _ClassRequestState extends State<ClassRequest> {
       "message": "",
       "description": ""
     };
+    print(requestBodyClass);
 
     try {
       final responseClass = await http.post(
@@ -71,6 +72,7 @@ class _ClassRequestState extends State<ClassRequest> {
 
       if (responseClass.statusCode == 200) {
         List<Map<String, dynamic>> classData = [];
+        print(responseClass);
         Map<String, dynamic> dataClass = jsonDecode(responseClass.body) as Map<String, dynamic>;
 
         classData.addAll((dataClass['attendanceRequestdisplayList'] as List)
@@ -117,21 +119,12 @@ class _ClassRequestState extends State<ClassRequest> {
     "colCode": "0001",
     "collegeId": 1,
     "studentId": 1242,
-    "id": 0,
-    "studentName": "",
+
+
     "requestDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
     "date": selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : "",
-    "courseId": 0,
-    "courseName": "",
-    "period": "",
-    "employeeId": 0,
-    "employeeName": "",
-    "description": "",
-    "status": "",
-    "createdBy": 0,
-    "createdDate": "",
-    "modifiedBy": 0,
-    "modifiedDate": "",
+      "id": 0,
+
     "loginIpAddress": "",
     "loginSystemName": "",
     "flag": "CREATE",
@@ -144,15 +137,17 @@ class _ClassRequestState extends State<ClassRequest> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveAttendanceRequest'),
+        Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveClassRequest'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
 
       if (response.statusCode == 200) {
-        print(response.body);
+        final responseBody = jsonDecode(response.body);
+        String message = responseBody['message'] ?? '';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Data saved successfully')),
+          SnackBar(content: Text(message)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

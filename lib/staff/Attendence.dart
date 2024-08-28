@@ -280,6 +280,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 16.0),
+
             Container(
               child: SingleChildScrollView(
                 child: Container(
@@ -300,16 +301,57 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+
+                     Row(
+                       children: [Text(
+                         ' ${_periodData[_selectedPeriod]?['Sem'] ?? 'N/A'}',
+                         style: TextStyle(fontWeight: FontWeight.bold),
+                       ),
+
+                         Text(
+                           '/${_periodData[_selectedPeriod]?['Branch'] ?? 'N/A'}',
+                           style: TextStyle(fontWeight: FontWeight.bold),
+                         ),],
+                     ),
+                          Text(
+                            '/${_periodData[_selectedPeriod]?['Program'] ?? ''}',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+
+
+                  
+
+
+                        ],
+
+                      ),
+
                       Row(
                         children: [
                           Expanded(
                             child: Text(
                               _selectedDateText,
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                ' ${_periodData[_selectedPeriod]?['StartTime'] ?? 'N/A'}',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+
+                              Text(
+                                '-${_periodData[_selectedPeriod]?['EndTime'] ?? ''}',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
                           ),
                           IconButton(
                             icon: Icon(Icons.calendar_today),
@@ -317,7 +359,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 16.0),
+
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Container(
@@ -343,7 +385,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               isExpanded: true,
                               value: _selectedPeriod,
                               hint: Text(
-                                '      Pick a Date to Select Period',
+                                '      Select Period',
                                 style: TextStyle(color: Colors.white),
                               ),
                               dropdownColor: Colors.blue,
@@ -450,10 +492,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   ),
                                 ),
                               ),
+
                             ],
                           ),
                         ),
-                      )
+                      ),
+
 
 
                     ],
@@ -498,7 +542,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           (absentCount / totalCount) * constraints.maxWidth;
                       if (totalCount == 0) {
                         return Container(
-                          height: 30.0,
+                          height: 16.0,
                           child: Center(
                             child: Text('No Students'),
                           ),
@@ -506,55 +550,52 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       } else {
                         return Column(
                           children: [
-                            Container(
-                              margin: EdgeInsets.symmetric(vertical: 8.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12.0),
-                                // Add border radius here
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: presentWidth,
-                                      height: 30.0,
-                                      color: Colors.green,
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(right: 8.0),
-                                          child: Text(
-                                            totalCount > 0
-                                                ? '${(presentCount / totalCount * 100).toStringAsFixed(1)}%'
-                                                : '0%',
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12.0),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              // Add border radius here
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: presentWidth,
+                                    height: 30.0,
+                                    color: Colors.green,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(right: 8.0),
+                                        child: Text(
+                                          totalCount > 0
+                                              ? '${(presentCount / totalCount * 100).toStringAsFixed(1)}%'
+                                              : '0%',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12.0),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ),
-                                    Container(
-                                      width: absentWidth,
-                                      height: 30.0,
-                                      color: Colors.red,
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(right: 8.0),
-                                          child: Text(
-                                            totalCount > 0
-                                                ? '${(absentCount / totalCount * 100).toStringAsFixed(1)}%'
-                                                : '0%',
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12.0),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                  ),
+                                  Container(
+                                    width: absentWidth,
+                                    height: 30.0,
+                                    color: Colors.red,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(right: 8.0),
+                                        child: Text(
+                                          totalCount > 0
+                                              ? '${(absentCount / totalCount * 100).toStringAsFixed(1)}%'
+                                              : '0%',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12.0),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -612,8 +653,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 ),
                               ),
                             ),
+
                           ],
                         ),
+
                         SizedBox(height: 16.0),
                         TextField(
                           controller: _searchController,

@@ -115,26 +115,16 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
       "colCode": "0001",
       "collegeId": 1,
       "studentId": 1242,
-      "id": 0,
-      "studentName": "",
+
+
       "requestDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
       "date": selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : "",
-      "courseId": 0,
-      "courseName": "",
-      "period": "",
-      "employeeId": 0,
-      "employeeName": "",
-      "description": "",
-      "status": "",
-      "createdBy": 0,
-      "createdDate": "",
-      "modifiedBy": 0,
-      "modifiedDate": "",
+      "id": 0,
+
       "loginIpAddress": "",
       "loginSystemName": "",
       "flag": "CREATE",
-      "requestType": "",
-      "topic": 0,
+
       "saveAttendanceRequestTableVariables": saveAttendanceRequestTableVariables,
 
     };
@@ -147,9 +137,14 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
       );
 
       if (response.statusCode == 200) {
+        print(response.body);
+        final responseBody = jsonDecode(response.body);
+        String message = responseBody['message'] ?? '';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Data saved successfully')),
+          SnackBar(content: Text(message)),
         );
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to save data')),

@@ -51,6 +51,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final Map<String, dynamic> responseBody = json.decode(response.body);
+      print(data);
 
       final String message = responseBody['message'];
 
@@ -66,35 +67,52 @@ class _LeaveRequestState extends State<LeaveRequest> {
   }
 
   Future<void> _sendLeaveRequest() async {
+    if (_subjectController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
+        _fromDate == null ||
+        _toDate == null ||
+        _filePath == null) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill out all required fields.')),
+      );
+      return;
+    }
+
     final flag = _editRequestId == null ? "CREATE" : "OVERWRITE";
     final requestId = _editRequestId ?? 0;
+
+    final requestBody = {
+      "GrpCode": "Bees",
+      "ColCode": "0001",
+      "CollegeId": "1",
+      "Id": requestId,
+      "StudentId": "2548",
+      "EmployeeId": "0",
+      "RequestDate": "2024-08-12",
+      "Description": _descriptionController.text,
+      "Subject": _subjectController.text,
+      "FromDate": _fromDate?.toIso8601String(),
+      "ToDate": _toDate?.toIso8601String(),
+      "File": _filePath,
+      "LoginIpAddress": "",
+      "LoginSystemName": "",
+      "Flag": flag
+    };
+
+    // Print request body
+    print('Request Body: ${json.encode(requestBody)}');
 
     final response = await http.post(
       Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "GrpCode": "Bees",
-        "ColCode": "0001",
-        "CollegeId": "1",
-        "Id": requestId,
-        "StudentId": "2548",
-        "EmployeeId": "0",
-        "RequestDate":"2024-08-12",
-        "Description": _descriptionController.text,
-        "Subject": _subjectController.text,
-        "FromDate": _fromDate?.toIso8601String(),
-        "ToDate": _toDate?.toIso8601String(),
-        "File": _filePath,
-        "LoginIpAddress": "",
-        "LoginSystemName": "",
-        "Flag": flag
-      }),
+      body: json.encode(requestBody),
     );
 
     if (response.statusCode == 200) {
       _fetchLeaveRequests();
       final Map<String, dynamic> responseBody = json.decode(response.body);
-      print(responseBody);
+      print(responseBody.toString());
 
       final String message = responseBody['message'];
       if (message != null) {
@@ -114,7 +132,6 @@ class _LeaveRequestState extends State<LeaveRequest> {
         _filePath = null;
       });
     } else {
-
       // Handle error
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to send leave request')),
@@ -237,7 +254,9 @@ class _LeaveRequestState extends State<LeaveRequest> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leave Request'),
+        backgroundColor: Colors.white,
+
+        title: const Text('Leave Request',style: TextStyle(fontWeight: FontWeight.bold),),
       ),
       body: SingleChildScrollView(
         child: Padding(

@@ -1,13 +1,20 @@
+import 'package:cloudilya/student/studentCertificates/studentsCertificate.dart';
 import 'package:cloudilya/student/transportRegistration.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../staff/Attendence.dart';
+import '../staff/LeaveApplication.dart';
 import '../student/HostalRegistration.dart';
 import '../student/feepayment.dart';
-
+import '../views/dashboard.dart';
+import 'Academics/Regulation.dart';
+import 'Academics/courseEnrollment.dart';
 import 'AttendaceRequest/Rquest management.dart';
+import 'Attendence view/attendenceview.dart';
+import 'Myinfo/myInfo.dart';
 import 'Transport/transportManagement.dart';
 import 'hostal/hostalManagement.dart';
 import 'leaveRequest.dart';
@@ -17,7 +24,10 @@ class StudentDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Dashboard'),
+        backgroundColor: Colors.white60,
+
+
+        title: Text('Student Dashboard',style: TextStyle(fontWeight: FontWeight.bold),),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -26,7 +36,6 @@ class StudentDashboard extends StatelessWidget {
             },
           ),
         ],
-        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1.0,
       ),
@@ -66,8 +75,73 @@ class StudentDashboard extends StatelessWidget {
               Colors.green,
               LeaveRequest(),
             ),
+            _buildGridTile(
+              context,
+              'Attendance',
+              Icons.check_circle,
+              Colors.blueAccent,
+              AttendanceScreen(),
+            ),
+            _buildGridTile(
+              context,
+              'Leave',
+              Icons.attach_email,
+              Colors.greenAccent,
+              LeaveApplicationScreen(),
+            ),
+            _buildGridTile(
+              context,
+              'dash',
+              Icons.dashboard,
+              Colors.red,
+              DashboardScreen(),
+            ),
+            _buildGridTile(
+              context,
+              'Attendence View',
+              Icons.class_rounded,
+              Colors.red,
+              AttendanceView(),
+            ),
+            _buildGridTile(
+              context,
+              'Student certificate ',
+              Icons.checklist_rtl,
+              Colors.red,
+              StudentCertificates(),
+            ),_buildGridTile(
+              context,
+              'Regulation ',
+              Icons.report_gmailerrorred,
+              Colors.red,
+              Regulation(),
+            ),
+            _buildGridTile(
+              context,
+              'emp cert approval ',
+              Icons.approval,
+              Colors.green,
+              AttendanceView(),
+            ),
+            _buildGridTile(
+              context,
+              'STUDENT LEAVE APPROVAL ',
+              Icons.approval_rounded,
+              Colors.black,
+              AttendanceView(),
+            ),   _buildGridTile(
+              context,
+              'Student  enrollment ',
+              Icons.settings_applications_outlined,
+              Colors.black,
+              StudentEnrollment(),
+            ),
             _buildGridTile(context, 'Transport', Icons.directions_bus,
                 Colors.purpleAccent, TransportManagement()
+                // TransportRegistrationScreen()// Show toast message
+                ),
+            _buildGridTile(context, 'myinfo', Icons.info_sharp, Colors.orange,
+                Myinfo()
                 // TransportRegistrationScreen()// Show toast message
                 ),
             _buildGridTile(context, 'Transport', Icons.directions_bus,

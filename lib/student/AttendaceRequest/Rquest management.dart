@@ -30,7 +30,8 @@ class _requestManagementState extends State<requestManagement>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Request Management'),
+        backgroundColor: Colors.white,
+        title: Text('Request Management',style: TextStyle(fontWeight: FontWeight.bold),),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: Container(

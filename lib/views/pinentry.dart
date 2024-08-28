@@ -17,8 +17,9 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Enter PIN'),
-        backgroundColor: Colors.blueAccent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

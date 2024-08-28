@@ -287,6 +287,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                   backgroundColor: Colors.blue,
                 ),
               ),
+              if(selectedFilePath!=null)
+              Text(selectedFilePath.toString()),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: sendComplaint,

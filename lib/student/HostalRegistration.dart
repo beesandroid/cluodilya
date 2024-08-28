@@ -385,6 +385,8 @@ class _HostelSelectorState extends State<HostelSelector> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Hostel Registration'),
       ),
       body: FutureBuilder<Map<String, dynamic>>(

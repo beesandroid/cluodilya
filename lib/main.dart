@@ -3,6 +3,7 @@ import 'package:cloudilya/student/HostalRegistration.dart';
 import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
+import 'package:cloudilya/views/dashboard.dart';
 import 'package:cloudilya/views/pin%20verification.dart';
 import 'package:cloudilya/views/pinScreen.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/HostelManagement', page: () => HostelManagement()),
         GetPage(name: '/pin_setup', page: () => PinSetupScreen()),
         GetPage(name: '/pin_verification', page: () => PinVerificationScreen()),
+        GetPage(name: '/DashboardScreen', page: () => DashboardScreen()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,

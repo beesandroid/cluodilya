@@ -139,246 +139,223 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fee Payment Details'),
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: futureFees,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No fees data available.'));
-          } else {
-            final feeData = snapshot.data!;
-            print('Full Fee Data: $feeData'); // Debugging print
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 55.0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: feeData.length,
-                      itemBuilder: (context, index) {
-                        final fee = feeData[index];
-                        final feeName = fee['feeName'];
-                        final feeKey = '$index';
-
-                        // Print modifyStatus for debugging
-                        final modifyStatus = fee['modifyStatus'];
-                        print(
-                            'Fee Index: $index, Modify Status: $modifyStatus');
-
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Material(
-                            color: Colors.white,
-                            elevation: 4.0,
-                            shadowColor: Colors.grey,
-                            borderRadius: BorderRadius.circular(12.0),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    feeName,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Semester: ${fee['semester']}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    'Amount: ${fee['amount']}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    'Collected Amount: ${fee['collectedAmount']}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    'Due Amount: ${fee['dueAmount']}',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (fee['installments'] != null)
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: List.generate(
-                                        fee['installments'].length,
-                                        (installmentIndex) {
-                                          final installment =
-                                              fee['installments']
-                                                  [installmentIndex];
-                                          final installmentKey =
-                                              '$index-$installmentIndex';
-                                          final installmentDueAmount =
-                                              installment['dueAmount'];
-                                          final installmentPayableAmount =
-                                              double.tryParse(controllers[
-                                                              installmentKey]
-                                                          ?.text ??
-                                                      '0.0') ??
-                                                  0.0;
-
-                                          return Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Installment ${installmentIndex + 1}: ${installment['amount']}',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                Text(
-                                                  'Start Date: ${installment['installmentStartDate']}',
-                                                ),
-                                                Text(
-                                                  'End Date: ${installment['installmentEndDate']}',
-                                                ),
-                                                Text(
-                                                  'Due Amount: ${installment['dueAmount']}',
-                                                  style: TextStyle(
-                                                      color: Colors.red,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                if (installment[
-                                                        'modifyStatus'] ==
-                                                    1)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 12.0),
-                                                    child: TextField(
-                                                      controller: controllers[
-                                                          installmentKey],
-                                                      decoration:
-                                                          InputDecoration(
-                                                        labelText:
-                                                            'Payable Amount',
-                                                        hintText:
-                                                            'Enter amount <= $installmentDueAmount',
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    horizontal:
-                                                                        12.0,
-                                                                    vertical:
-                                                                        8.0),
-                                                      ),
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      onChanged: (value) {
-                                                        if (value.isEmpty) {
-                                                          controllers[
-                                                                  installmentKey]
-                                                              ?.text = '0.0';
-                                                        }
-                                                        validateAndUpdateTotalAmount();
-                                                      },
-                                                    ),
-                                                  )
-                                                else
-                                                  Text(
-                                                    'Payable Amount: $installmentDueAmount',
-                                                  ),
-                                                const SizedBox(height: 8),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  if (fee['installments'] == null ||
-                                      fee['installments'].isEmpty)
-                                    if (fee['modifyStatus'] == 1)
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: TextField(
-                                          controller: controllers[feeKey],
-                                          decoration: InputDecoration(
-                                            labelText: 'Payable Amount',
-                                            hintText:
-                                                'Enter amount <= ${fee['dueAmount']}',
-                                            border: OutlineInputBorder(),
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                    horizontal: 12.0,
-                                                    vertical: 8.0),
-                                          ),
-                                          keyboardType: TextInputType.number,
-                                          onChanged: (value) {
-                                            validateAndUpdateTotalAmount();
-                                          },
-                                        ),
-                                      )
-                                    else
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                            'Payable Amount: ${fee['dueAmount']}'),
-                                      ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-        },
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 25.0, left: 15),
-            child: Container(
-              decoration:
-                  BoxDecoration(borderRadius: BorderRadius.circular(15)),
-              width: 220.0, height: 50, // Set the width
-              child: ElevatedButton(
-                onPressed: () => _showPaymentPreview(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.blue, // Set the background color to blue
-                ),
-                child: Text(
-                  "Proceed to Payment",
-                  style: TextStyle(color: Colors.white),
+    return
+      Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: Text(
+            'Fee Payment Details',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              color: Colors.black87,
+            ),
+          ),
+          centerTitle: true,
+          iconTheme: IconThemeData(color: Colors.black87),
+        ),
+        body: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.white, Color(0xFFE0E0E0)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: futureFees,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator(color: Colors.blueAccent));
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.redAccent)));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No fees data available.', style: TextStyle(color: Colors.black54)));
+                } else {
+                  final feeData = snapshot.data!;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: feeData.length,
+                            itemBuilder: (context, index) {
+                              final fee = feeData[index];
+                              final feeName = fee['feeName'];
+                              final feeKey = '$index';
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          feeName,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Semester: ${fee['semester']}',
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
+                                        Text(
+                                          'Amount: ${fee['amount']}',
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
+                                        Text(
+                                          'Collected Amount: ${fee['collectedAmount']}',
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
+                                        Text(
+                                          'Due Amount: ${fee['dueAmount']}',
+                                          style: TextStyle(
+                                            color: Colors.redAccent,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        if (fee['installments'] != null)
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: List.generate(
+                                              fee['installments'].length,
+                                                  (installmentIndex) {
+                                                final installment = fee['installments'][installmentIndex];
+                                                final installmentKey = '$index-$installmentIndex';
+                                                final installmentDueAmount = installment['dueAmount'];
+
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(top: 8.0),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Installment ${installmentIndex + 1}: ${installment['amount']}',
+                                                        style: TextStyle(color: Colors.black54),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        'Due Amount: $installmentDueAmount',
+                                                        style: TextStyle(color: Colors.redAccent),
+                                                      ),
+                                                      const SizedBox(height: 12),
+                                                      if (installment['modifyStatus'] == 1)
+                                                        TextField(
+                                                          controller: controllers[installmentKey],
+                                                          style: TextStyle(color: Colors.black87),
+                                                          decoration: InputDecoration(
+                                                            labelText: 'Payable Amount',
+                                                            labelStyle: TextStyle(color: Colors.blueAccent),
+                                                            hintText: 'Enter amount <= $installmentDueAmount',
+                                                            hintStyle: TextStyle(color: Colors.black38),
+                                                            filled: true,
+                                                            fillColor: Colors.blueAccent.withOpacity(0.1),
+                                                            border: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(12.0),
+                                                              borderSide: BorderSide.none,
+                                                            ),
+                                                          ),
+                                                          keyboardType: TextInputType.number,
+                                                          onChanged: (value) {
+                                                            validateAndUpdateTotalAmount();
+                                                          },
+                                                        ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        if (fee['installments'] == null || fee['installments'].isEmpty)
+                                          if (fee['modifyStatus'] == 1)
+                                            TextField(
+                                              controller: controllers[feeKey],
+                                              style: TextStyle(color: Colors.black87),
+                                              decoration: InputDecoration(
+                                                labelText: 'Payable Amount',
+                                                labelStyle: TextStyle(color: Colors.blueAccent),
+                                                hintText: 'Enter amount <= ${fee['dueAmount']}',
+                                                hintStyle: TextStyle(color: Colors.black38),
+                                                filled: true,
+                                                fillColor: Colors.blueAccent.withOpacity(0.1),
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(12.0),
+                                                  borderSide: BorderSide.none,
+                                                ),
+                                              ),
+                                              keyboardType: TextInputType.number,
+                                              onChanged: (value) {
+                                                validateAndUpdateTotalAmount();
+                                              },
+                                            )
+                                          else
+                                            Text(
+                                              'Payable Amount: ${fee['dueAmount']}',
+                                              style: TextStyle(color: Colors.blue,fontWeight: FontWeight.bold),
+                                            ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () => _showPaymentPreview(context),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 80),
+                            backgroundColor: Colors.blue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
+                            elevation: 10,
+                          ),
+                          child: Text(
+                            "Proceed to Payment",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      );
+
+
+
   }
 
   void debugTotalCalculation() {
@@ -501,7 +478,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog(backgroundColor: Colors.white,
         title: Text('Payment Preview', textAlign: TextAlign.center),
         content: SingleChildScrollView(
           child: Column(

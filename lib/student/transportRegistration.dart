@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 
 class TransportRegistrationScreen extends StatefulWidget {
@@ -207,7 +208,18 @@ class _TransportRegistrationScreenState
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print(data);
+
+        if (data['layOutDisplayList'] == null &&
+            data['transportMainDisplayList'] == null &&
+            data['displayFeesList'] == null) {
+          Fluttertoast.showToast(
+            msg: data['message'] ?? 'No data available',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+          );
+          return;
+        }
+
         setState(() {
           layOutDisplayList = data['layOutDisplayList'] ?? [];
           transportMainDisplayList = data['transportMainDisplayList'] ?? [];
@@ -255,6 +267,8 @@ class _TransportRegistrationScreenState
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Transport Registration'),
       ),
       body: Padding(

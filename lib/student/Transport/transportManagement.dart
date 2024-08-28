@@ -31,6 +31,8 @@ class _TransportManagementState extends State<TransportManagement>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+
         title: Text('Transport Management'),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
