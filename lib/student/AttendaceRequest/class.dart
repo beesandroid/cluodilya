@@ -206,7 +206,7 @@ class _ClassRequestState extends State<ClassRequest> {
             SizedBox(height: 20),
             Expanded(
               child: classList.isEmpty
-                  ? Center(child: Text('Select Date'))
+                  ? Center(child: Text('Select Date',style: TextStyle(fontWeight: FontWeight.bold),))
                   : ListView.builder(
                 itemCount: classList.length,
                 itemBuilder: (context, index) {

@@ -203,7 +203,7 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
             SizedBox(height: 20),
             Expanded(
               child: attendanceList.isEmpty
-                  ? Center(child: Text('No data available'))
+                  ? Center(child: Text('Select Date',style: TextStyle(fontWeight: FontWeight.bold),))
                   : ListView.builder(
                 itemCount: attendanceList.length,
                 itemBuilder: (context, index) {

@@ -3,16 +3,13 @@ import 'package:cloudilya/student/HostalRegistration.dart';
 import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
-import 'package:cloudilya/views/dashboard.dart';
 import 'package:cloudilya/views/pin%20verification.dart';
 import 'package:cloudilya/views/pinScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'staff/Attendence.dart';
-import 'staff/EmpDashboard.dart';
-import 'staff/LeaveApplication.dart';
+
 import 'views/Signup.dart';
 
 void main() async {
@@ -38,18 +35,13 @@ class MyApp extends StatelessWidget {
         GetPage(
             name: '/splash', page: () => SplashScreen(isLoggedIn: isLoggedIn)),
         GetPage(name: '/login', page: () => LoginPage()),
-        GetPage(name: '/Empdashboard', page: () => EmpDashboard()),
-        GetPage(name: '/signup', page: () => NewSignupScreen()),
-        GetPage(name: '/attendance_screen', page: () => AttendanceScreen()),
-        GetPage(
-            name: '/LeaveApplication', page: () => LeaveApplicationScreen()),
+
         GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
         GetPage(name: '/StudentDashboard', page: () => StudentDashboard()),
         GetPage(name: '/HostelSelector', page: () => HostelSelector()),
         GetPage(name: '/HostelManagement', page: () => HostelManagement()),
         GetPage(name: '/pin_setup', page: () => PinSetupScreen()),
         GetPage(name: '/pin_verification', page: () => PinVerificationScreen()),
-        GetPage(name: '/DashboardScreen', page: () => DashboardScreen()),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -339,8 +331,6 @@ class LoginController extends GetxController {
           if (status != null) {
             if (userType == 'STUDENT' && status == 0) {
               Get.offNamed('/StudentDashboard');
-            } else if (userType == 'EMPLOYEE' && status == 1) {
-              Get.offNamed('/Empdashboard');
             } else {
               Get.snackbar(
                 'Error',

@@ -1,3 +1,4 @@
+import 'package:cloudilya/student/feecard/feePermission.dart';
 import 'package:cloudilya/student/studentCertificates/studentsCertificate.dart';
 import 'package:cloudilya/student/transportRegistration.dart';
 import 'package:flutter/material.dart';
@@ -5,17 +6,16 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../staff/Attendence.dart';
-import '../staff/LeaveApplication.dart';
+
 import '../student/HostalRegistration.dart';
 import '../student/feepayment.dart';
-import '../views/dashboard.dart';
 import 'Academics/Regulation.dart';
 import 'Academics/courseEnrollment.dart';
 import 'AttendaceRequest/Rquest management.dart';
 import 'Attendence view/attendenceview.dart';
 import 'Myinfo/myInfo.dart';
 import 'Transport/transportManagement.dart';
+import 'feecard/feecard.dart';
 import 'hostal/hostalManagement.dart';
 import 'leaveRequest.dart';
 
@@ -24,7 +24,6 @@ class StudentDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white60,
 
 
         title: Text('Student Dashboard',style: TextStyle(fontWeight: FontWeight.bold),),
@@ -75,33 +74,27 @@ class StudentDashboard extends StatelessWidget {
               Colors.green,
               LeaveRequest(),
             ),
-            _buildGridTile(
-              context,
-              'Attendance',
-              Icons.check_circle,
-              Colors.blueAccent,
-              AttendanceScreen(),
-            ),
-            _buildGridTile(
-              context,
-              'Leave',
-              Icons.attach_email,
-              Colors.greenAccent,
-              LeaveApplicationScreen(),
-            ),
-            _buildGridTile(
-              context,
-              'dash',
-              Icons.dashboard,
-              Colors.red,
-              DashboardScreen(),
-            ),
+
+
+
             _buildGridTile(
               context,
               'Attendence View',
               Icons.class_rounded,
               Colors.red,
               AttendanceView(),
+            ), _buildGridTile(
+              context,
+              'FeeCard View',
+              Icons.card_membership,
+              Colors.red,
+              FeeCard(),
+            ),_buildGridTile(
+              context,
+              'Fee permission View',
+              Icons.credit_card_off,
+              Colors.red,
+              FeePermission(),
             ),
             _buildGridTile(
               context,
