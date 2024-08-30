@@ -214,7 +214,17 @@ class _FeePermissionState extends State<FeePermission> {
               children: [
                 ElevatedButton(
                   onPressed: _fetchAcademicYears,
-                  child: const Text('Add Permissions',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add, color: Colors.white),
+                      const SizedBox(width: 8), // Space between the icon and the text
+                      const Text(
+                        'Add Permissions',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
@@ -224,6 +234,7 @@ class _FeePermissionState extends State<FeePermission> {
                     textStyle: const TextStyle(fontSize: 16),
                   ),
                 ),
+
               ],
             ),
             const SizedBox(height: 16),

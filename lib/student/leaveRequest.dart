@@ -267,7 +267,8 @@ class _LeaveRequestState extends State<LeaveRequest> {
               const SizedBox(height: 8),
               _buildTextField(_descriptionController, 'Description', maxLines: 3),
               const SizedBox(height: 8),
-              _buildDatePicker('Select From Date', _fromDate, () => _selectDate(context, true)),
+              Container(
+                  child: _buildDatePicker('Select From Date', _fromDate, () => _selectDate(context, true))),
               _buildDatePicker('Select To Date', _toDate, () => _selectDate(context, false)),
               _buildFilePicker(),
               const SizedBox(height: 8),
