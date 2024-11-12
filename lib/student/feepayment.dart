@@ -5,12 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:paytm_allinonesdk/paytm_allinonesdk.dart';
-
 class FeePaymentScreen extends StatefulWidget {
   @override
   _FeePaymentScreenState createState() => _FeePaymentScreenState();
 }
-
 class _FeePaymentScreenState extends State<FeePaymentScreen> {
   late Future<List<Map<String, dynamic>>> futureFees;
   List<Map<String, dynamic>>? feeData;
@@ -34,26 +32,35 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
   Future<List<Map<String, dynamic>>> fetchFeeDetails() async {
     const String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SearchStudentRegularFeeDetails';
+
+    // Define the request body
+    final requestBody = {
+      "GrpCode": "Beesdev",
+      "ColCode": "0001",
+      "CollegeId": "1",
+      "HostelId": "0",
+      "ReceiptNumber": "0",
+      "HallTicketNo": "22H41AO485",
+      "UserTypeName": "Student",
+      "FeeSetUpId": "",
+      "ReceiptDate": "",
+      "Flag": "AR",
+      "FeeId": "0"
+    };
+
+    // Print the request body
+    print("Request Body: ${jsonEncode(requestBody)}");
+
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "GrpCode": "Bees",
-        "ColCode": "0001",
-        "CollegeId": "1",
-        "HostelId": "0",
-        "ReceiptNumber": "0",
-        "HallTicketNo": "22H41AO485",
-        "UserTypeName": "Student",
-        "FeeSetUpId": "",
-        "ReceiptDate": "",
-        "Flag": "AR",
-        "FeeId": "0"
-      }),
+      body: jsonEncode(requestBody),
     );
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+
+      print("Response Data: $data");
       List<Map<String, dynamic>> fees = List<Map<String, dynamic>>.from(
           data['cloudilyaStudentRegularFeeDetailsList']);
       return fees;
@@ -139,223 +146,318 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return
-      Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Text(
-            'Fee Payment Details',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-              color: Colors.black87,
+    return Scaffold(
+      appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade900, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          centerTitle: true,
-          iconTheme: IconThemeData(color: Colors.black87),
         ),
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.white, Color(0xFFE0E0E0)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            FutureBuilder<List<Map<String, dynamic>>>(
-              future: futureFees,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: Colors.blueAccent));
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.redAccent)));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No fees data available.', style: TextStyle(color: Colors.black54)));
-                } else {
-                  final feeData = snapshot.data!;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: feeData.length,
-                            itemBuilder: (context, index) {
-                              final fee = feeData[index];
-                              final feeName = fee['feeName'];
-                              final feeKey = '$index';
+        elevation: 0,
+        title: Text(
+          'Fee Payment',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          Container(
+            color:
+                Colors.grey.shade100, // Light background to make the cards pop
+          ),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: futureFees,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.blueAccent,
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No fees data available.',
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              } else {
+                final feeData = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 16.0,
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: feeData.length,
+                          itemBuilder: (context, index) {
+                            final fee = feeData[index];
+                            final feeName = fee['feeName'];
+                            final feeKey = '$index';
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 4),
+                            return AnimatedContainer(
+                              duration: Duration(milliseconds: 500),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 5),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        feeName,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade900,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.receipt_long,
+                                        color: Colors.blueAccent,
                                       ),
                                     ],
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          feeName,
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          'Semester: ${fee['semester']}',
-                                          style: TextStyle(color: Colors.black54),
-                                        ),
-                                        Text(
-                                          'Amount: ${fee['amount']}',
-                                          style: TextStyle(color: Colors.black54),
-                                        ),
-                                        Text(
-                                          'Collected Amount: ${fee['collectedAmount']}',
-                                          style: TextStyle(color: Colors.black54),
-                                        ),
-                                        Text(
-                                          'Due Amount: ${fee['dueAmount']}',
-                                          style: TextStyle(
-                                            color: Colors.redAccent,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        if (fee['installments'] != null)
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: List.generate(
-                                              fee['installments'].length,
-                                                  (installmentIndex) {
-                                                final installment = fee['installments'][installmentIndex];
-                                                final installmentKey = '$index-$installmentIndex';
-                                                final installmentDueAmount = installment['dueAmount'];
+                                  const SizedBox(height: 10),
+                                  _buildRichText('Semester', fee['semester']),
+                                  _buildRichText('Amount', '₹${fee['amount']}'),
+                                  _buildRichText('Collected Amount',
+                                      '₹${fee['collectedAmount']}'),
+                                  _buildRichText(
+                                      'Due Amount', '₹${fee['dueAmount']}',
+                                      isImportant: true),
+                                  const SizedBox(height: 12),
+                                  if (fee['installments'] != null)
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: List.generate(
+                                        fee['installments'].length,
+                                        (installmentIndex) {
+                                          final installment =
+                                              fee['installments']
+                                                  [installmentIndex];
+                                          final installmentKey =
+                                              '$index-$installmentIndex';
+                                          final installmentDueAmount =
+                                              installment['dueAmount'];
 
-                                                return Padding(
-                                                  padding: const EdgeInsets.only(top: 8.0),
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        'Installment ${installmentIndex + 1}: ${installment['amount']}',
-                                                        style: TextStyle(color: Colors.black54),
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        'Due Amount: $installmentDueAmount',
-                                                        style: TextStyle(color: Colors.redAccent),
-                                                      ),
-                                                      const SizedBox(height: 12),
-                                                      if (installment['modifyStatus'] == 1)
-                                                        TextField(
-                                                          controller: controllers[installmentKey],
-                                                          style: TextStyle(color: Colors.black87),
-                                                          decoration: InputDecoration(
-                                                            labelText: 'Payable Amount',
-                                                            labelStyle: TextStyle(color: Colors.blueAccent),
-                                                            hintText: 'Enter amount <= $installmentDueAmount',
-                                                            hintStyle: TextStyle(color: Colors.black38),
-                                                            filled: true,
-                                                            fillColor: Colors.blueAccent.withOpacity(0.1),
-                                                            border: OutlineInputBorder(
-                                                              borderRadius: BorderRadius.circular(12.0),
-                                                              borderSide: BorderSide.none,
-                                                            ),
-                                                          ),
-                                                          keyboardType: TextInputType.number,
-                                                          onChanged: (value) {
-                                                            validateAndUpdateTotalAmount();
-                                                          },
-                                                        ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        if (fee['installments'] == null || fee['installments'].isEmpty)
-                                          if (fee['modifyStatus'] == 1)
-                                            TextField(
-                                              controller: controllers[feeKey],
-                                              style: TextStyle(color: Colors.black87),
-                                              decoration: InputDecoration(
-                                                labelText: 'Payable Amount',
-                                                labelStyle: TextStyle(color: Colors.blueAccent),
-                                                hintText: 'Enter amount <= ${fee['dueAmount']}',
-                                                hintStyle: TextStyle(color: Colors.black38),
-                                                filled: true,
-                                                fillColor: Colors.blueAccent.withOpacity(0.1),
-                                                border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(12.0),
-                                                  borderSide: BorderSide.none,
+                                          return Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Installment ${installmentIndex + 1}: ₹${installment['amount']}',
+                                                  style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                      fontSize: 16),
                                                 ),
-                                              ),
-                                              keyboardType: TextInputType.number,
-                                              onChanged: (value) {
-                                                validateAndUpdateTotalAmount();
-                                              },
-                                            )
-                                          else
-                                            Text(
-                                              'Payable Amount: ${fee['dueAmount']}',
-                                              style: TextStyle(color: Colors.blue,fontWeight: FontWeight.bold),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Due Amount: ₹$installmentDueAmount',
+                                                  style: TextStyle(
+                                                      color: Colors.redAccent,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                if (installment[
+                                                        'modifyStatus'] ==
+                                                    1)
+                                                  TextField(
+                                                    controller: controllers[
+                                                        installmentKey],
+                                                    style: TextStyle(
+                                                        color: Colors.black87),
+                                                    decoration: InputDecoration(
+                                                      labelText:
+                                                          'Payable Amount',
+                                                      labelStyle: TextStyle(
+                                                          color: Colors.blue),
+                                                      hintText:
+                                                          'Enter amount <= ₹$installmentDueAmount',
+                                                      hintStyle: TextStyle(
+                                                          color:
+                                                              Colors.black38),
+                                                      filled: true,
+                                                      fillColor: Colors.blue
+                                                          .withOpacity(0.05),
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12.0),
+                                                        borderSide:
+                                                            BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    onChanged: (value) {
+                                                      validateAndUpdateTotalAmount();
+                                                    },
+                                                  ),
+                                              ],
                                             ),
-                                      ],
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
+                                  if (fee['installments'] == null ||
+                                      fee['installments'].isEmpty)
+                                    if (fee['modifyStatus'] == 1)
+                                      TextField(
+                                        controller: controllers[feeKey],
+                                        style: TextStyle(color: Colors.black87),
+                                        decoration: InputDecoration(
+                                          labelText: 'Payable Amount',
+                                          labelStyle:
+                                              TextStyle(color: Colors.blue),
+                                          hintText:
+                                              'Enter amount <= ₹${fee['dueAmount']}',
+                                          hintStyle:
+                                              TextStyle(color: Colors.black38),
+                                          filled: true,
+                                          fillColor:
+                                              Colors.blue.withOpacity(0.05),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12.0),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (value) {
+                                          validateAndUpdateTotalAmount();
+                                        },
+                                      )
+                                    else
+                                      Text(
+                                        'Payable Amount: ₹${fee['dueAmount']}',
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () => _showPaymentPreview(context),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 80,
+                          ),
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                          elevation: 12,
+                          shadowColor: Colors.blue,
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () => _showPaymentPreview(context),
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 80),
-                            backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                            ),
-                            elevation: 10,
-                          ),
-                          child: Text(
-                            "Proceed to Payment",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                        child: Text(
+                          "Calculate Total",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                }
-              },
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRichText(String label, String value,
+      {bool isImportant = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade800,
             ),
-          ],
-        ),
-      );
-
-
-
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isImportant ? FontWeight.bold : FontWeight.w500,
+              color: isImportant ? Colors.redAccent : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void debugTotalCalculation() {
@@ -413,9 +515,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         );
         return;
       }
-
       total += payableAmount;
-
       if (fee['installments'] != null) {
         for (int j = 0; j < fee['installments'].length; j++) {
           final installmentKey = '$i-$j';
@@ -423,7 +523,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
           final installmentPayableAmount =
               double.tryParse(controllers[installmentKey]?.text ?? '0.0') ??
                   0.0;
-
           if (installmentPayableAmount > installmentDueAmount) {
             Fluttertoast.showToast(
               msg: 'Payable amount cannot be greater than due amount.',
@@ -438,7 +537,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         }
       }
     }
-
     setState(() {
       totalAmount = total;
     });
@@ -475,46 +573,206 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         }
       }
     }
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(backgroundColor: Colors.white,
-        title: Text('Payment Preview', textAlign: TextAlign.center),
-        content: SingleChildScrollView(
+      barrierColor: Colors.black.withOpacity(0.7), // Slightly darker overlay
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Colors.grey[100]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 12,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              ...payableFees.entries.map((entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      '${entry.key}: ${entry.value.toStringAsFixed(2)}',
-                      style: TextStyle(fontSize: 16),
+              // Top ticket-style cutout with a bold header
+              Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(15),
+                      ),
+                      color: Colors.grey[300],
                     ),
-                  )),
-              SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Total: ${totalAmount.toStringAsFixed(2)}',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Center(
+                      child: Text(
+                        'Proceed to Pay',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -10,
+                    left: -10,
+                    child: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                  Positioned(
+                    top: -10,
+                    right: -10,
+                    child: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              // Payable Fees List with a sleek bill layout
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ...payableFees.entries.map((entry) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '₹${entry.value.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  SizedBox(height: 20),
+                  Divider(color: Colors.grey),
+                  SizedBox(height: 10),
+                  // Total Amount
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '₹${totalAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              // Bottom ticket cutout with perforation and custom dashed divider
+              Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Positioned(
+                    left: -10,
+                    bottom: -10,
+                    child: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                  Positioned(
+                    right: -10,
+                    bottom: -10,
+                    child: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                  DashedLine(color: Colors.grey),
+                  // Use the custom dashed line here
+                ],
+              ),
+              SizedBox(height: 20),
+              // Action Buttons with clean style
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Cancel Button
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  // Pay Button
+                  ElevatedButton(
+                    onPressed: () {
+                      processOnlinePayment();
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Pay',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              processOnlinePayment();
-            },
-            child: Text('Pay'),
-          ),
-        ],
       ),
     );
   }
@@ -573,7 +831,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
     // Prepare the request body based on the fee details
     final requestBody = {
-      "GrpCode": "Bees",
+      "GrpCode": "Beesdev",
       "ColCode": "0001",
       "CollegeId": "1",
       "ReceiptNumber": 0,
@@ -736,7 +994,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
       // Prepare data for API call
       final apiRequestData = {
-        "GrpCode": "Bees",
+        "GrpCode": "Beesdev",
         "ColCode": "0001",
         "CollegeId": "1",
         "StudentId": "2548",
@@ -779,8 +1037,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
       print(
           "API Response Status Code: ${apiResponse.statusCode}"); // Print status code
       print("API Response Body: ${apiResponse.body}"); // Print response body
-
-      // Handle API response
       if (apiResponse.statusCode == 200) {
         Fluttertoast.showToast(
           msg: "Fee data saved successfully",
@@ -807,12 +1063,10 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         );
       }
     } catch (error) {
-      // Handle any errors that occur during the transaction
       print('Error: $error');
       setState(() {
         result = error.toString();
       });
-
       if (error is PlatformException) {
         Fluttertoast.showToast(
           msg: "PlatformException: ${error.message}",
@@ -835,5 +1089,36 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         );
       }
     }
+  }
+}
+class DashedLine extends StatelessWidget {
+  final double height;
+  final Color color;
+
+  DashedLine({this.height = 1, this.color = Colors.black});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxWidth = constraints.constrainWidth();
+        final dashWidth = 5.0;
+        final dashHeight = height;
+        final dashCount = (boxWidth / (2 * dashWidth)).floor();
+        return Flex(
+          children: List.generate(dashCount, (_) {
+            return SizedBox(
+              width: dashWidth,
+              height: dashHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color),
+              ),
+            );
+          }),
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
+        );
+      },
+    );
   }
 }

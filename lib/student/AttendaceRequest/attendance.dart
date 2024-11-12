@@ -45,7 +45,7 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
 
     // Request body for "attendance" flag
     Map<String, dynamic> requestBodyAttendance = {
-      "grpCode": "BEES",
+      "grpCode": "BEESdev",
       "colCode": "0001",
       "collegeId": 1,
       "studentId": 1242,
@@ -111,7 +111,7 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
     }
 
     Map<String, dynamic> requestBody = {
-      "grpCode": "BEES",
+      "grpCode": "BEESdev",
       "colCode": "0001",
       "collegeId": 1,
       "studentId": 1242,
@@ -180,7 +180,7 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                 // Calendar icon
+                  // Calendar icon
                   SizedBox(width: 8), // Space between the icon and text
                   Text(
                     selectedDate == null
@@ -199,7 +199,7 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
                 ],
               ),
             )
-,
+            ,
             SizedBox(height: 20),
             Expanded(
               child: attendanceList.isEmpty
@@ -306,27 +306,27 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
             ),
             SizedBox(height: 20),
             if(selectedDate!=null)
-            ElevatedButton(
-              onPressed: _saveSelectedItems,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.white),
+              ElevatedButton(
+                onPressed: _saveSelectedItems,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: Colors.white),
+                  ),
+                ),
+                child: Text(
+                  'Save Request',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              child: Text(
-                'Save Request',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
           ],
         ),
       ),

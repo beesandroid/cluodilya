@@ -20,8 +20,6 @@ class _ClassRequestState extends State<ClassRequest> {
   void initState() {
     super.initState();
   }
-
-  // Function to select a date
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -71,6 +69,7 @@ class _ClassRequestState extends State<ClassRequest> {
       );
 
       if (responseClass.statusCode == 200) {
+        print(responseClass.body);
         List<Map<String, dynamic>> classData = [];
         print(responseClass);
         Map<String, dynamic> dataClass = jsonDecode(responseClass.body) as Map<String, dynamic>;

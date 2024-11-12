@@ -29,7 +29,7 @@ class _HostelSelectorState extends State<HostelSelector> {
   Future<Map<String, dynamic>> fetchHostelData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-
+    // Retrieve SharedPreferences values
     String photo = prefs.getString('photo') ?? '';
     String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
@@ -51,26 +51,33 @@ class _HostelSelectorState extends State<HostelSelector> {
     String finYear = prefs.getString('finYear') ?? '';
     String email = prefs.getString('email') ?? '';
     String studentStatus = prefs.getString('studentStatus') ?? '';
+
+    // Construct the request body
+    Map<String, dynamic> requestBody = {
+      "GrpCode": "beesdev",
+      "ColCode": colCode,
+      "AcYear": acYear,
+      "UserTypeName": "STUDENT",
+      "RegistrationDate": "",
+      "StudentId": "1681",  // You may replace with "studId" if needed
+      "HostelId": "0",
+      "RoomTypeId": "0",
+      "RoomId": "0"
+    };
+
+    // Print the request body before sending
+    print('Request Body: ${jsonEncode(requestBody)}');
+
+    // Make the API call
     final response = await http.post(
-      Uri.parse(
-          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
+      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode({
-        "GrpCode": grpCode,
-        "ColCode": colCode,
-        "AcYear": acYear,
-        "UserTypeName": "STUDENT",
-        "RegistrationDate": "",
-        // "StudentId": "1681",
-        "StudentId": studId,
-        "HostelId": "0",
-        "RoomTypeId": "0",
-        "RoomId": "0"
-      }),
+      body: jsonEncode(requestBody),
     );
 
+    // Handle the response
     if (response.statusCode == 200) {
       print(response.body);
       return jsonDecode(response.body);
@@ -78,6 +85,7 @@ class _HostelSelectorState extends State<HostelSelector> {
       throw Exception('Failed to load data');
     }
   }
+
 
   void printAllottedBedsDisplayList(List allottedBedsDisplayList) {
     for (var entry in allottedBedsDisplayList) {
@@ -100,7 +108,6 @@ class _HostelSelectorState extends State<HostelSelector> {
   Future<void> fetchFilteredData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-
     String photo = prefs.getString('photo') ?? '';
     String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
@@ -122,34 +129,36 @@ class _HostelSelectorState extends State<HostelSelector> {
     String finYear = prefs.getString('finYear') ?? '';
     String email = prefs.getString('email') ?? '';
     String studentStatus = prefs.getString('studentStatus') ?? '';
-    if (selectedHostelId == null ||
-        selectedRoomTypeId == null ||
-        selectedRoomId == null) {
+
+    if (selectedHostelId == null || selectedRoomTypeId == null || selectedRoomId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Please select hostel, room type, and room number')),
+        SnackBar(content: Text('Please select hostel, room type, and room number')),
       );
       return;
     }
 
+    // Prepare request body
+    final requestBody = {
+      "GrpCode": "beesdev",
+      "ColCode": colCode,
+      "AcYear": acYear,
+      "UserTypeName": "STUDENT",
+      "RegistrationDate": "",
+      "StudentId": studId,
+      "HostelId": selectedHostelId.toString(),
+      "RoomTypeId": selectedRoomTypeId.toString(),
+      "RoomId": selectedRoomId.toString(),
+    };
+
+    // Print the request body for verification
+    print("Request body: ${jsonEncode(requestBody)}");
+
     final response = await http.post(
-      Uri.parse(
-          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
+      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayHostelRegistration'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode({
-        "GrpCode": grpCode,
-        "ColCode": colCode,
-        "AcYear": acYear,
-        "UserTypeName": "STUDENT",
-        "RegistrationDate": "",
-        "StudentId": studId,
-        // "StudentId": "1642",
-        "HostelId": selectedHostelId.toString(),
-        "RoomTypeId": selectedRoomTypeId.toString(),
-        "RoomId": selectedRoomId.toString()
-      }),
+      body: jsonEncode(requestBody),
     );
 
     if (response.statusCode == 200) {
@@ -157,7 +166,6 @@ class _HostelSelectorState extends State<HostelSelector> {
       print(data);
 
       if (data['mainDisplayList'] == null) {
-        // Handle the situation where there is no vacancy
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'No data available')),
         );
@@ -185,8 +193,7 @@ class _HostelSelectorState extends State<HostelSelector> {
             print('Registration Date: ${entry["registrationDate"]}');
             print('User Registered: ${entry["userRegisteredBy"]}');
             print('User Type : ${entry["userTypeName"]}');
-            print(
-                ''); // Print an empty line for better readability between entries
+            print(''); // Print an empty line for better readability between entries
           }
         }
         setState(() {
@@ -200,10 +207,9 @@ class _HostelSelectorState extends State<HostelSelector> {
     }
   }
 
+
   Future<void> saveRegistration() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
-
     String photo = prefs.getString('photo') ?? '';
     String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
@@ -237,7 +243,7 @@ class _HostelSelectorState extends State<HostelSelector> {
     }).toList();
 
     final requestBody = jsonEncode({
-      "GrpCode": grpCode,
+      "GrpCode": "beesdev",
       "ColCode": colCode,
       "CollegeId": "1",
       "StudentId": studId,
@@ -313,7 +319,7 @@ class _HostelSelectorState extends State<HostelSelector> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return AlertDialog(backgroundColor: Colors.white,
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -385,9 +391,18 @@ class _HostelSelectorState extends State<HostelSelector> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade900, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
 
-        title: Text('Hostel Registration'),
+        title: Text('Hostel Registration',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: hostelDataFuture,
@@ -678,7 +693,7 @@ class _HostelSelectorState extends State<HostelSelector> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
-                        color: Colors.blueAccent,
+                        color: Colors.blue,
                       ),
                     ),
 
@@ -729,7 +744,7 @@ class _HostelSelectorState extends State<HostelSelector> {
                       child: Text(
                         'Close',
                         style: TextStyle(
-                          color: Colors.blueAccent,
+                          color: Colors.blue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -4,6 +4,11 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>We need continuous access to your location to track the bus in real-time, even when the app is in the background.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need access to your location to display the bus location on the map.</string>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

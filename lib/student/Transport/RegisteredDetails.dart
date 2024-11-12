@@ -53,7 +53,7 @@ class _TransportRegistrationDetailsScreenState extends State<TransportRegistrati
     showCupertinoDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return AlertDialog(backgroundColor: Colors.white  ,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

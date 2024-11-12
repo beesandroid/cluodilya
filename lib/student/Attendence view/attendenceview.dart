@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class AttendanceView extends StatefulWidget {
   const AttendanceView({super.key});
 
@@ -19,43 +21,96 @@ class _AttendanceViewState extends State<AttendanceView> {
   }
 
   Future<void> _fetchAttendanceData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegeId = prefs.getString('collegeId') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
     const url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentAttendanceDisplay';
-    const requestBody = {
-      "GrpCode": "Bees",
-      "ColCode": "0001",
-      "CollegeId": "1",
-      "StudentId": "1646",
+    final requestBody = {
+      "GrpCode": "Beesdev",
+      "ColCode": colCode,
+      "CollegeId": collegeId,
+      "StudentId": studId,
       "Date": ""
     };
+    print(requestBody);
 
-    final response = await http.post(Uri.parse(url), body: json.encode(requestBody), headers: {
-      "Content-Type": "application/json",
-    });
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        body: json.encode(requestBody),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        print(response.body);
+        final responseData = json.decode(response.body);
+        setState(() {
+          data = responseData;
+          print(data);
+        });
+      } else {
+        // Handle error
+        print('Failed to load data');
+        setState(() {
+          data = {}; // Set to empty map to trigger "No attendance" message
+        });
+      }
+    } catch (e) {
+      // Handle exception
+      print('Error occurred: $e');
       setState(() {
-        data = json.decode(response.body);
+        data = {}; // Set to empty map to trigger "No attendance" message
       });
-    } else {
-      // Handle error
-      print('Failed to load data');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine if data is available
+    bool isDataAvailable = data != null &&
+        data!.isNotEmpty &&
+        (data!['subjectList']?.isNotEmpty ?? false ||
+            data!['semesterLists']?.isNotEmpty ?? false ||
+            data!['overAllList']?.isNotEmpty ?? false);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
 
-        title: Text('Attendance', style: TextStyle(color: Colors.grey[800],fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.grey[800],
-      ),
       body: data == null
           ? Center(child: CircularProgressIndicator(color: Colors.grey[800]))
-          : _buildAttendanceView(),
+          : isDataAvailable
+          ? _buildAttendanceView()
+          : Center(
+        child: Text(
+          'No attendance available',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.grey[700],
+          ),
+        ),
+      ),
     );
   }
 
@@ -183,7 +238,6 @@ class _AttendanceViewState extends State<AttendanceView> {
       ),
     );
   }
-
 
   Widget _buildTitle(String title) {
     return Text(

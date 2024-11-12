@@ -257,17 +257,21 @@ class LoginController extends GetxController {
       final response = await _dio.post(
         _loginUrl,
         data: {
-          'GrpCode': '',
+          'GrpCode': 'beesdev',
           'UserName': userName,
           'password': password,
         },
+
         options: Options(
           headers: {'Content-Type': 'application/json'},
         ),
       );
 
+
+
       if (response.statusCode == 200) {
         dynamic responseData = response.data;
+        print(responseData);
 
         if (responseData is String) {
           try {

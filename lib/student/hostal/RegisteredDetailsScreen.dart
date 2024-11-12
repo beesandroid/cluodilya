@@ -5,7 +5,8 @@ import 'dart:convert';
 
 class RegisteredDetailsScreen extends StatefulWidget {
   @override
-  _RegisteredDetailsScreenState createState() => _RegisteredDetailsScreenState();
+  _RegisteredDetailsScreenState createState() =>
+      _RegisteredDetailsScreenState();
 }
 
 class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
@@ -20,7 +21,8 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
 
   Future<void> fetchData() async {
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "GrpCode": "bees",
@@ -29,11 +31,8 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
         "Flag": "HostelStatus"
       }),
     );
-
     if (response.statusCode == 200) {
       print(response.body);
-
-
       setState(() {
         apiResponse = json.decode(response.body);
         isLoading = false;
@@ -49,12 +48,12 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
   void showHistoryDialog() {
     if (apiResponse == null) return;
     final viewHistoryList = apiResponse!['viewHistoryList'] as List<dynamic>;
-
     showCupertinoDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(mainAxisAlignment: MainAxisAlignment.center,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('History'),
             ],
@@ -63,7 +62,10 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
             child: Column(
               children: viewHistoryList.map((history) {
                 return ListTile(
-                  title: Text('${history['hostelName']}',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
+                  title: Text(
+                    '${history['hostelName']}',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -81,7 +83,10 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
           ),
           actions: [
             CupertinoDialogAction(
-              child: Text('Close',style: TextStyle(color: Colors.black),),
+              child: Text(
+                'Close',
+                style: TextStyle(color: Colors.black),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -95,102 +100,106 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-
-
       child: SafeArea(
         child: isLoading
             ? Center(child: CupertinoActivityIndicator())
             : apiResponse == null
-            ? Center(child: Text('Failed to load data'))
-            : AnimatedContainer(
-          duration: Duration(seconds: 1),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.history_toggle_off_outlined),
-                    onPressed: showHistoryDialog,
+                ? Center(child: Text('Failed to load data'))
+                : AnimatedContainer(
+                    duration: Duration(seconds: 1),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsets.all(16),
+                    child: ListView(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.history_toggle_off_outlined),
+                              onPressed: showHistoryDialog,
+                            ),
+                          ],
+                        ),
+                        if (apiResponse!['stuedntDisplaySearchList'] != null)
+                          ...apiResponse!['stuedntDisplaySearchList']
+                              .map<Widget>((item) {
+                            return Container(
+                              margin: EdgeInsets.symmetric(vertical: 8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    offset: Offset(0, 2),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      ' ${item['hostelName']}',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Room Type: ${item['roomTypeName']}'),
+                                    Text('Room Number: ${item['roomNumber']}'),
+                                    Text('Block Name: ${item['blockName']}'),
+                                    Text('Floor Name: ${item['floorName']}'),
+                                    Text('Total Paid Amount: ${item['totalCollectedAmount']}'),
+                                    Text('Due Amount: ${item['dueAmount']}'),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        SizedBox(height: 16),
+                        if (apiResponse!['installmentsDisplayList'] != null)
+                          ...apiResponse!['installmentsDisplayList']
+                              .map<Widget>((item) {
+                            return Container(
+                              margin: EdgeInsets.symmetric(vertical: 8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    offset: Offset(0, 2),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Fee Name: ${item['feeName']}',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Amount: ${item['amount']}'),
+                                    Text('Due Amount: ${item['dueAmount']}'),
+                                    Text(
+                                        'Collected Amount: ${item['collectedAmount']}'),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              if (apiResponse!['stuedntDisplaySearchList'] != null)
-                ...apiResponse!['stuedntDisplaySearchList']
-                    .map<Widget>((item) {
-                  return Container(
-                    margin: EdgeInsets.symmetric(vertical: 8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          offset: Offset(0, 2),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ' ${item['hostelName']}',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 8),
-                          Text('Room Type: ${item['roomTypeName']}'),
-                          Text('Room Number: ${item['roomNumber']}'),
-                          Text('Block Name: ${item['blockName']}'),
-                          Text('Floor Name: ${item['floorName']}'),
-                          Text('Total Paid Amount: ${item['totalCollectedAmount']}'),
-                          Text('Due Amount: ${item['dueAmount']}'),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              SizedBox(height: 16),
-              if (apiResponse!['installmentsDisplayList'] != null)
-                ...apiResponse!['installmentsDisplayList']
-                    .map<Widget>((item) {
-                  return Container(
-                    margin: EdgeInsets.symmetric(vertical: 8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          offset: Offset(0, 2),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Fee Name: ${item['feeName']}',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 8),
-                          Text('Amount: ${item['amount']}'),
-                          Text('Due Amount: ${item['dueAmount']}'),
-                          Text('Collected Amount: ${item['collectedAmount']}'),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-            ],
-          ),
-        ),
       ),
     );
   }

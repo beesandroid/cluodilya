@@ -26,7 +26,7 @@ class _RegulationState extends State<Regulation> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode({
-        "GrpCode": "BEES",
+        "GrpCode": "BEESdev",
         "ColCode": "0001",
         "CollegeId": "1",
         "StudentId": "1400",
@@ -35,7 +35,9 @@ class _RegulationState extends State<Regulation> {
     );
 
     if (response.statusCode == 200) {
+      print(response.body);
       return jsonDecode(response.body);
+
     } else {
       throw Exception('Failed to load data');
     }
@@ -45,14 +47,23 @@ class _RegulationState extends State<Regulation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade900, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
 
         title: const Text(
           'Curriculum Regulation',
           style: TextStyle(
-            fontFamily: 'Roboto',
+
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 20,color: Colors.white
           ),
         ),
         elevation: 0,
@@ -130,7 +141,7 @@ class _RegulationState extends State<Regulation> {
               ),
               Expanded(
                 child: filteredList.isEmpty
-                    ? const Center(child: Text('No courses available for selected semester'))
+                    ? const Center(child: Text('No courses available for selected semester',style: TextStyle(fontWeight: FontWeight.bold),))
                     : GridView.builder(
                   padding: const EdgeInsets.all(16.0),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

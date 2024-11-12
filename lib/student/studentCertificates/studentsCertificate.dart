@@ -57,7 +57,7 @@ class _StudentCertificatesState extends State<StudentCertificates> {
       Uri.parse(
           'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CertificatesDropdownWithFee'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"GrpCode": "BEES", "ColCode": "0001"}),
+      body: jsonEncode({"GrpCode": "BEESdev", "ColCode": "0001","StudentId":"2"}),
     );
 
     if (response.statusCode == 200) {
@@ -99,11 +99,9 @@ class _StudentCertificatesState extends State<StudentCertificates> {
               length, (index) => characters[random.nextInt(characters.length)])
           .join();
     }
-
     if (selectedCertificates.isEmpty) return;
-
     final requestBody = jsonEncode({
-      "GrpCode": "BEES",
+      "GrpCode": "BEESdev",
       "ColCode": "0001",
       "StudentId": "102",
       "CertificateId": "0",
@@ -115,6 +113,7 @@ class _StudentCertificatesState extends State<StudentCertificates> {
       "LoginSystemName": "",
       "UserId": "1",
       "Flag": "CREATE",
+      "PaymentType":"",
       "StudentCertificatesTableVariable": selectedCertificates.map((id) {
         final certificate = certificatesList
             .firstWhere((cert) => cert['reportId'] == id, orElse: () => {});
@@ -123,14 +122,10 @@ class _StudentCertificatesState extends State<StudentCertificates> {
           "CertificateId": id.toString(),
           "Purpose": descriptionControllers[id]?.text ?? '',
           "Fee": '${certificate['fee'] ?? '0'}'
-          // Adjust this to match your fee logic
         };
       }).toList()
     });
-
-    // Print the request body
-    print('Request Body: $requestBody');
-
+ print('Request Body: $requestBody');
     final response = await http.post(
       Uri.parse(
           'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SavingOfCertificatesFeeForTempData'),
@@ -196,16 +191,13 @@ class _StudentCertificatesState extends State<StudentCertificates> {
   ) async
   {
     try {
-      // Start the transaction and await the response
       final response = await AllInOneSdk.startTransaction(
         mid,
         ordeR_ID,
-
         totalAmount.toString(),
         txnToken,
         callbacK_URL,
         false,
-        // restrictAppInvoke
         false, // restrictAppInvoke
       );
 
@@ -278,18 +270,27 @@ class _StudentCertificatesState extends State<StudentCertificates> {
     return
       Scaffold(
         appBar: AppBar(
+          iconTheme: IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade900, Colors.blue.shade400],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
 
           title: Text(
             'Student Certificates',
             style: TextStyle(
-              color: Colors.black,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 22,
+
             ),
           ),
           backgroundColor: Colors.white,
           elevation: 1,
-          iconTheme: IconThemeData(color: Colors.black),
         ),
         body: certificatesList.isEmpty
             ? Center(

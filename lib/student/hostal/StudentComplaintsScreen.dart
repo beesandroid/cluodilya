@@ -6,18 +6,19 @@ import 'package:intl/intl.dart';
 
 class StudentComplaintsScreen extends StatefulWidget {
   @override
-  _StudentComplaintsScreenState createState() => _StudentComplaintsScreenState();
+  _StudentComplaintsScreenState createState() =>
+      _StudentComplaintsScreenState();
 }
-
 class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   List<Map<String, dynamic>> complaintTypes = [];
   List<Map<String, dynamic>> complaintRequests = [];
   int? selectedComplaintTypeId;
   DateTime? selectedDate;
-  TextEditingController complaintDescriptionController = TextEditingController();
+  TextEditingController complaintDescriptionController =
+      TextEditingController();
   String? selectedFilePath;
   int? selectedComplaintId;
-  bool isEditing = false; // New state variable for edit mode
+  bool isEditing = false;
 
   @override
   void initState() {
@@ -28,7 +29,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
   Future<void> fetchComplaintTypes() async {
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintTypeDropdown'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintTypeDropdown'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "GrpCode": "Bees",
@@ -42,7 +44,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       print(response.body);
       print(response.body);
       setState(() {
-        complaintTypes = List<Map<String, dynamic>>.from(data['complaintTypeDropdownList']);
+        complaintTypes =
+            List<Map<String, dynamic>>.from(data['complaintTypeDropdownList']);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -53,7 +56,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
   Future<void> fetchComplaintRequests() async {
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "GrpCode": "Bees",
@@ -77,7 +81,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
     if (response.statusCode == 200) {
       print(response.body);
       setState(() {
-        complaintRequests = List<Map<String, dynamic>>.from(data['complaintRequestList']);
+        complaintRequests =
+            List<Map<String, dynamic>>.from(data['complaintRequestList']);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +110,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       "ComplaintDescription": complaintDescriptionController.text,
       "TypeOfComplaint": selectedComplaintTypeId,
       "File": selectedFilePath ?? "",
-      "ComplaintDate":selectedDate.toString(),
+      "ComplaintDate": selectedDate.toString(),
       "LoginIpAddress": "",
       "LoginSystemName": "",
       "Flag": "Hostel",
@@ -116,7 +121,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
     print('Request Body: $requestBody');
 
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
       headers: {'Content-Type': 'application/json'},
       body: requestBody,
     );
@@ -131,7 +137,10 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEditing ? 'Complaint modified successfully.' : 'Complaint sent successfully.')),
+          SnackBar(
+              content: Text(isEditing
+                  ? 'Complaint modified successfully.'
+                  : 'Complaint sent successfully.')),
         );
         resetForm();
         fetchComplaintRequests(); // Refresh the complaint requests list
@@ -146,11 +155,13 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   Future<void> deleteComplaint(int complaintId) async {
     // Optimistically remove the complaint from the list first
     setState(() {
-      complaintRequests.removeWhere((complaint) => complaint['complaintId'] == complaintId);
+      complaintRequests
+          .removeWhere((complaint) => complaint['complaintId'] == complaintId);
     });
 
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "GrpCode": "Bees",
@@ -193,7 +204,6 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
     }
   }
 
-
   Future<void> pickFile() async {
     final result = await FilePicker.platform.pickFiles();
     if (result != null) {
@@ -217,7 +227,6 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
@@ -240,7 +249,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                 },
                 items: complaintTypes.map((type) {
                   return DropdownMenuItem<int>(
-                    value: type['complaintId'], // Ensure this is the correct key from your complaintTypes list
+                    value: type['complaintId'],
+                    // Ensure this is the correct key from your complaintTypes list
                     child: Text(type['complaintName']),
                   );
                 }).toList(),
@@ -251,7 +261,6 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                   return null;
                 },
               ),
-
               SizedBox(height: 16),
               GestureDetector(
                 onTap: () async {
@@ -272,10 +281,11 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                     labelText: 'Select Date',
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12),
-
                     suffixIcon: Icon(Icons.calendar_today, color: Colors.black),
                   ),
-                  child: Text(selectedDate != null ? selectedDate!.toLocal().toString().split(' ')[0] : 'No Date Chosen'),
+                  child: Text(selectedDate != null
+                      ? selectedDate!.toLocal().toString().split(' ')[0]
+                      : 'No Date Chosen'),
                 ),
               ),
               SizedBox(height: 16),
@@ -290,18 +300,24 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: pickFile,
-                child: Text('Pick File',style: TextStyle(color: Colors.white),),
+                child: Text(
+                  'Pick File',
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
               SizedBox(height: 8),
-              Text(selectedFilePath != null ? 'Selected File: ${selectedFilePath!}' : 'No File Selected'),
+              Text(selectedFilePath != null
+                  ? 'Selected File: ${selectedFilePath!}'
+                  : 'No File Selected'),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: sendComplaint,
-                child: Text(isEditing ? 'Modify Complaint' : 'Send Complaint', style: TextStyle(color: Colors.white)),
+                child: Text(isEditing ? 'Modify Complaint' : 'Send Complaint',
+                    style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: EdgeInsets.symmetric(vertical: 14),
@@ -315,87 +331,106 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
               SizedBox(height: 8),
               complaintRequests.isNotEmpty
                   ? ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: complaintRequests.length,
-                itemBuilder: (context, index) {
-                  final complaint = complaintRequests[index];
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(12),
-                      title: Text(
-                        complaint['typeOfComplaintName'] ?? 'No Type',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Date: ${complaint['complaintDate'] ?? 'No Date'}'),
-                          Text('Status: ${complaint['status'] ?? 'No Status'}'),
-                          if (complaint['file'] != null && complaint['file']!.isNotEmpty)
-                            Text('File: ${complaint['file']}'),
-                          if (complaint['complaintDescription'] != null && complaint['complaintDescription']!.isNotEmpty)
-                            Text('Description: ${complaint['complaintDescription']}'),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.edit),
-                            onPressed: () {
-                              setState(() {
-                                selectedComplaintId = complaint['complaintId'];
-                                selectedComplaintTypeId = complaint['typeOfComplaint']; // Ensure this matches the correct key
-                                complaintDescriptionController.text = complaint['complaintDescription'] ?? '';
-                                selectedDate = complaint['complaintDate'] != null ? DateTime.parse(complaint['complaintDate']) : null;
-                                selectedFilePath = complaint['file'] ?? null;
-                                isEditing = true; // Set to edit mode
-                              });
-                            },
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: complaintRequests.length,
+                      itemBuilder: (context, index) {
+                        final complaint = complaintRequests[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-
-                          IconButton(
-                            icon: Icon(Icons.delete,color: Colors.red,),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text("Are you sure?"),
-                                    content: Text("Do you really want to delete this complaint?"),
-                                    actions: [
-                                      TextButton(
-                                        child: Text("Cancel"),
-                                        onPressed: () {
-                                          Navigator.of(context).pop(); // Close the dialog
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: Text("Delete"),
-                                        onPressed: () {
-                                          deleteComplaint(complaint['complaintId']);
-                                          Navigator.of(context).pop(); // Close the dialog
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(12),
+                            title: Text(
+                              complaint['typeOfComplaintName'] ?? 'No Type',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    'Date: ${complaint['complaintDate'] ?? 'No Date'}'),
+                                Text(
+                                    'Status: ${complaint['status'] ?? 'No Status'}'),
+                                if (complaint['file'] != null &&
+                                    complaint['file']!.isNotEmpty)
+                                  Text('File: ${complaint['file']}'),
+                                if (complaint['complaintDescription'] != null &&
+                                    complaint['complaintDescription']!
+                                        .isNotEmpty)
+                                  Text(
+                                      'Description: ${complaint['complaintDescription']}'),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {
+                                    setState(() {
+                                      selectedComplaintId =
+                                          complaint['complaintId'];
+                                      selectedComplaintTypeId = complaint[
+                                          'typeOfComplaint']; // Ensure this matches the correct key
+                                      complaintDescriptionController.text =
+                                          complaint['complaintDescription'] ??
+                                              '';
+                                      selectedDate =
+                                          complaint['complaintDate'] != null
+                                              ? DateTime.parse(
+                                                  complaint['complaintDate'])
+                                              : null;
+                                      selectedFilePath =
+                                          complaint['file'] ?? null;
+                                      isEditing = true; // Set to edit mode
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text("Are you sure?"),
+                                          content: Text(
+                                              "Do you really want to delete this complaint?"),
+                                          actions: [
+                                            TextButton(
+                                              child: Text("Cancel"),
+                                              onPressed: () {
+                                                Navigator.of(context)
+                                                    .pop(); // Close the dialog
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Delete"),
+                                              onPressed: () {
+                                                deleteComplaint(
+                                                    complaint['complaintId']);
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              )
+                        );
+                      },
+                    )
                   : Text('No complaints found.'),
             ],
           ),

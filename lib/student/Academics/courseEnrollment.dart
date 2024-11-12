@@ -24,11 +24,11 @@ class _StudentEnrollmentState extends State<StudentEnrollment> {
   Future<void> _fetchEnrollmentData() async {
     final url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentSelfService_CourseEnrollment';
     final requestBody = {
-      "GrpCode": "Bees",
+      "GrpCode": "Beesdev",
       "ColCode": "0001",
       "CollegeId": "1",
       "StudCourseId": "0",
-      "StudentId": "1242",
+      "StudentId": "1647",
       "CourseId": "0",
       "UserId": "1",
       "LoginIpAddress": "",
@@ -64,7 +64,7 @@ class _StudentEnrollmentState extends State<StudentEnrollment> {
       Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CourseDropdowForEnrollment'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        "GrpCode": "BEES",
+        "GrpCode": "Beesdev",
         "ColCode": "0001",
         "CollegeId": "1",
         "StudentId": "1647"
@@ -109,7 +109,7 @@ class _StudentEnrollmentState extends State<StudentEnrollment> {
 
   Future<void> _fetchCoursesForCategory(int categoryId) async {
     final requestBody = {
-      "GrpCode": "Bees",
+      "GrpCode": "Beesdev",
       "ColCode": "0001",
       "CollegeId": "1",
       "StudentId": "1647",
@@ -177,7 +177,7 @@ class _StudentEnrollmentState extends State<StudentEnrollment> {
       Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentSelfService_CourseEnrollment'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        "GrpCode": "Bees",
+        "GrpCode": "Beesdev",
         "ColCode": "0001",
         "CollegeId": "1",
         "StudCourseId": "8",
@@ -205,9 +205,18 @@ class _StudentEnrollmentState extends State<StudentEnrollment> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
 
-        title: Text('Course Enrollment',style: TextStyle(fontWeight: FontWeight.bold),),
+        iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade900, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: Text('Course Enrollment',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),),
         elevation: 0,
       ),
       body: Container(

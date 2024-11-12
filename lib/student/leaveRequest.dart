@@ -27,10 +27,11 @@ class _LeaveRequestState extends State<LeaveRequest> {
 
   Future<void> _fetchLeaveRequests() async {
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        "GrpCode": "Bees",
+        "GrpCode": "BeesDEV",
         "ColCode": "0001",
         "CollegeId": "1",
         "Id": "0",
@@ -38,7 +39,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
         "EmployeeId": "0",
         "Description": "",
         "Subject": "",
-        "RequestDate":"2024-08-12",
+        "RequestDate": "2024-08-12",
         "FromDate": "",
         "ToDate": "",
         "File": "",
@@ -50,14 +51,22 @@ class _LeaveRequestState extends State<LeaveRequest> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final Map<String, dynamic> responseBody = json.decode(response.body);
-      print(data);
+      print(data); // Log the complete response
 
-      final String message = responseBody['message'];
-
-      setState(() {
-        _leaveRequestList = data['leaveRequestList'];
-      });
+      // Check if 'studentLeaveRequestList' exists and is a list
+      if (data['studentLeaveRequestList'] != null &&
+          data['studentLeaveRequestList'] is List) {
+        setState(() {
+          _leaveRequestList = data['studentLeaveRequestList'];
+        });
+      } else {
+        setState(() {
+          _leaveRequestList = []; // Handle case where there are no requests
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No leave requests found')),
+        );
+      }
     } else {
       // Handle error
       ScaffoldMessenger.of(context).showSnackBar(
@@ -72,7 +81,6 @@ class _LeaveRequestState extends State<LeaveRequest> {
         _fromDate == null ||
         _toDate == null ||
         _filePath == null) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill out all required fields.')),
       );
@@ -83,7 +91,7 @@ class _LeaveRequestState extends State<LeaveRequest> {
     final requestId = _editRequestId ?? 0;
 
     final requestBody = {
-      "GrpCode": "Bees",
+      "GrpCode": "BeesDEV",
       "ColCode": "0001",
       "CollegeId": "1",
       "Id": requestId,
@@ -104,7 +112,8 @@ class _LeaveRequestState extends State<LeaveRequest> {
     print('Request Body: ${json.encode(requestBody)}');
 
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(requestBody),
     );
@@ -184,7 +193,8 @@ class _LeaveRequestState extends State<LeaveRequest> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
-          content: const Text('Are you sure you want to delete this leave request?'),
+          content:
+              const Text('Are you sure you want to delete this leave request?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
@@ -208,17 +218,18 @@ class _LeaveRequestState extends State<LeaveRequest> {
   void _deleteLeaveRequest(int index) async {
     final request = _leaveRequestList[index];
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentLeaveRequest'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        "GrpCode": "Bees",
+        "GrpCode": "BeesDEV",
         "ColCode": "0001",
         "CollegeId": "1",
         "Id": request['id'],
         "StudentId": "2548",
         "EmployeeId": "0",
         "Description": "",
-        "RequestDate":"2024-08-12",
+        "RequestDate": "2024-08-12",
         "Subject": "",
         "FromDate": "",
         "ToDate": "",
@@ -241,7 +252,6 @@ class _LeaveRequestState extends State<LeaveRequest> {
           ),
         );
       }
-
     } else {
       // Handle error
       ScaffoldMessenger.of(context).showSnackBar(
@@ -253,10 +263,22 @@ class _LeaveRequestState extends State<LeaveRequest> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
 
-        title: const Text('Leave Request',style: TextStyle(fontWeight: FontWeight.bold),),
+      appBar: AppBar(iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade900, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Leave Request',
+          style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -265,79 +287,137 @@ class _LeaveRequestState extends State<LeaveRequest> {
             children: [
               _buildTextField(_subjectController, 'Subject'),
               const SizedBox(height: 8),
-              _buildTextField(_descriptionController, 'Description', maxLines: 3),
+              _buildTextField(_descriptionController, 'Description',
+                  maxLines: 3),
               const SizedBox(height: 8),
               Container(
-                  child: _buildDatePicker('Select From Date', _fromDate, () => _selectDate(context, true))),
-              _buildDatePicker('Select To Date', _toDate, () => _selectDate(context, false)),
+                  child: _buildDatePicker('Select From Date', _fromDate,
+                      () => _selectDate(context, true))),
+              _buildDatePicker(
+                  'Select To Date', _toDate, () => _selectDate(context, false)),
               _buildFilePicker(),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: _sendLeaveRequest,
-                child: Text(_editRequestId == null ? 'Send Request' : 'Modify Request'),
+                child: Text(
+                    _editRequestId == null ? 'Send Request' : 'Modify Request'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
               const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Leave Request List:",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                  ],
+                ),
+              ),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _leaveRequestList.length,
                 itemBuilder: (context, index) {
                   final request = _leaveRequestList[index];
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(15),
+                  return Card(
+                    color: Colors.white,
+                    elevation: 10,
+                    // Adds a shadow effect
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(15), // Rounded corners
                     ),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                request['subject'] ?? 'No Subject',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  request['subject'] ?? 'No Subject',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
                                 ),
                               ),
                               Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.black),
+                                    icon: const Icon(Icons.edit,
+                                        color: Colors.green),
                                     onPressed: () => _modifyLeaveRequest(index),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () => _confirmDeleteLeaveRequest(index),
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () =>
+                                        _confirmDeleteLeaveRequest(index),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(request['description'] ?? 'No Description'),
-                          const SizedBox(height: 4),
-                          Text('From: ${request['fromDate']?.split('T')[0] ?? 'N/A'}'),
-                          Text('To: ${request['toDate']?.split('T')[0] ?? 'N/A'}'),
-                          const SizedBox(height: 4),
-                          Text('File: ${request['file'] ?? 'No file chosen'}'),
                           const SizedBox(height: 8),
+                          Text(
+                            request['description'] ?? 'No Description',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'From: ${request['fromDate']?.split('T')[0] ?? 'N/A'}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              Text(
+                                'To: ${request['toDate']?.split('T')[0] ?? 'N/A'}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.attach_file, color: Colors.blue),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  request['file'] ?? 'No file chosen',
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.black),
+                                  overflow: TextOverflow
+                                      .ellipsis, // Ensures long text doesn't overflow
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
                   );
                 },
-              ),
+              )
             ],
           ),
         ),
@@ -345,7 +425,8 @@ class _LeaveRequestState extends State<LeaveRequest> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String labelText, {int maxLines = 1}) {
+  Widget _buildTextField(TextEditingController controller, String labelText,
+      {int maxLines = 1}) {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
@@ -369,7 +450,9 @@ class _LeaveRequestState extends State<LeaveRequest> {
         ),
         const SizedBox(width: 16),
         Text(
-          date != null ? date.toIso8601String().split('T')[0] : 'No date chosen',
+          date != null
+              ? date.toIso8601String().split('T')[0]
+              : 'No date chosen',
           style: const TextStyle(fontSize: 16),
         ),
       ],

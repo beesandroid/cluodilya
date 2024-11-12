@@ -17,7 +17,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: AppBar(title: Text('Enter PIN')),
+      appBar: AppBar(title: Text('Enter PIN',style: TextStyle(fontWeight: FontWeight.bold),),backgroundColor: Colors.white,),
       body: Padding(
         padding: const EdgeInsets.all(55.0),
         child: Column(

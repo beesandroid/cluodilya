@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -13,24 +16,34 @@ class StudentTimeTableScreen extends StatefulWidget {
 class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
   Map<String, List<dynamic>> _timeTableData = {};
   bool _isLoading = true;
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now(); // Set to today's date
 
   @override
   void initState() {
     super.initState();
-    _fetchTimeTable();
+    _fetchTimeTable(
+        date: _selectedDate
+            .toIso8601String()
+            .split('T')
+            .first); // Fetch timetable for today
   }
 
   Future<void> _fetchTimeTable({String date = ''}) async {
-    const url = 'https://beessoftware.cloud/CoreAPIPreProd/StudentSelfService/StudentTimeTableDisplay';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String studId = prefs.getString('studId') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegeId = prefs.getString('collegeId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    const url =
+        'https://beessoftware.cloud/CoreAPIPreProd/StudentSelfService/StudentTimeTableDisplay';
     final requestBody = {
-      "GrpCode": "Bees",
-      "ColCode": "0001",
-      "CollegeId": "1",
-      "StudentId": "1640",
+      "GrpCode": "Beesdev",
+      "ColCode": colCode,
+      "CollegeId": collegeId,
+      "StudentId": studId,
       "Date": date,
     };
-
+    print(requestBody);
     final response = await http.post(
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
@@ -39,7 +52,9 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final List<dynamic> rawTimeTableData = data['studentTimeTableDisplayList'] ?? [];
+      print(data);
+      final List<dynamic> rawTimeTableData =
+          data['studentTimeTableDisplayList'] ?? [];
       final groupedData = <String, List<dynamic>>{};
 
       if (rawTimeTableData is List) {
@@ -82,74 +97,143 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Date Heading with bold gradient text
               Text(
                 date,
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  foreground: Paint()..shader = LinearGradient(
+                    colors: [  Colors.blue.shade900,
+                      Colors.blue.shade400,],
+                  ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
+
                 ),
               ),
+
               SizedBox(height: 8),
-              Table(
-                border: TableBorder.symmetric(
-                  inside: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
-                  outside: BorderSide.none,
-                ),
-                columnWidths: {
-                  0: FlexColumnWidth(2),
-                  1: FlexColumnWidth(4),
-                },
-                children: [
-                  TableRow(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                    children: [
-                      TableCell(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Period',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      TableCell(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Subject',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
+              // Timetable table with glass effect and vibrant colors
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.5,
                   ),
-                  for (var dayData in dayDataList) ...[
-                    for (int i = 1; i <= 10; i++)
-                      if (dayData.containsKey('period$i'))
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurpleAccent.withOpacity(0.2),
+                      blurRadius: 10,
+                      spreadRadius: 3,
+                      offset: Offset(3, 5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Table(
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                            color: Colors.white.withOpacity(0.4), width: 0.5),
+                        verticalInside: BorderSide.none,
+                      ),
+                      columnWidths: {
+                        0: FlexColumnWidth(2),
+                        1: FlexColumnWidth(4),
+                      },
+                      children: [
+                        // Header row with vibrant gradient background
                         TableRow(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
+                            gradient: LinearGradient(
+                              colors: [     Colors.blue.shade900,
+                                Colors.blue.shade400,],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
                           ),
                           children: [
                             TableCell(
                               child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text('Period $i', style: TextStyle(color: Colors.white)),
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text(
+                                  'Period',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 16,
+
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
                             TableCell(
                               child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(dayData['period$i'] ?? '', style: TextStyle(color: Colors.white)),
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text(
+                                  'Subject',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 16,
+
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                  ],
-                ],
+                        // Table Content Rows with improved text visibility
+                        for (var dayData in dayDataList) ...[
+                          for (int i = 1; i <= 7; i++)
+                            if (dayData.containsKey('period$i'))
+                              TableRow(
+                                decoration: BoxDecoration(
+                                  color: Colors.white
+                                ),
+                                children: [
+                                  TableCell(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10.0, horizontal: 8.0),
+                                      child: Text(
+                                        'Period $i',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                  TableCell(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10.0, horizontal: 8.0),
+                                      child: Text(
+                                        dayData['period$i'] ?? '',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
             ],
@@ -159,28 +243,27 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
     );
   }
 
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor:  Color(0xFF243B55),
-        title: const Text('Student Time Table', style: TextStyle(color: Colors.white)),
-        elevation: 0,
-      ),
       body: Stack(
         children: [
           // Background Gradient
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF141E30),
-                  Color(0xFF243B55),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+                // gradient: LinearGradient(
+                //   colors: [
+                //     Color(0xFF141E30),
+                //     Color(0xFF243B55),
+                //   ],
+                //   begin: Alignment.topCenter,
+                //   end: Alignment.bottomCenter,
+                // ),
+                ),
           ),
           Column(
             children: [
@@ -196,19 +279,22 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                       color: Colors.purpleAccent,
                       shape: BoxShape.circle,
                     ),
-                    defaultTextStyle: TextStyle(color: Colors.white),
+                    defaultTextStyle: TextStyle(color: Colors.black),
                     weekendTextStyle: TextStyle(color: Colors.redAccent),
                     outsideTextStyle: TextStyle(color: Colors.grey),
                   ),
                   daysOfWeekStyle: DaysOfWeekStyle(
-                    weekdayStyle: TextStyle(color: Colors.white),
+                    weekdayStyle: TextStyle(color: Colors.black),
                     weekendStyle: TextStyle(color: Colors.redAccent),
                   ),
                   headerStyle: HeaderStyle(
-                    titleTextStyle: TextStyle(color: Colors.white, fontSize: 16),
-                    formatButtonTextStyle: TextStyle(color: Colors.white),
-                    leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
-                    rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+                    titleTextStyle:
+                        TextStyle(color: Colors.black, fontSize: 16),
+                    formatButtonTextStyle: TextStyle(color: Colors.black),
+                    leftChevronIcon:
+                        Icon(Icons.chevron_left, color: Colors.black),
+                    rightChevronIcon:
+                        Icon(Icons.chevron_right, color: Colors.black),
                   ),
                   focusedDay: _selectedDate,
                   firstDay: DateTime.utc(2020, 1, 1),
@@ -218,17 +304,21 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                     setState(() {
                       _selectedDate = selectedDay;
                       _isLoading = true;
-                      _fetchTimeTable(date: selectedDay.toIso8601String().split('T').first);
+                      _fetchTimeTable(
+                          date: selectedDay.toIso8601String().split('T').first);
                     });
                   },
                 ),
               ),
               Expanded(
                 child: _isLoading
-                    ? Center(child: CircularProgressIndicator(color: Colors.white))
+                    ? Center(
+                        child: CircularProgressIndicator(color: Colors.black))
                     : _timeTableData.isNotEmpty
-                    ? _buildTimeTable()
-                    : Center(child: Text('No timetable data available', style: TextStyle(color: Colors.white))),
+                        ? _buildTimeTable()
+                        : Center(
+                            child: Text('No Time-Table on this day',
+                                style: TextStyle(color: Colors.black))),
               ),
             ],
           ),

@@ -1,127 +1,288 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class StudentActivityScreen extends StatelessWidget {
+class StudentActivityScreen extends StatefulWidget {
   const StudentActivityScreen({super.key});
 
-  Future<Map<String, dynamic>> fetchStudentActivityDetails() async {
-    final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentActivityDetailsDisplay'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        "GrpCode": "Bees",
-        "ColCode": "0001",
-        "CollegeId": "1",
-        "StudentId": "1239",
-        "ActivityId": "0",
-        "ActivityName": "",
-        "AchivementCompletedIn": "0",
-        "JoinYear": "0",
-        "Certificate": "0",
-        "Remarks": "0",
-        "UserId": "1",
-        "Achievement": "",
-        "Event": "",
-        "AwardGivenBy": "",
-        "ChangeReason": "",
-        "LoginIpAddress": "",
-        "LoginSystemName": "",
-        "Flag": "VIEW",
-        "StudentActivityDetailsDisplaytablevariable": [
-          {"StudentId": "0", "File": ""}
-        ]
-      }),
-    );
+  @override
+  _StudentActivityScreenState createState() => _StudentActivityScreenState();
+}
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['studentActivityDetailsDisplayList'][0];
-    } else {
-      throw Exception('Failed to load student activity details');
+class _StudentActivityScreenState extends State<StudentActivityScreen> {
+  Map<String, dynamic>? activityDetail;
+  bool isLoading = true;
+  String errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStudentActivityDetails();
+  }
+
+  Future<void> fetchStudentActivityDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String studId = prefs.getString('studId') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegeId = prefs.getString('collegeId') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+
+    final requestBody = {
+      "GrpCode": "BeesDEV",
+      "ColCode": colCode,
+      "CollegeId": collegeId,
+      "StudentId": studId,
+      "ActivityId": "0",
+      "ActivityName": "",
+      "AchivementCompletedIn": "0",
+      "JoinYear": "0",
+      "Certificate": "0",
+      "Remarks": "0",
+      "UserId": adminUserId,
+      "Achievement": "",
+      "Event": "",
+      "AwardGivenBy": "",
+      "ChangeReason": "",
+      "LoginIpAddress": "",
+      "LoginSystemName": "",
+      "Flag": "VIEW",
+      "StudentActivityDetailsDisplaytablevariable": [
+        {"StudentId": "0", "File": ""}
+      ]
+    };
+
+    // Print request body to debug
+    print("Request body: ${jsonEncode(requestBody)}");
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentActivityDetailsDisplay'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("API Response: $data");
+        if (data['studentActivityDetailsDisplayList'] != null &&
+            data['studentActivityDetailsDisplayList'].isNotEmpty) {
+          final personalDetails = data['studentActivityDetailsDisplayList'][0];
+          setState(() {
+            activityDetail = {
+              "activityName": personalDetails["activityName"] ?? "N/A",
+              "achivementCompletedIn":
+                  personalDetails["achivementCompletedIn"] ?? "N/A",
+              "joinYear": personalDetails["joinYear"] ?? "N/A",
+              "certificate": personalDetails["certificate"] ?? "N/A",
+              "remarks": personalDetails["remarks"] ?? "N/A",
+              "achievement": personalDetails["achievement"] ?? "N/A",
+              "event": personalDetails["event"] ?? "N/A",
+              "awardGivenBy": personalDetails["awardGivenBy"] ?? "N/A",
+            };
+          });
+        } else {
+          setState(() {
+            activityDetail = null;
+            errorMessage = 'No Activity Details Available.';
+          });
+        }
+      } else {
+        // Handle non-200 responses
+        setState(() {
+          activityDetail = null;
+          errorMessage = 'Failed to load student activity details.';
+        });
+        print('Failed to load student activity details');
+      }
+    } catch (e) {
+      // Handle errors
+      setState(() {
+        activityDetail = null;
+        errorMessage = 'Error fetching data: $e';
+      });
+      print('Error fetching student activity details: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.white,
-        title: Text('Student Activity',style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchStudentActivityDetails(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('No data available'));
-          } else {
-            final detail = snapshot.data!;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Card(color: Colors.white,
-                elevation: 8.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      // Use a Stack to place a background gradient and content over it
+      body: Stack(
+        children: [
+          // Background gradient with blue shades
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade900, Colors.blue.shade400],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          // Main content with SafeArea
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 24.0),
+                  child: Row(
                     children: [
-                      Text(
-                        detail['activityName']?.toString() ?? 'N/A',
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Student Activity',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                          color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 10),
-                      _buildDetailRow('Achievement Completed In:', detail['achivementCompletedIn']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Join Year:', detail['joinYear']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Certificate:', detail['certificate']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Remarks:', detail['remarks']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Achievement:', detail['achievement']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Event:', detail['event']?.toString() ?? 'N/A'),
-                      _buildDetailRow('Award Given By:', detail['awardGivenBy']?.toString() ?? 'N/A'),
                     ],
                   ),
                 ),
-              ),
-            );
-          }
-        },
+                Expanded(
+                  child: isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : activityDetail != null
+                          ? SingleChildScrollView(
+                              padding: const EdgeInsets.all(16.0),
+                              child: _buildActivityCard(activityDetail!),
+                            )
+                          : Center(
+                              child: Text(
+                                errorMessage.isNotEmpty
+                                    ? errorMessage
+                                    : 'No Activity Details Available.',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.blueGrey[700],
+  Widget _buildActivityCard(Map<String, dynamic> detail) {
+    return Center(
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          // Glassmorphism effect
+          color: Colors.white.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.0),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: Colors.white.withOpacity(0.2), width: 1.0),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Center(
+                    child: Text(
+                      detail['activityName']?.toString() ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Details with icons
+                  _buildDetailRow(
+                      Icons.check_circle_outline,
+                      'Achievement Completed In:',
+                      detail['achivementCompletedIn']),
+                  _buildDetailRow(Icons.calendar_today, 'Join Year:',
+                      detail['joinYear']?.toString()),
+                  _buildDetailRow(Icons.card_membership, 'Certificate:',
+                      detail['certificate']?.toString()),
+                  _buildDetailRow(
+                      Icons.comment, 'Remarks:', detail['remarks']?.toString()),
+                  _buildDetailRow(Icons.emoji_events, 'Achievement:',
+                      detail['achievement']?.toString()),
+                  _buildDetailRow(
+                      Icons.event, 'Event:', detail['event']?.toString()),
+                  _buildDetailRow(Icons.person, 'Award Given By:',
+                      detail['awardGivenBy']?.toString()),
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.white70),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blueGrey[600],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value ?? 'N/A',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

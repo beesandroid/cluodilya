@@ -40,8 +40,8 @@ dependencies:
   webview_flutter: ^2.0.13
   url_launcher: ^6.0.0
   get:
-
-  intl:
+  ionicons: ^0.2.2
+  intl: ^0.18.0
   fluttertoast:
   page_transition:
   animated_list: ^0.0.2
@@ -56,26 +56,39 @@ dependencies:
   multi_select_flutter: ^4.0.0
   paytm_allinonesdk: ^1.2.6
   pin_code_fields: ^8.0.0
-  firebase_core:
+  lottie:
+
   flutter_staggered_grid_view:
   table_calendar:
+  persistent_bottom_nav_bar: ^6.2.1
+  multi_dropdown: ^3.0.1
+  google_fonts:
+  fl_chart:
 
 
-  charts_flutter_new: ^0.12.0  # Try a different version if available
 
 
-  fl_chart: ^0.40.6
-  flutter_map: ^3.1.0
+
+
+  flutter_map:
 
   latlong2: ^0.8.1
 
 
-  firebase_messaging:
+
   dropdown_search:
   flutter_typeahead: ^4.0.0
+  flutter_staggered_animations: ^1.0.0
+  permission_handler: ^10.2.0
+  flutter_svg:
+  rive:
+  animations: ^2.0.7
+  flutter_osm_plugin: ^0.60.5
+  geolocator: ^9.0.0
 
 
   dart_openai: ^3.0.0
+
 
 
 dev_dependencies:
@@ -105,6 +118,11 @@ flutter:
     - assets/image.png
     - assets/beeslogo.jpeg
     - assets/driver.png
+    - assets/profilepic.jpeg
+    - assets/pro.jpeg
+    - assets/busAnime.json
+    - assets/icons8-bus-100.png
+    - assets/attendence.json
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

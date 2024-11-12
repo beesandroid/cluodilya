@@ -16,9 +16,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.white,
-
         title: Text('Enter PIN'),
       ),
       body: SingleChildScrollView(
@@ -26,9 +25,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          // Ensure the Column takes minimum vertical space
           children: [
-            SizedBox(height: 100.0), // Add space at the top for centering
+            SizedBox(height: 100.0),
             PinCodeTextField(
               controller: _pinController,
               length: 4,
@@ -39,8 +37,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                   _currentText = value;
                 });
               },
-              onCompleted: (value) {
-                print('PIN Completed: $value'); // Debugging line to check if PIN is completed
+              onCompleted: (value) {// Debugging line to check if PIN is completed
                 _verifyPin(value);
               },
               pinTheme: PinTheme(
