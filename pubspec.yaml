@@ -88,6 +88,8 @@ dependencies:
 
 
   dart_openai: ^3.0.0
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
 
 
 
@@ -123,6 +125,11 @@ flutter:
     - assets/busAnime.json
     - assets/icons8-bus-100.png
     - assets/attendence.json
+    - assets/PaytmLogo.svg
+    - assets/billdesklogo.svg
+    - assets/Paytm-Logo.wine.png
+    - assets/qdq7x3h1cac6yqks7qyn.webp
+    - assets/BillDesk Logo - PNG Logo Vector Brand Downloads (SVG, EPS).png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

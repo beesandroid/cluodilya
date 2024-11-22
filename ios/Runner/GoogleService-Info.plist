@@ -8,6 +8,12 @@
 	<string>434226759409</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
+	<key>NSAppTransportSecurity</key>
+    <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <true/>
+    </dict>
+
 	<key>BUNDLE_ID</key>
 	<string>com.beessoftware.cloudilya</string>
 	<key>PROJECT_ID</key>

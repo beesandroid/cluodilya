@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:paytm_allinonesdk/paytm_allinonesdk.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 class FeePaymentScreen extends StatefulWidget {
   @override
   _FeePaymentScreenState createState() => _FeePaymentScreenState();
@@ -30,17 +31,41 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchFeeDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
+    String CollegeId = prefs.getString('CollegeId') ?? '';
     const String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SearchStudentRegularFeeDetails';
 
     // Define the request body
     final requestBody = {
-      "GrpCode": "Beesdev",
-      "ColCode": "0001",
+      "GrpCode": grpCode,
+      "ColCode": colCode,
       "CollegeId": "1",
       "HostelId": "0",
       "ReceiptNumber": "0",
-      "HallTicketNo": "22H41AO485",
+      "HallTicketNo": userName,
       "UserTypeName": "Student",
       "FeeSetUpId": "",
       "ReceiptDate": "",
@@ -186,9 +211,9 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
               } else if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    'Error: ${snapshot.error}',
+                    'No fees data available.',
                     style: TextStyle(
-                      color: Colors.redAccent,
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -249,18 +274,27 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        feeName,
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue.shade900,
-                                        ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            feeName,
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue.shade900,
+                                            ),
+                                          ),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Icon(
+                                              Icons.receipt_long,
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Icon(
-                                        Icons.receipt_long,
-                                        color: Colors.blueAccent,
-                                      ),
+
                                     ],
                                   ),
                                   const SizedBox(height: 10),
@@ -647,29 +681,32 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ...payableFees.entries.map((entry) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              entry.key,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
                             ),
-                            Text(
-                              '₹${entry.value.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      )),
+                        Text(
+                          '₹${entry.value.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
                   SizedBox(height: 20),
                   Divider(color: Colors.grey),
                   SizedBox(height: 10),
@@ -677,12 +714,15 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Total',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          'Total',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
@@ -719,7 +759,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                     ),
                   ),
                   DashedLine(color: Colors.grey),
-                  // Use the custom dashed line here
                 ],
               ),
               SizedBox(height: 20),
@@ -732,8 +771,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -754,8 +792,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -775,6 +812,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         ),
       ),
     );
+
   }
 
   void updateTotalAmount() {
@@ -811,6 +849,13 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
   }
 
   Future<void> processOnlinePayment() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+   String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+
     const String url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SavingForRegularFeeCollectionTemp';
 
@@ -831,19 +876,19 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
     // Prepare the request body based on the fee details
     final requestBody = {
-      "GrpCode": "Beesdev",
-      "ColCode": "0001",
+      "GrpCode": grpCode,
+      "ColCode": colCode,
       "CollegeId": "1",
       "ReceiptNumber": 0,
       "ReceiptDate": DateTime.now().toIso8601String().split('T')[0],
       "UserTypeName": "STUDENT",
-      "HallTicketNo": "22H41AO485",
-      "AcYear": "2024 - 2025",
+      "HallTicketNo": userName,
+      "AcYear": acYear,
       "PayAmount": "1",
       "TotalInWords":
           "one rupee only", // You need to convert the total amount to words
       "CaptchaImg": captcha.toString(),
-      "FinYear": "2024 - 2025",
+      "FinYear": finYear,
       "Id": "0",
       "UserId": "1",
       "LoginIpAddress": "",
@@ -852,6 +897,7 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
       "ARSavingForRegularFeeCollectionTempTableVariable":
           [] // Initialize as an empty list
     };
+    print("www"+requestBody.toString());
 
     // Adding the fee data to the request body
     for (int i = 0; i < feeData!.length; i++) {
@@ -884,8 +930,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
           });
         }
       }
-
-      // Add the fee itself if it doesn't have installments or after processing its installments
       if (fee['installments'] == null || fee['installments'].isEmpty) {
         (requestBody["ARSavingForRegularFeeCollectionTempTableVariable"]
                 as List)
@@ -966,6 +1010,30 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
       String captchaImg,
       String atomTransId) async {
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      String photo = prefs.getString('photo') ?? '';
+      String imagePath = prefs.getString('imagePath') ?? '';
+      String grpCode = prefs.getString('grpCode') ?? '';
+      String userName = prefs.getString('userName') ?? '';
+      String password = prefs.getString('password') ?? '';
+      String colCode = prefs.getString('colCode') ?? '';
+      String collegename = prefs.getString('collegename') ?? '';
+      String studId = prefs.getString('studId') ?? '';
+      String groupUserId = prefs.getString('groupUserId') ?? '';
+      String hostelUserId = prefs.getString('hostelUserId') ?? '';
+      String transportUserId = prefs.getString('transportUserId') ?? '';
+      String adminUserId = prefs.getString('adminUserId') ?? '';
+      String empId = prefs.getString('empId') ?? '';
+      String databaseCode = prefs.getString('databaseCode') ?? '';
+      String description = prefs.getString('description') ?? '';
+      String dateDifference = prefs.getString('dateDifference') ?? '';
+      String userType = prefs.getString('userType') ?? '';
+      String acYear = prefs.getString('acYear') ?? '';
+      String finYear = prefs.getString('finYear') ?? '';
+      String email = prefs.getString('email') ?? '';
+      String studentStatus = prefs.getString('studentStatus') ?? '';
+      String CollegeId = prefs.getString('CollegeId') ?? '';
       // Start the transaction and await the response
       final response = await AllInOneSdk.startTransaction(
         mid,
@@ -976,8 +1044,6 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
         false,
         false, // restrictAppInvoke
       );
-
-      // Handle response
       Map<String, dynamic> sdkResponse;
       if (response is String) {
         sdkResponse = json
@@ -994,15 +1060,15 @@ class _FeePaymentScreenState extends State<FeePaymentScreen> {
 
       // Prepare data for API call
       final apiRequestData = {
-        "GrpCode": "Beesdev",
-        "ColCode": "0001",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
         "CollegeId": "1",
-        "StudentId": "2548",
+        "StudentId": studId,
         "NewTxnId": newTxnId.toString(),
         "CaptchaImg": captchaImg.toString(),
-        "AcYear": "2024 - 2025",
+        "AcYear": acYear,
         "Id": "0",
-        "FinYear": "2024 - 2025",
+        "FinYear":finYear,
         "AtomTransId": atomTransId,
         "MerchantTransId": sdkResponse["MID"] ?? "",
         "TransAmt": sdkResponse["TXNAMOUNT"] ?? "",

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OutingRequestScreen extends StatefulWidget {
   @override
@@ -38,17 +39,22 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
   }
 
   Future<void> _fetchRequests() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String CollegeId = prefs.getString('CollegeId') ?? '';
     try {
       final response = await http.post(
         Uri.parse(
             'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/SaveStudentHostelRequest'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
-          'GrpCode': 'BEES',
-          'ColCode': '0001',
-          'CollegeId': '1',
+          'GrpCode': grpCode,
+          'ColCode': colCode,
+          'CollegeId': CollegeId,
           'Id': '0',
-          'StudentId': '2548',
+          'StudentId': studId,
           'Date': '',
           'DateOfRequest': '',
           'VisitingId': '0',
@@ -84,18 +90,21 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
   }
 
   Future<void> _fetchOutTimeDisplayList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     if (_selectedDate == null) return;
-
     try {
       final response = await http.post(
         Uri.parse(
             'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/OutRequestTimeDisplay'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
-          'GrpCode': 'Bees',
-          'ColCode': '0001',
+          'GrpCode': grpCode,
+          'ColCode': colCode,
           'CollegeId': '1',
-          'StudentId': '2548',
+          'StudentId': studId,
           'Date': DateFormat('yyyy-MM-dd').format(_selectedDate!),
         }),
       );
@@ -135,7 +144,11 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
   }
 
   Future<void> _sendRequest(String flag) async {
-    if (flag != 'VIEW' && _selectedOutTime == null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+   if (flag != 'VIEW' && _selectedOutTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No record selected'),
@@ -147,13 +160,13 @@ class _OutingRequestScreenState extends State<OutingRequestScreen> {
 
     try {
       final requestBody = {
-        'GrpCode': 'BEES',
-        'ColCode': '0001',
+        'GrpCode': grpCode,
+        'ColCode': colCode,
         'CollegeId': '1',
         'Id': (flag == 'DELETE' || flag == 'OVERWRITE')
             ? (_editingRequestId ?? 0).toString()
             : '0',
-        'StudentId': '2548',
+        'StudentId': studId,
         'Date': _selectedDate != null
             ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
             : '',

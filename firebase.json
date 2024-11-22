@@ -1,1 +1,41 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"cloudilya","appId":"1:434226759409:android:e7d8ed9526b62be7eecb50","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"cloudilya","appId":"1:434226759409:ios:57178395f98f7eedeecb50","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"cloudilya","appId":"1:434226759409:ios:ee2436c8c282ac9aeecb50","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"cloudilya","configurations":{"android":"1:434226759409:android:e7d8ed9526b62be7eecb50","ios":"1:434226759409:ios:57178395f98f7eedeecb50","macos":"1:434226759409:ios:ee2436c8c282ac9aeecb50","web":"1:434226759409:web:8de5d07a603d1959eecb50","windows":"1:434226759409:web:f239d168b6b89dc0eecb50"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "cloudilya",
+          "appId": "1:434226759409:android:e7d8ed9526b62be7eecb50",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "cloudilya",
+          "appId": "1:434226759409:ios:57178395f98f7eedeecb50",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "cloudilya",
+          "appId": "1:434226759409:ios:ee2436c8c282ac9aeecb50",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "cloudilya",
+          "configurations": {
+            "android": "1:434226759409:android:e7d8ed9526b62be7eecb50",
+            "ios": "1:434226759409:ios:57178395f98f7eedeecb50",
+            "macos": "1:434226759409:ios:ee2436c8c282ac9aeecb50",
+            "web": "1:434226759409:web:8de5d07a603d1959eecb50",
+            "windows": "1:434226759409:web:f239d168b6b89dc0eecb50"
+          }
+        }
+      }
+    }
+  }
+}

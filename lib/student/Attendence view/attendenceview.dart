@@ -22,31 +22,13 @@ class _AttendanceViewState extends State<AttendanceView> {
 
   Future<void> _fetchAttendanceData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String photo = prefs.getString('photo') ?? '';
-    String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
-    String userName = prefs.getString('userName') ?? '';
-    String password = prefs.getString('password') ?? '';
     String colCode = prefs.getString('colCode') ?? '';
     String collegeId = prefs.getString('collegeId') ?? '';
-    String collegename = prefs.getString('collegename') ?? '';
     String studId = prefs.getString('studId') ?? '';
-    String groupUserId = prefs.getString('groupUserId') ?? '';
-    String hostelUserId = prefs.getString('hostelUserId') ?? '';
-    String transportUserId = prefs.getString('transportUserId') ?? '';
-    String adminUserId = prefs.getString('adminUserId') ?? '';
-    String empId = prefs.getString('empId') ?? '';
-    String databaseCode = prefs.getString('databaseCode') ?? '';
-    String description = prefs.getString('description') ?? '';
-    String dateDifference = prefs.getString('dateDifference') ?? '';
-    String userType = prefs.getString('userType') ?? '';
-    String acYear = prefs.getString('acYear') ?? '';
-    String finYear = prefs.getString('finYear') ?? '';
-    String email = prefs.getString('email') ?? '';
-    String studentStatus = prefs.getString('studentStatus') ?? '';
     const url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/StudentAttendanceDisplay';
     final requestBody = {
-      "GrpCode": "Beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "CollegeId": collegeId,
       "StudentId": studId,

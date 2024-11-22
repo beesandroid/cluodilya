@@ -20,12 +20,9 @@ class _NewSignupScreenState extends State<NewSignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _retypePasswordController =
       TextEditingController();
-
   bool _otpSent = false;
   bool _otpVerified = false;
   String? _serverOtp;
-
-  // Variables to store API response values
   String? _mercid;
   String? _bdorderid;
   String? _rdata;

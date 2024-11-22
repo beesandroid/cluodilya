@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FeePermission extends StatefulWidget {
   const FeePermission({super.key});
@@ -10,7 +11,8 @@ class FeePermission extends StatefulWidget {
   State<FeePermission> createState() => _FeePermissionState();
 }
 
-class _FeePermissionState extends State<FeePermission> {
+class _FeePermissionState extends State<FeePermission>
+    with SingleTickerProviderStateMixin {
   List<dynamic> feePermissionList = [];
   List<dynamic> academicYears = [];
   List<dynamic> feeNames = [];
@@ -25,24 +27,57 @@ class _FeePermissionState extends State<FeePermission> {
   DateTime? toDate;
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
+  // Animation Controller for subtle animations
+  late AnimationController _animationController;
+
+  // Custom colors and styles
+  final Color primaryColor = const Color(0xFF0A0E21);
+  final Color accentColor = const Color(0xFFEB1555);
+  final Color cardColor = const Color(0xFF1D1E33);
+  final Color backgroundColor = Colors.white;
+  final TextStyle headingStyle =
+  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold);
+  final TextStyle subheadingStyle =
+  const TextStyle(fontSize: 18, fontWeight: FontWeight.w600);
+  final TextStyle contentStyle = const TextStyle(fontSize: 16);
+
   @override
   void initState() {
     super.initState();
     _fetchFeePermissions();
     _fetchAcademicYears();
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+  }
+
+  // Dispose animation controller
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchFeePermissions() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
     const url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FeePermissionsDisplay';
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        "GrpCode": "Beesdev",
-        "ColCode": "0001",
-        "AcYear": "2024 - 2025",
-        "StudentId": "1648",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
+        "AcYear": acYear,
+        "StudentId": studId,
         "FeeId": "0",
         "PermissionDate": "",
         "PermissionAmount": "0",
@@ -87,17 +122,23 @@ class _FeePermissionState extends State<FeePermission> {
       print('Failed to load academic years');
     }
   }
+
   Future<void> _fetchFeeNames(String academicYear) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     const url =
         'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FeeNameDropdownNew';
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        "GrpCode": "BEESdev",
-        "ColCode": "0001",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
         "AcYear": academicYear,
-        "StudentId": "1648",
+        "StudentId": studId,
         "FeeId": "0",
       }),
     );
@@ -109,22 +150,30 @@ class _FeePermissionState extends State<FeePermission> {
       print('Failed to load fee names');
     }
   }
+
   Future<void> _submitAmount() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     if (enteredAmount != null) {
       if (enteredAmount! > 0 && enteredAmount! <= (maxAmount ?? 0)) {
-        if (fromDate != null && toDate != null && toDate!.isAfter(fromDate!)) {
+        if (fromDate != null &&
+            toDate != null &&
+            toDate!.isAfter(fromDate!)) {
           final selectedFee = feeNames.firstWhere(
-            (fee) => fee['feeName'] == selectedFeeName,
+                (fee) => fee['feeName'] == selectedFeeName,
             orElse: () => {'feeId': 0},
           );
           final feeId = isEditing
               ? editedFeeId
               : (selectedFee['feeId'] as int).toString();
           final requestBody = {
-            "GrpCode": "Beesdev",
-            "ColCode": "0001",
+            "GrpCode": grpCode,
+            "ColCode": colCode,
             "AcYear": selectedAcademicYear.toString(),
-            "StudentId": "1648",
+            "StudentId": studId,
             "FeeId": feeId,
             "PermissionDate": dateFormat.format(fromDate!),
             "PermissionAmount": enteredAmount?.toStringAsFixed(2),
@@ -164,7 +213,7 @@ class _FeePermissionState extends State<FeePermission> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content:
-                    Text('PermissionUpTo must be after the PermissionDate')),
+                Text('PermissionUpTo must be after the PermissionDate')),
           );
         }
       } else {
@@ -194,7 +243,7 @@ class _FeePermissionState extends State<FeePermission> {
       selectedFeeName = item['feeName'];
 
       final fee = feeNames.firstWhere(
-        (fee) => fee['feeName'] == selectedFeeName,
+            (fee) => fee['feeName'] == selectedFeeName,
         orElse: () => {'amount': 0.0},
       );
 
@@ -219,12 +268,17 @@ class _FeePermissionState extends State<FeePermission> {
   }
 
   void _deletePermission(Map<String, dynamic> item) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     final feeId = item['feeId'].toString();
     final requestBody = {
-      "GrpCode": "Beesdev",
-      "ColCode": "0001",
+      "GrpCode": grpCode,
+      "ColCode": colCode,
       "AcYear": item['acYear'],
-      "StudentId": "1648",
+      "StudentId": studId,
       "FeeId": feeId,
       "PermissionDate": item['permissionDate'],
       "PermissionAmount": item['permissionAmount'].toString(),
@@ -260,7 +314,7 @@ class _FeePermissionState extends State<FeePermission> {
 
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
     final DateTime initialDate =
-        isFromDate ? fromDate ?? DateTime.now() : toDate ?? DateTime.now();
+    isFromDate ? fromDate ?? DateTime.now() : toDate ?? DateTime.now();
     final DateTime firstDate = DateTime(1900);
     final DateTime lastDate = DateTime(DateTime.now().year + 10);
 
@@ -284,9 +338,9 @@ class _FeePermissionState extends State<FeePermission> {
 
   Widget _buildDetailRow(
       {required IconData icon,
-      required String label,
-      required String value,
-      required Color color}) {
+        required String label,
+        required String value,
+        required Color color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -296,10 +350,7 @@ class _FeePermissionState extends State<FeePermission> {
           Expanded(
             child: Text(
               '$label: $value',
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-              ),
+              style: contentStyle.copyWith(color: Colors.grey[800]),
             ),
           ),
         ],
@@ -307,9 +358,136 @@ class _FeePermissionState extends State<FeePermission> {
     );
   }
 
+  Widget _buildNoPermissionAvailable() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          'No permissions available',
+          style: headingStyle.copyWith(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeePermissionList() {
+    return feePermissionList.isEmpty
+        ? _buildNoPermissionAvailable()
+        : ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: feePermissionList.length,
+      itemBuilder: (context, index) {
+        final item = feePermissionList[index];
+        return GestureDetector(
+          onTap: () {
+            // Implement tap functionality if needed
+          },
+          child: Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25.0),
+            ),
+            elevation: 10,
+            margin: const EdgeInsets.symmetric(vertical: 12.0),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.all(5.0),
+              leading: CircleAvatar(
+                backgroundColor: Colors.blue[50],
+                radius: 30,
+                child:
+                Icon(Icons.payment, size: 22, color: Colors.blue),
+              ),
+              title: Text(
+                item['feeName'] ?? 'N/A',
+                style: headingStyle.copyWith(color: Colors.black),
+              ),
+              childrenPadding:
+              const EdgeInsets.symmetric(horizontal: 16.0),
+              children: [
+                _buildDetailRow(
+                  icon: Icons.currency_rupee,
+                  label: 'Permission Amount',
+                  value:
+                  '₹ ${item['permissionAmount']?.toStringAsFixed(2) ?? '0.00'}',
+                  color: Colors.green,
+                ),
+                _buildDetailRow(
+                  icon: Icons.calendar_today,
+                  label: 'Permission Date',
+                  value: item['permissionDate'] ?? 'N/A',
+                  color: Colors.blueAccent,
+                ),
+                _buildDetailRow(
+                  icon: Icons.update,
+                  label: 'Permission Up To',
+                  value: item['permissionUpTo'] ?? 'N/A',
+                  color: Colors.orange,
+                ),
+                _buildDetailRow(
+                  icon: Icons.school,
+                  label: 'Academic Year',
+                  value: item['acYear'] ?? 'N/A',
+                  color: Colors.purple,
+                ),
+              ],
+              trailing: PopupMenuButton<String>(
+                color: Colors.white,
+                onSelected: (value) {
+                  if (value == 'Edit') {
+                    _editPermission(item);
+                  } else if (value == 'Delete') {
+                    _deletePermission(item);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'Edit',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, color: Colors.blueAccent),
+                        SizedBox(width: 10),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'Delete',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.delete, color: Colors.redAccent),
+                        SizedBox(width: 10),
+                        Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                icon:
+                const Icon(Icons.more_vert, color: Colors.black87),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor, // Set the background color to white
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
         flexibleSpace: Container(
@@ -327,119 +505,81 @@ class _FeePermissionState extends State<FeePermission> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
           padding: const EdgeInsets.all(16.0),
           child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                  gradient: LinearGradient(
-                    colors: [Colors.blue, Colors.blue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  filled: true,
+                  labelText: 'Select Academic Year',
+                  labelStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 15.0,
-                      offset: Offset(0, 8),
+                ),
+                value: selectedAcademicYear,
+                items: academicYears
+                    .map<DropdownMenuItem<String>>((dynamic year) {
+                  return DropdownMenuItem<String>(
+                    value: year['acYear'] as String?,
+                    child: Text(
+                      year['acYear'] as String? ?? 'N/A',
+                      style: subheadingStyle.copyWith(color: Colors.black),
                     ),
-                  ],
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedAcademicYear,
-                    hint: const Text('   Select Academic Year',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                    dropdownColor: Colors.blue,
-                    items: academicYears
-                        .map<DropdownMenuItem<String>>((dynamic year) {
-                      return DropdownMenuItem<String>(
-                        value: year['acYear'] as String?,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
-                          child: Text(
-                            year['acYear'] as String? ?? 'N/A',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedAcademicYear = value;
-                        _fetchFeeNames(value!);
-                      });
-                    },
-                    icon:
-                        const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    style: const TextStyle(color: Colors.white),
-                    isExpanded: true,
-                  ),
-                ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedAcademicYear = value;
+                    _fetchFeeNames(value!);
+                  });
+                },
+                dropdownColor: Colors.white,
+                iconEnabledColor: Colors.black,
+                style: TextStyle(color: Colors.black),
               ),
             ),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                  gradient: LinearGradient(
-                    colors: [Colors.blue, Colors.blue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  filled: true,
+                  labelText: 'Select Fee Name',
+                  labelStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 15.0,
-                      offset: Offset(0, 8),
+                ),
+                value: selectedFeeName,
+                items:
+                feeNames.map<DropdownMenuItem<String>>((dynamic fee) {
+                  return DropdownMenuItem<String>(
+                    value: fee['feeName'] as String?,
+                    child: Text(
+                      '${fee['feeName'] as String? ?? 'N/A'} - ₹ ${(fee['amount'] as double? ?? 0.0).toStringAsFixed(2)}',
+                      style:
+                      subheadingStyle.copyWith(color: Colors.black),
                     ),
-                  ],
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedFeeName,
-                    hint: const Text('   Select Fee Name',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                    dropdownColor: Colors.blue[100],
-                    items:
-                        feeNames.map<DropdownMenuItem<String>>((dynamic fee) {
-                      return DropdownMenuItem<String>(
-                        value: fee['feeName'] as String?,
-                        child: Text(
-                          '  ${fee['feeName'] as String? ?? 'N/A'} - ₹ ${(fee['amount'] as double? ?? 0.0).toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedFeeName = value;
-                        maxAmount = feeNames.firstWhere(
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedFeeName = value;
+                    maxAmount = feeNames.firstWhere(
                           (fee) => fee['feeName'] == value,
-                          orElse: () => {'amount': 0.0},
-                        )['amount'] as double?;
-                      });
-                    },
-                    icon:
-                        const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    style: const TextStyle(color: Colors.white),
-                    isExpanded: true,
-                  ),
-                ),
+                      orElse: () => {'amount': 0.0},
+                    )['amount'] as double?;
+                  });
+                },
+                dropdownColor: Colors.white,
+                iconEnabledColor: Colors.blueGrey,
+                style: TextStyle(color: Colors.blueGrey),
               ),
             ),
             const SizedBox(height: 16),
@@ -448,18 +588,16 @@ class _FeePermissionState extends State<FeePermission> {
               children: [
                 Text(
                   'Amount: ₹ ${maxAmount?.toStringAsFixed(2) ?? '0.00'}',
-                  style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold),
+                  style: subheadingStyle.copyWith(color: Colors.black),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   decoration: InputDecoration(
                     labelText: 'Enter Amount',
+                    labelStyle: TextStyle(color: Colors.black),
+                    filled: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: const BorderSide(color: Colors.black),
                     ),
                   ),
                   keyboardType: TextInputType.number,
@@ -468,28 +606,36 @@ class _FeePermissionState extends State<FeePermission> {
                       enteredAmount = double.tryParse(value);
                     });
                   },
-                  style: const TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.black),
                 ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(left: 10.0),
-                  child: Container(
-                    width: 220,
+                  child: SizedBox(
+                    width: 240,
                     child: ElevatedButton(
                       onPressed: () => _selectDate(context, true),
-                      child: Text(
-                        fromDate != null
-                            ? 'From Date: ${dateFormat.format(fromDate!)}'
-                            : 'Select From Date',
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0,right: 8),
+                            child: Icon(Icons.calendar_month,color: Colors.white,),
+                          ),
+                          Text(
+                            fromDate != null
+                                ? 'From Date: ${dateFormat.format(fromDate!)}'
+                                : 'Select From Date',
+                            style: subheadingStyle.copyWith(color: Colors.white),
+                          ),
+                        ],
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
@@ -497,23 +643,31 @@ class _FeePermissionState extends State<FeePermission> {
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(left: 10.0),
-                  child: Container(
-                    width: 220,
+                  child: SizedBox(
+                    width: 240,
                     child: ElevatedButton(
                       onPressed: () => _selectDate(context, false),
-                      child: Text(
-                        toDate != null
-                            ? 'To Date: ${dateFormat.format(toDate!)}'
-                            : 'Select To Date',
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0,right: 8),
+                            child: Icon(Icons.calendar_month,color: Colors.white,),
+                          ),
+                          Text(
+                            toDate != null
+                                ? 'To Date: ${dateFormat.format(toDate!)}'
+                                : 'Select To Date',
+                            style: subheadingStyle.copyWith(color: Colors.white),
+                          ),
+                        ],
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
@@ -541,119 +695,14 @@ class _FeePermissionState extends State<FeePermission> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                "Existing Permissions ",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                "Existing Permissions",
+                style: headingStyle.copyWith(color: Colors.black),
               ),
             ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: feePermissionList.length,
-              itemBuilder: (context, index) {
-                final item = feePermissionList[index];
-                return Card(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25.0),
-                  ),
-                  elevation: 10,
-                  margin: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.all(5.0),
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue[50],
-                      radius: 30,
-                      child: Icon(Icons.payment, size: 30, color: Colors.blue),
-                    ),
-                    title: Text(
-                      item['feeName'] ?? 'N/A',
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    childrenPadding:
-                        const EdgeInsets.symmetric(horizontal: 16.0),
-                    children: [
-                      _buildDetailRow(
-                        icon: Icons.currency_rupee,
-                        label: 'Permission Amount',
-                        value:
-                            '₹ ${item['permissionAmount']?.toStringAsFixed(2) ?? '0.00'}',
-                        color: Colors.green,
-                      ),
-                      _buildDetailRow(
-                        icon: Icons.calendar_today,
-                        label: 'Permission Date',
-                        value: item['permissionDate'] ?? 'N/A',
-                        color: Colors.blueAccent,
-                      ),
-                      _buildDetailRow(
-                        icon: Icons.update,
-                        label: 'Permission Up To',
-                        value: item['permissionUpTo'] ?? 'N/A',
-                        color: Colors.orange,
-                      ),
-                      _buildDetailRow(
-                        icon: Icons.school,
-                        label: 'Academic Year',
-                        value: item['acYear'] ?? 'N/A',
-                        color: Colors.purple,
-                      ),
-                    ],
-                    trailing: PopupMenuButton<String>(
-                      color: Colors.white,
-                      onSelected: (value) {
-                        if (value == 'Edit') {
-                          _editPermission(item);
-                        } else if (value == 'Delete') {
-                          _deletePermission(item);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem<String>(
-                          value: 'Edit',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.edit, color: Colors.blueAccent),
-                              SizedBox(width: 10),
-                              Text(
-                                'Edit',
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<String>(
-                          value: 'Delete',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.delete, color: Colors.redAccent),
-                              SizedBox(width: 10),
-                              Text(
-                                'Delete',
-                                style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      icon: const Icon(Icons.more_vert, color: Colors.black87),
-                    ),
-                  ),
-                );
-              },
-            ),
+            _buildFeePermissionList(),
           ]),
         ),
       ),

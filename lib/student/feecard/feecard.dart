@@ -28,18 +28,17 @@ class _FeeCardState extends State<FeeCard> {
     String userName = prefs.getString('userName') ?? '';
     String colCode = prefs.getString('colCode') ?? '';
     String collegeId = prefs.getString('collegeId') ?? '';
-    String studId = prefs.getString('studId') ?? '';
     String acYear = prefs.getString('acYear') ?? '';
 
     final url = Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FeeCardDisplay');
     final body = {
-      "GrpCode": "Beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "CollegeId": collegeId,
       "HallTicketNo":userName,
       "AcYear":acYear
     };
-    print(body);
+    print("ddd"+body.toString());
 
     try {
       final response = await http.post(

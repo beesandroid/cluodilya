@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StudentComplaintsScreen extends StatefulWidget {
   @override
@@ -51,15 +52,39 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   }
 
   Future<void> fetchComplaintRequests() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String photo = prefs.getString('photo') ?? '';
+    String imagePath = prefs.getString('imagePath') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String userName = prefs.getString('userName') ?? '';
+    String password = prefs.getString('password') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegename = prefs.getString('collegename') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+    String groupUserId = prefs.getString('groupUserId') ?? '';
+    String hostelUserId = prefs.getString('hostelUserId') ?? '';
+    String transportUserId = prefs.getString('transportUserId') ?? '';
+    String adminUserId = prefs.getString('adminUserId') ?? '';
+    String empId = prefs.getString('empId') ?? '';
+    String databaseCode = prefs.getString('databaseCode') ?? '';
+    String description = prefs.getString('description') ?? '';
+    String dateDifference = prefs.getString('dateDifference') ?? '';
+    String userType = prefs.getString('userType') ?? '';
+    String acYear = prefs.getString('acYear') ?? '';
+    String finYear = prefs.getString('finYear') ?? '';
+    String email = prefs.getString('email') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
+    String CollegeId = prefs.getString('CollegeId') ?? '';
     final response = await http.post(
       Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        "GrpCode": "Beesdev",
-        "ColCode": "0001",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
         "CollegeId": "1",
         "ComplaintId": 0,
-        "StudentId": "2548",
+        "StudentId": studId,
         "EmployeeId": 0,
         "ComplaintDescription": "",
         "TypeOfComplaint": 0,
@@ -86,6 +111,11 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   }
 
   Future<void> sendComplaint() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+
     String registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (selectedComplaintTypeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,11 +125,11 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
     }
 
     final requestBody = json.encode({
-      "GrpCode": "Beesdev",
-      "ColCode": "0001",
+      "GrpCode": grpCode,
+      "ColCode": colCode,
       "CollegeId": "1",
       "ComplaintId": selectedComplaintId ?? 0,
-      "StudentId": "2548",
+      "StudentId": studId,
       "EmployeeId": 0,
       "ComplaintDescription": complaintDescriptionController.text,
       "TypeOfComplaint": selectedComplaintTypeId,
@@ -142,6 +172,11 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   }
 
   Future<void> deleteComplaint(int complaintId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+
     setState(() {
       complaintRequests.removeWhere((complaint) => complaint['complaintId'] == complaintId);
     });
@@ -150,11 +185,11 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/ComplaintRequestDetails'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        "GrpCode": "Beesdev",
-        "ColCode": "0001",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
         "CollegeId": "1",
         "ComplaintId": complaintId,
-        "StudentId": "2548",
+        "StudentId": studId,
         "EmployeeId": 0,
         "ComplaintDescription": "",
         "TypeOfComplaint": 0,
@@ -302,7 +337,17 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                 'Complaint Requests',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ListView.builder(
+              complaintRequests.isEmpty
+                  ? Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: Text(
+                    'No complaints at this time',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              )
+                  : ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemCount: complaintRequests.length,
@@ -310,11 +355,17 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                   final complaint = complaintRequests[index];
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Container(decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(15)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(15)),
                       child: ListTile(
-                        title: Text(complaint['complaintDescription'],style: TextStyle(fontWeight: FontWeight.bold),),
-                        subtitle: Text('Date: ${complaint['complaintDate']}  \ncomplaintDescription: ${complaint['complaintDescription']}\file: ${complaint['file']}'),
-
+                        title: Text(
+                          complaint['complaintDescription'],
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                            'Date: ${complaint['complaintDate']}  \nComplaint Description: ${complaint['complaintDescription']}\nFile: ${complaint['file']}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -322,10 +373,14 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                               icon: Icon(Icons.edit, color: Colors.black),
                               onPressed: () {
                                 setState(() {
-                                  selectedComplaintId = complaint['complaintId'];
-                                  selectedComplaintTypeId = complaint['typeOfComplaint'];
-                                  complaintDescriptionController.text = complaint['complaintDescription'];
-                                  selectedDate = DateTime.parse(complaint['complaintDate']);
+                                  selectedComplaintId =
+                                  complaint['complaintId'];
+                                  selectedComplaintTypeId =
+                                  complaint['typeOfComplaint'];
+                                  complaintDescriptionController.text =
+                                  complaint['complaintDescription'];
+                                  selectedDate = DateTime.parse(
+                                      complaint['complaintDate']);
                                   isEditing = true;
                                 });
                               },
@@ -348,5 +403,4 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
         ),
       ),
     );
-  }
-}
+  }}

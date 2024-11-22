@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisteredDetailsScreen extends StatefulWidget {
   @override
@@ -20,19 +20,24 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
   }
 
   Future<void> fetchData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+
     final response = await http.post(
       Uri.parse(
           'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/DisplayForStudentSearch'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        "GrpCode": "bees",
-        "ColCode": "0001",
-        "StudentId": "2548",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
+        "StudentId": studId,
         "Flag": "HostelStatus"
       }),
     );
     if (response.statusCode == 200) {
-      print(response.body);
       setState(() {
         apiResponse = json.decode(response.body);
         isLoading = false;
@@ -46,18 +51,14 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
   }
 
   void showHistoryDialog() {
-    if (apiResponse == null) return;
+    if (apiResponse == null || apiResponse!['viewHistoryList'] == null) return;
+
     final viewHistoryList = apiResponse!['viewHistoryList'] as List<dynamic>;
-    showCupertinoDialog(
+    showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('History'),
-            ],
-          ),
+          title: Text('History', textAlign: TextAlign.center),
           content: SingleChildScrollView(
             child: Column(
               children: viewHistoryList.map((history) {
@@ -82,14 +83,9 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
             ),
           ),
           actions: [
-            CupertinoDialogAction(
-              child: Text(
-                'Close',
-                style: TextStyle(color: Colors.black),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            TextButton(
+              child: Text('Close'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );
@@ -99,107 +95,115 @@ class _RegisteredDetailsScreenState extends State<RegisteredDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: SafeArea(
+    return Scaffold(
+
+      body: SafeArea(
         child: isLoading
-            ? Center(child: CupertinoActivityIndicator())
+            ? Center(child: CircularProgressIndicator())
             : apiResponse == null
-                ? Center(child: Text('Failed to load data'))
-                : AnimatedContainer(
-                    duration: Duration(seconds: 1),
-                    curve: Curves.easeInOut,
-                    padding: EdgeInsets.all(16),
-                    child: ListView(
+            ? Center(
+          child: Text(
+            'Failed to load data',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        )
+            : ListView(
+          padding: EdgeInsets.all(16.0),
+          children: [
+            if (apiResponse!['stuedntDisplaySearchList'] != null &&
+                apiResponse!['stuedntDisplaySearchList'].isNotEmpty)
+              ...apiResponse!['stuedntDisplaySearchList']
+                  .map<Widget>((item) {
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        offset: Offset(0, 2),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.history_toggle_off_outlined),
-                              onPressed: showHistoryDialog,
-                            ),
-                          ],
+                        Text(
+                          '${item['hostelName']}',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
                         ),
-                        if (apiResponse!['stuedntDisplaySearchList'] != null)
-                          ...apiResponse!['stuedntDisplaySearchList']
-                              .map<Widget>((item) {
-                            return Container(
-                              margin: EdgeInsets.symmetric(vertical: 8.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    offset: Offset(0, 2),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      ' ${item['hostelName']}',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text('Room Type: ${item['roomTypeName']}'),
-                                    Text('Room Number: ${item['roomNumber']}'),
-                                    Text('Block Name: ${item['blockName']}'),
-                                    Text('Floor Name: ${item['floorName']}'),
-                                    Text('Total Paid Amount: ${item['totalCollectedAmount']}'),
-                                    Text('Due Amount: ${item['dueAmount']}'),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        SizedBox(height: 16),
-                        if (apiResponse!['installmentsDisplayList'] != null)
-                          ...apiResponse!['installmentsDisplayList']
-                              .map<Widget>((item) {
-                            return Container(
-                              margin: EdgeInsets.symmetric(vertical: 8.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    offset: Offset(0, 2),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Fee Name: ${item['feeName']}',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text('Amount: ${item['amount']}'),
-                                    Text('Due Amount: ${item['dueAmount']}'),
-                                    Text(
-                                        'Collected Amount: ${item['collectedAmount']}'),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        SizedBox(height: 8),
+                        Text('Room Type: ${item['roomTypeName']}'),
+                        Text('Room Number: ${item['roomNumber']}'),
+                        Text('Block Name: ${item['blockName']}'),
+                        Text('Floor Name: ${item['floorName']}'),
+                        Text(
+                            'Total Paid Amount: ${item['totalCollectedAmount']}'),
+                        Text('Due Amount: ${item['dueAmount']}'),
                       ],
                     ),
                   ),
+                );
+              }).toList(),
+            if (apiResponse!['installmentsDisplayList'] != null &&
+                apiResponse!['installmentsDisplayList'].isNotEmpty)
+              ...apiResponse!['installmentsDisplayList']
+                  .map<Widget>((item) {
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        offset: Offset(0, 2),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Fee Name: ${item['feeName']}',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8),
+                        Text('Amount: ${item['amount']}'),
+                        Text('Due Amount: ${item['dueAmount']}'),
+                        Text(
+                            'Collected Amount: ${item['collectedAmount']}'),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            if ((apiResponse!['stuedntDisplaySearchList'] == null ||
+                apiResponse!['stuedntDisplaySearchList']
+                    .isEmpty) &&
+                (apiResponse!['installmentsDisplayList'] == null ||
+                    apiResponse!['installmentsDisplayList']
+                        .isEmpty))
+              Center(
+                child: Text(
+                  'No Data Available',
+                  style:
+                  TextStyle(fontSize: 18, color: Colors.black,fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

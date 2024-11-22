@@ -1,23 +1,31 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:cloudilya/student/HostalRegistration.dart';
 import 'package:cloudilya/student/StudentDashboard.dart';
 import 'package:cloudilya/student/feepayment.dart';
 import 'package:cloudilya/student/hostal/hostalManagement.dart';
+import 'package:cloudilya/views/http.dart';
 import 'package:cloudilya/views/pin%20verification.dart';
 import 'package:cloudilya/views/pinScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart'as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // Import FirebaseMessaging
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 
-import 'views/Signup.dart';
+import 'fcm.dart';
+// Removed unused import: 'views/Signup.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Initialize Firebase
   final prefs = await SharedPreferences.getInstance();
   final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final String? storedPin = prefs.getString('pin');
   print('Stored PIN: $storedPin'); // Debugging line
+  HttpOverrides.global = MyHttpOverrides();
+
   runApp(MyApp(isLoggedIn: isLoggedIn, storedPin: storedPin));
 }
 
@@ -35,13 +43,13 @@ class MyApp extends StatelessWidget {
         GetPage(
             name: '/splash', page: () => SplashScreen(isLoggedIn: isLoggedIn)),
         GetPage(name: '/login', page: () => LoginPage()),
-
         GetPage(name: '/FeePaymentScreen', page: () => FeePaymentScreen()),
         GetPage(name: '/StudentDashboard', page: () => StudentDashboard()),
         GetPage(name: '/HostelSelector', page: () => HostelSelector()),
         GetPage(name: '/HostelManagement', page: () => HostelManagement()),
         GetPage(name: '/pin_setup', page: () => PinSetupScreen()),
         GetPage(name: '/pin_verification', page: () => PinVerificationScreen()),
+        // Ensure '/EmpDashboard' is defined if used
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
@@ -63,7 +71,7 @@ class MyApp extends StatelessWidget {
             borderSide: BorderSide(color: Colors.grey, width: 1.0),
           ),
           contentPadding:
-              EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+          EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
           hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
@@ -98,7 +106,7 @@ class SplashScreen extends StatelessWidget {
         if (userType == 'STUDENT') {
           Get.offNamed('/StudentDashboard');
         } else if (userType == 'EMPLOYEE') {
-          Get.offNamed('/EmpDashboard');
+          Get.offNamed('/EmpDashboard'); // Ensure this route is defined
         } else {
           Get.offNamed('/login');
         }
@@ -114,8 +122,20 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget { // Converted to StatefulWidget
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final LoginController _loginController = Get.put(LoginController());
+  final NotificationHandler notificationHandler = NotificationHandler();
+
+  @override
+  void initState() {
+    super.initState();
+    notificationHandler.init(context); // Initialize with context
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +146,12 @@ class LoginPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+
               Image.asset('assets/image.png', width: 150, height: 150),
+              SizedBox(height: 20.0),
+              _buildTextField('GrpCode',
+                  controller: _loginController.grpCodeController),
+
               SizedBox(height: 20.0),
               _buildTextField('UserID',
                   controller: _loginController.userIdController),
@@ -142,7 +167,7 @@ class LoginPage extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF003d85),
                   padding:
-                      EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
+                  EdgeInsets.symmetric(vertical: 16.0, horizontal: 50.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
@@ -234,13 +259,15 @@ class LoginPage extends StatelessWidget {
 class LoginController extends GetxController {
   var userIdController = TextEditingController();
   var passwordController = TextEditingController();
+  var grpCodeController = TextEditingController();
+
   var rememberMe = false.obs;
 
-  final Dio _dio = Dio();
   final String _loginUrl =
       'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/GetLoginUserDetails';
 
   void login() async {
+    final grpCode = grpCodeController.text.trim();
     final userName = userIdController.text.trim();
     final password = passwordController.text.trim();
 
@@ -253,38 +280,27 @@ class LoginController extends GetxController {
       return;
     }
 
-    try {
-      final response = await _dio.post(
-        _loginUrl,
-        data: {
-          'GrpCode': 'beesdev',
-          'UserName': userName,
-          'password': password,
-        },
+    final requestBody = {
+      'GrpCode': grpCode,
+      'UserName': userName,
+      'password': password,
+    };
 
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-        ),
+    print('Request Body: ${jsonEncode(requestBody)}');
+
+    try {
+      final response = await http.post(
+        Uri.parse(_loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
       );
 
-
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        dynamic responseData = response.data;
-        print(responseData);
-
-        if (responseData is String) {
-          try {
-            responseData = jsonDecode(responseData);
-          } catch (e) {
-            Get.snackbar(
-              'Error',
-              'Failed to parse response data: ${e.toString()}',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-            return;
-          }
-        }
+        print(response.body);
+        final responseData = jsonDecode(response.body);
 
         if (responseData is Map<String, dynamic>) {
           handleLoginResponse(responseData);
@@ -303,6 +319,7 @@ class LoginController extends GetxController {
         );
       }
     } catch (e) {
+      print("${e.toString()}");
       Get.snackbar(
         'Error',
         'An error occurred: ${e.toString()}',
@@ -326,9 +343,11 @@ class LoginController extends GetxController {
 
         await saveResponseToSharedPreferences(singleLoginUserDetails);
 
+        // Get FCM token and save to server
+        await getAndSaveFcmToken();
+
         final prefs = await SharedPreferences.getInstance();
         final pin = prefs.getString('pin');
-
         if (pin == null || pin.isEmpty) {
           Get.offNamed('/pin_setup');
         } else {
@@ -365,26 +384,88 @@ class LoginController extends GetxController {
       );
     }
   }
-}
 
-Future<void> saveResponseToSharedPreferences(
-    Map<String, dynamic> responseBody) async {
-  final prefs = await SharedPreferences.getInstance();
+  Future<void> saveResponseToSharedPreferences(
+      Map<String, dynamic> responseBody) async {
+    final prefs = await SharedPreferences.getInstance();
 
-  responseBody.forEach((key, value) {
-    if (value is String) {
-      prefs.setString(key, value);
-    } else if (value is int) {
-      prefs.setInt(key, value);
-    } else if (value is bool) {
-      prefs.setBool(key, value);
-    } else if (value is double) {
-      prefs.setDouble(key, value);
-    } else if (value is List<String>) {
-      prefs.setStringList(key, value);
+    responseBody.forEach((key, value) {
+      if (value is String) {
+        prefs.setString(key, value);
+      } else if (value is int) {
+        prefs.setInt(key, value);
+      } else if (value is bool) {
+        prefs.setBool(key, value);
+      } else if (value is double) {
+        prefs.setDouble(key, value);
+      } else if (value is List<String>) {
+        prefs.setStringList(key, value);
+      } else {
+        prefs.setString(key, value.toString());
+      }
+    });
+    await prefs.setBool('isLoggedIn', true);
+  }
+
+  Future<void> getAndSaveFcmToken() async {
+    // Initialize Firebase Messaging
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Request permission (for iOS)
+    await messaging.requestPermission();
+
+    // Get FCM token
+    String? fcmToken = await messaging.getToken();
+    print('FCM Token: $fcmToken');
+
+    if (fcmToken != null) {
+      // Save token to server
+      await saveTokenToServer(fcmToken);
     } else {
-      prefs.setString(key, value.toString());
+      print('Failed to get FCM token');
     }
-  });
-  await prefs.setBool('isLoggedIn', true);
+  }
+
+  Future<void> saveTokenToServer(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCodeValue = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String collegeId = prefs.getString('collegeId') ?? '';
+    String admnNo = prefs.getString('userName') ?? '';
+
+    final Map<String, dynamic> body = {
+      "GrpCode": grpCodeValue,
+      "CollegeId": collegeId,
+      "ColCode": colCode,
+      "Admnno": admnNo,
+      "Token": token
+    };
+
+    print('Request Body: ${json.encode(body)}');
+
+    const url = 'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/FMCTokenSaving';
+    final Map<String, String> headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        // Handle successful response
+        print('Token saved successfully');
+      } else {
+        // Handle server error
+        print('Failed to save token. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Handle network or other errors
+      print('Error saving token: $e');
+    }
+  }
 }
+
+

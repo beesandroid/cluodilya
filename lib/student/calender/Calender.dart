@@ -30,14 +30,14 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
 
   Future<void> _fetchTimeTable({String date = ''}) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String studId = prefs.getString('studId') ?? '';
+    String grpCode = prefs.getString('grpCode') ?? '';
     String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     String collegeId = prefs.getString('collegeId') ?? '';
-    String adminUserId = prefs.getString('adminUserId') ?? '';
     const url =
         'https://beessoftware.cloud/CoreAPIPreProd/StudentSelfService/StudentTimeTableDisplay';
     final requestBody = {
-      "GrpCode": "Beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "CollegeId": collegeId,
       "StudentId": studId,
@@ -103,11 +103,13 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  foreground: Paint()..shader = LinearGradient(
-                    colors: [  Colors.blue.shade900,
-                      Colors.blue.shade400,],
-                  ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
-
+                  foreground: Paint()
+                    ..shader = LinearGradient(
+                      colors: [
+                        Colors.blue.shade900,
+                        Colors.blue.shade400,
+                      ],
+                    ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
                 ),
               ),
 
@@ -149,8 +151,10 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                         TableRow(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [     Colors.blue.shade900,
-                                Colors.blue.shade400,],
+                              colors: [
+                                Colors.blue.shade900,
+                                Colors.blue.shade400,
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -165,7 +169,6 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     fontSize: 16,
-
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -180,7 +183,6 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     fontSize: 16,
-
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -193,9 +195,7 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                           for (int i = 1; i <= 7; i++)
                             if (dayData.containsKey('period$i'))
                               TableRow(
-                                decoration: BoxDecoration(
-                                  color: Colors.white
-                                ),
+                                decoration: BoxDecoration(color: Colors.white),
                                 children: [
                                   TableCell(
                                     child: Padding(
@@ -206,7 +206,6 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w600,
-
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -221,7 +220,6 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w600,
-
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -242,10 +240,6 @@ class _StudentTimeTableScreenState extends State<StudentTimeTableScreen> {
       },
     );
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {

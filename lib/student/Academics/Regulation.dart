@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Regulation extends StatefulWidget {
   const Regulation({super.key});
@@ -20,16 +21,23 @@ class _RegulationState extends State<Regulation> {
   }
 
   Future<Map<String, dynamic>> fetchCurriculumData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+
     final response = await http.post(
-      Uri.parse('https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CurriculumDataDisplay'),
+      Uri.parse(
+          'https://beessoftware.cloud/CoreAPIPreProd/CloudilyaMobileAPP/CurriculumDataDisplay'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode({
-        "GrpCode": "BEESdev",
-        "ColCode": "0001",
+        "GrpCode": grpCode,
+        "ColCode": colCode,
         "CollegeId": "1",
-        "StudentId": "1400",
+        "StudentId": studId,
         "SemId": 0
       }),
     );
@@ -37,7 +45,6 @@ class _RegulationState extends State<Regulation> {
     if (response.statusCode == 200) {
       print(response.body);
       return jsonDecode(response.body);
-
     } else {
       throw Exception('Failed to load data');
     }
@@ -47,7 +54,7 @@ class _RegulationState extends State<Regulation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -57,13 +64,12 @@ class _RegulationState extends State<Regulation> {
             ),
           ),
         ),
-
         title: const Text(
           'Curriculum Regulation',
           style: TextStyle(
-
             fontWeight: FontWeight.bold,
-            fontSize: 20,color: Colors.white
+            fontSize: 20,
+            color: Colors.white,
           ),
         ),
         elevation: 0,
@@ -72,22 +78,24 @@ class _RegulationState extends State<Regulation> {
         future: _futureData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(color: Colors.blue));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data == null) {
             return const Center(child: Text('No data available'));
           }
 
-          final curriculumList = snapshot.data!['curriculumDisplayList'] as List<dynamic>;
-          final uniqueSemesters = curriculumList
-              .map((e) => e['semester'])
-              .toSet()
-              .toList();
+          final curriculumList =
+          snapshot.data!['curriculumDisplayList'] as List<dynamic>;
+          final uniqueSemesters =
+          curriculumList.map((e) => e['semester']).toSet().toList();
 
           final filteredList = _selectedSemester.isEmpty
               ? curriculumList
-              : curriculumList.where((e) => e['semester'] == _selectedSemester).toList();
+              : curriculumList
+              .where((e) => e['semester'] == _selectedSemester)
+              .toList();
 
           return Column(
             children: [
@@ -105,14 +113,17 @@ class _RegulationState extends State<Regulation> {
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            _selectedSemester = isSelected ? "" : semester;
+                            _selectedSemester =
+                            isSelected ? "" : semester as String;
                           });
                         },
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.blue : Colors.grey.shade200,
+                            color:
+                            isSelected ? Colors.blue : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               if (isSelected)
@@ -127,7 +138,8 @@ class _RegulationState extends State<Regulation> {
                             child: Text(
                               semester,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black,
+                                color:
+                                isSelected ? Colors.white : Colors.black,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
@@ -141,13 +153,19 @@ class _RegulationState extends State<Regulation> {
               ),
               Expanded(
                 child: filteredList.isEmpty
-                    ? const Center(child: Text('No courses available for selected semester',style: TextStyle(fontWeight: FontWeight.bold),))
+                    ? const Center(
+                    child: Text(
+                      'No courses available for selected semester',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ))
                     : GridView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate:
+                  SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
+                    childAspectRatio: 0.7, // Adjusted aspect ratio
                   ),
                   itemCount: filteredList.length,
                   itemBuilder: (context, index) {
@@ -163,11 +181,12 @@ class _RegulationState extends State<Regulation> {
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min, // Added line
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 item['courseName'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue,
@@ -176,19 +195,23 @@ class _RegulationState extends State<Regulation> {
                               const SizedBox(height: 8),
                               Text(
                                 'Semester: ${item['semester']}',
-                                style: TextStyle(color: Colors.black),
+                                style:
+                                const TextStyle(color: Colors.black),
                               ),
                               Text(
                                 'Category: ${item['courseCategoryName']}',
-                                style: TextStyle(color: Colors.black),
+                                style:
+                                const TextStyle(color: Colors.black),
                               ),
                               Text(
                                 'Type: ${item['courseType']}',
-                                style: TextStyle(color: Colors.black),
+                                style:
+                                const TextStyle(color: Colors.black),
                               ),
                               Text(
                                 'Credits: ${item['credits']}',
-                                style: TextStyle(color: Colors.black),
+                                style:
+                                const TextStyle(color: Colors.black),
                               ),
                             ],
                           ),

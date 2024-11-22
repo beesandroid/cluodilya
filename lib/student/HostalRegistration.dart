@@ -54,12 +54,12 @@ class _HostelSelectorState extends State<HostelSelector> {
 
     // Construct the request body
     Map<String, dynamic> requestBody = {
-      "GrpCode": "beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "AcYear": acYear,
       "UserTypeName": "STUDENT",
       "RegistrationDate": "",
-      "StudentId": "1681",  // You may replace with "studId" if needed
+      "StudentId": studId,  // You may replace with "studId" if needed
       "HostelId": "0",
       "RoomTypeId": "0",
       "RoomId": "0"
@@ -107,28 +107,11 @@ class _HostelSelectorState extends State<HostelSelector> {
 
   Future<void> fetchFilteredData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    String photo = prefs.getString('photo') ?? '';
-    String imagePath = prefs.getString('imagePath') ?? '';
     String grpCode = prefs.getString('grpCode') ?? '';
-    String userName = prefs.getString('userName') ?? '';
-    String password = prefs.getString('password') ?? '';
     String colCode = prefs.getString('colCode') ?? '';
-    String collegename = prefs.getString('collegename') ?? '';
     String studId = prefs.getString('studId') ?? '';
-    String groupUserId = prefs.getString('groupUserId') ?? '';
-    String hostelUserId = prefs.getString('hostelUserId') ?? '';
-    String transportUserId = prefs.getString('transportUserId') ?? '';
-    String adminUserId = prefs.getString('adminUserId') ?? '';
-    String empId = prefs.getString('empId') ?? '';
-    String databaseCode = prefs.getString('databaseCode') ?? '';
-    String description = prefs.getString('description') ?? '';
-    String dateDifference = prefs.getString('dateDifference') ?? '';
-    String userType = prefs.getString('userType') ?? '';
     String acYear = prefs.getString('acYear') ?? '';
-    String finYear = prefs.getString('finYear') ?? '';
-    String email = prefs.getString('email') ?? '';
-    String studentStatus = prefs.getString('studentStatus') ?? '';
+
 
     if (selectedHostelId == null || selectedRoomTypeId == null || selectedRoomId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,7 +122,7 @@ class _HostelSelectorState extends State<HostelSelector> {
 
     // Prepare request body
     final requestBody = {
-      "GrpCode": "beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "AcYear": acYear,
       "UserTypeName": "STUDENT",
@@ -243,7 +226,7 @@ class _HostelSelectorState extends State<HostelSelector> {
     }).toList();
 
     final requestBody = jsonEncode({
-      "GrpCode": "beesdev",
+      "GrpCode": grpCode,
       "ColCode": colCode,
       "CollegeId": "1",
       "StudentId": studId,
@@ -383,7 +366,7 @@ class _HostelSelectorState extends State<HostelSelector> {
 
     // Check if there are any pre-selected items
     bool hasPreSelectedItems =
-        mainDisplayList.any((room) => room['checked'] == 1);
+    mainDisplayList.any((room) => room['checked'] == 1);
 
     // Update the preview button visibility based on pre-selected items or user-selected items
     bool isPreviewButtonVisible =
@@ -401,8 +384,10 @@ class _HostelSelectorState extends State<HostelSelector> {
             ),
           ),
         ),
-
-        title: Text('Hostel Registration',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+        title: Text(
+          'Hostel Registration',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: hostelDataFuture,
@@ -422,31 +407,30 @@ class _HostelSelectorState extends State<HostelSelector> {
 
           final filteredRoomTypes = selectedHostelId != null
               ? roomTypes
-                  .where((rt) => rt['hostelId'] == selectedHostelId)
-                  .toList()
+              .where((rt) => rt['hostelId'] == selectedHostelId)
+              .toList()
               : [];
           final filteredRooms = selectedRoomTypeId != null
               ? vacancyRooms
-                  .where((r) =>
-                      r['hostelId'] == selectedHostelId &&
-                      r['roomTypeId'] == selectedRoomTypeId)
-                  .toList()
+              .where((r) =>
+          r['hostelId'] == selectedHostelId &&
+              r['roomTypeId'] == selectedRoomTypeId)
+              .toList()
               : [];
 
           // Extract room details for the container at the top
           final roomDetails =
-              mainDisplayList.isNotEmpty ? mainDisplayList.first : null;
+          mainDisplayList.isNotEmpty ? mainDisplayList.first : null;
           final roomCapacity =
-              roomDetails != null ? roomDetails['roomCapacity'] : 'N/A';
+          roomDetails != null ? roomDetails['roomCapacity'] : 'N/A';
           final allottedBeds =
-              roomDetails != null ? roomDetails['allottedBeds'] : 'N/A';
+          roomDetails != null ? roomDetails['allottedBeds'] : 'N/A';
           final availableBeds =
-              roomDetails != null ? roomDetails['availableBeds'] : 'N/A';
+          roomDetails != null ? roomDetails['availableBeds'] : 'N/A';
 
           return Padding(
             padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: ListView(
               children: [
                 Material(
                   elevation: 4.0,
@@ -535,7 +519,7 @@ class _HostelSelectorState extends State<HostelSelector> {
                     onPressed: isFetchButtonEnabled ? fetchFilteredData : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          Colors.blue, // Set the background color to blue
+                      Colors.blue, // Set the background color to blue
                     ),
                     child: Text(
                       'Fetch Data',
@@ -565,73 +549,74 @@ class _HostelSelectorState extends State<HostelSelector> {
                               ),
                           ],
                         ),
-
                         Text('Available Beds: $availableBeds'),
                       ],
                     ),
                   ),
                 SizedBox(height: 16.0),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: mainDisplayList.length,
-                    itemBuilder: (context, index) {
-                      final room = mainDisplayList[index];
-                      final isSelected = selectedItemIndices.contains(index) ||
-                          room['checked'] == 1;
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: mainDisplayList.length,
+                  itemBuilder: (context, index) {
+                    final room = mainDisplayList[index];
+                    final isSelected = selectedItemIndices.contains(index) ||
+                        room['checked'] == 1;
 
-                      if (room['checked'] == 1 &&
-                          !selectedItemIndices.contains(index)) {
-                        selectedItemIndices.add(index);
-                      }
+                    if (room['checked'] == 1 &&
+                        !selectedItemIndices.contains(index)) {
+                      selectedItemIndices.add(index);
+                    }
 
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (room['checked'] != 1) {
-                              if (isSelected) {
-                                selectedItemIndices.remove(index);
-                              } else {
-                                selectedItemIndices.add(index);
-                              }
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (room['checked'] != 1) {
+                            if (isSelected) {
+                              selectedItemIndices.remove(index);
+                            } else {
+                              selectedItemIndices.add(index);
                             }
-                          });
-                        },
-                        child: Container(
-                          margin: EdgeInsets.symmetric(vertical: 8.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: isSelected ? Colors.blue : Colors.grey,
-                              width: 2.0,
-                            ),
-                            borderRadius: BorderRadius.circular(8.0),
-                            color: isSelected
-                                ? Colors.blue.withOpacity(0.1)
-                                : null,
+                          }
+                        });
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey,
+                            width: 2.0,
                           ),
-                          child: Container(
-                            margin: EdgeInsets.all(0.0),
-                            child: ListTile(
-                              contentPadding: EdgeInsets.all(16.0),
-                              title: Text(
-                                'Fee Name: ${room['feeName'] ?? 'N/A'}',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      'Total Fee Amount: ${room['totalFeeAmount']}'),
-                                  Text('Frequency: ${room['frequency']}'),
-                                  Text('Installments: ${room['installement']}'),
-                                ],
-                              ),
+                          borderRadius: BorderRadius.circular(8.0),
+                          color: isSelected
+                              ? Colors.blue.withOpacity(0.1)
+                              : null,
+                        ),
+                        child: Container(
+                          margin: EdgeInsets.all(0.0),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(16.0),
+                            title: Text(
+                              'Fee Name: ${room['feeName'] ?? 'N/A'}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    'Total Fee Amount: ${room['totalFeeAmount']}'),
+                                Text('Frequency: ${room['frequency']}'),
+                                Text('Installments: ${room['installement']}'),
+                              ],
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
+                SizedBox(height: 16.0),
+                SizedBox(height: 16.0),
               ],
             ),
           );
@@ -639,26 +624,27 @@ class _HostelSelectorState extends State<HostelSelector> {
       ),
       floatingActionButton: isPreviewButtonVisible
           ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 220, // Set the width here
-                  child: FloatingActionButton(
-                    onPressed: showPreviewDialog,
-                    child: Text(
-                      "Preview Selection",
-                      style: TextStyle(color: Colors.white), // Text color
-                    ),
-                    tooltip: 'Preview Selection',
-                    backgroundColor:
-                        Colors.blue, // Set the background color here
-                  ),
-                ),
-              ],
-            )
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 220, // Set the width here
+            child: FloatingActionButton(
+              onPressed: showPreviewDialog,
+              child: Text(
+                "Preview Selection",
+                style: TextStyle(color: Colors.white), // Text color
+              ),
+              tooltip: 'Preview Selection',
+              backgroundColor:
+              Colors.blue, // Set the background color here
+            ),
+          ),
+        ],
+      )
           : null,
     );
   }
+
 
   void _showAllottedBedsDialog() {
     showGeneralDialog(

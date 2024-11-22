@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class AttendanceRequest extends StatefulWidget {
   const AttendanceRequest({super.key});
 
@@ -36,19 +38,18 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
       _callAttendanceAPI();
     }
   }
-
-  // Function to call the Attendance API
-  Future<void> _callAttendanceAPI() async {
+Future<void> _callAttendanceAPI() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     if (selectedDate == null) return;
-
     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-
-    // Request body for "attendance" flag
     Map<String, dynamic> requestBodyAttendance = {
-      "grpCode": "BEESdev",
-      "colCode": "0001",
+      "grpCode": grpCode,
+      "colCode": colCode,
       "collegeId": 1,
-      "studentId": 1242,
+      "studentId": studId,
       "courseId": 0,
       "date": formattedDate,
       "periods": "",
@@ -96,6 +97,11 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
 
   // Function to save selected items
   Future<void> _saveSelectedItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
+
     List<Map<String, dynamic>> saveAttendanceRequestTableVariables = [];
 
     for (var item in attendanceList) {
@@ -111,10 +117,10 @@ class _AttendanceRequestState extends State<AttendanceRequest> {
     }
 
     Map<String, dynamic> requestBody = {
-      "grpCode": "BEESdev",
-      "colCode": "0001",
+      "grpCode": grpCode,
+      "colCode": colCode,
       "collegeId": 1,
-      "studentId": 1242,
+      "studentId": studId,
 
 
       "requestDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ClassRequest extends StatefulWidget {
   const ClassRequest({super.key});
@@ -38,16 +39,20 @@ class _ClassRequestState extends State<ClassRequest> {
 
   // Function to call the Class Request API
   Future<void> _callClassRequestAPI() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studId = prefs.getString('studId') ?? '';
     if (selectedDate == null) return;
 
     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
 
     // Request body for "class" flag
     Map<String, dynamic> requestBodyClass = {
-      "grpCode": "BEES",
-      "colCode": "0001",
+      "grpCode": grpCode,
+      "colCode": colCode,
       "collegeId": 1,
-      "studentId": 1242,
+      "studentId": studId,
       "courseId": 0,
       "date": formattedDate,
       "periods": "",
@@ -97,6 +102,10 @@ class _ClassRequestState extends State<ClassRequest> {
 
   // Function to save selected items
   Future<void> _saveSelectedItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String grpCode = prefs.getString('grpCode') ?? '';
+    String colCode = prefs.getString('colCode') ?? '';
+    String studentStatus = prefs.getString('studentStatus') ?? '';
     List<Map<String, dynamic>> saveClassRequestTableVariables = [];
 
     for (var item in classList) {
@@ -114,10 +123,10 @@ class _ClassRequestState extends State<ClassRequest> {
 
     Map<String, dynamic> requestBody =
     {
-      "grpCode": "BEES",
-    "colCode": "0001",
+      "grpCode": grpCode,
+    "colCode": colCode,
     "collegeId": 1,
-    "studentId": 1242,
+    "studentId": studentStatus,
 
 
     "requestDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
